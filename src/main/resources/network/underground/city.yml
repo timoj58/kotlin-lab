@@ -1,0 +1,6 @@
+lines:
+  - id: CITY01
+    train: 1
+    total-trains: 10
+    name: WaterLoo & City
+    stations: [26,598]

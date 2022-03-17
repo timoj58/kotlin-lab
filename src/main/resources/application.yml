@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+network:
+  stations-csv: src/main/resources/network/stations.csv
+  trains:
+    - id: 1
+      capacity: 1000
+    - id: 2
+      capacity: 1500
+  lines:
+    underground:
+      - src/main/resources/network/underground/city.yml
+    overground:
+      - src/main/resources/network/overground/highbury.yml
+    cable:
+      - src/main/resources/network/cable/cable.yml
+    river:
+      - src/main/resources/network/river/river.yml
