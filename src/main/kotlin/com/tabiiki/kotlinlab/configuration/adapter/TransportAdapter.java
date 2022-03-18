@@ -14,14 +14,6 @@ public class TransportAdapter {
     private List<TransportConfig> ferries;
     private List<TransportConfig> cableCars;
 
-    public void setCableCars(List<TransportConfig> cableCars) {
-        this.cableCars = cableCars;
-    }
-
-    public void setTrains(List<TransportConfig> trains) {
-        this.trains = trains;
-    }
-
     public List<TransportConfig> getFerries() {
         return ferries;
     }
@@ -34,8 +26,15 @@ public class TransportAdapter {
         return cableCars;
     }
 
+    public void setCableCars(List<TransportConfig> cableCars) {
+        this.cableCars = cableCars;
+    }
 
-    public List<TransportConfig> getTrains(){
+    public List<TransportConfig> getTrains() {
         return trains;
+    }
+
+    public void setTrains(List<TransportConfig> trains) {
+        this.trains = trains;
     }
 }

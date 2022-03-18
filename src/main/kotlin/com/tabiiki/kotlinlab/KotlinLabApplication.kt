@@ -9,5 +9,5 @@ import org.springframework.web.reactive.config.EnableWebFlux
 class KotlinLabApplication
 
 fun main(args: Array<String>) {
-	runApplication<KotlinLabApplication>(*args)
+    runApplication<KotlinLabApplication>(*args)
 }

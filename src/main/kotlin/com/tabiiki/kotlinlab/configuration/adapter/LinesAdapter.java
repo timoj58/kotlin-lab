@@ -31,11 +31,11 @@ public class LinesAdapter {
         this.river = river;
     }
 
-    public Map<LineType, List<String>> getLines(){
+    public Map<LineType, List<String>> getLines() {
         return Map.of(
                 LineType.UNDERGROUND, underground,
                 LineType.OVERGROUND, overground,
-                LineType.CABLE,  cable,
+                LineType.CABLE, cable,
                 LineType.RIVER, river
         );
     }

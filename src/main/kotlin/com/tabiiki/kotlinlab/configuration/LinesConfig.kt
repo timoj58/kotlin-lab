@@ -11,11 +11,13 @@ import java.io.File
 import java.nio.file.Files
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-data class LineConfig(@JsonProperty("id") val id: String,
-                      @JsonProperty("name") val name: String,
-                      @JsonProperty("transport-id") val transportId: Int,
-                      @JsonProperty("transport-capacity") val transportCapacity: Int,
-                      @JsonProperty("stations") val stations: List<String>){
+data class LineConfig(
+    @JsonProperty("id") val id: String,
+    @JsonProperty("name") val name: String,
+    @JsonProperty("transport-id") val transportId: Int,
+    @JsonProperty("transport-capacity") val transportCapacity: Int,
+    @JsonProperty("stations") val stations: List<String>
+) {
     var type: LineType? = null
 }
 
@@ -23,7 +25,9 @@ data class LineConfig(@JsonProperty("id") val id: String,
 class LinesConfig(linesAdapter: LinesAdapter) {
 
     @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-    companion object class Config(@JsonProperty("lines") val lines: List<LineConfig>)
+    companion object
+    class Config(@JsonProperty("lines") val lines: List<LineConfig>)
+
     private val loadLines = mutableListOf<LineConfig>()
     val lines
         get() = loadLines.toList()
@@ -37,7 +41,7 @@ class LinesConfig(linesAdapter: LinesAdapter) {
                     mapper.readValue(it, Config::class.java)
                 }
 
-                loaded.lines.forEach{
+                loaded.lines.forEach {
                     loadLines.add(it.apply { it.type = type })
                 }
             }

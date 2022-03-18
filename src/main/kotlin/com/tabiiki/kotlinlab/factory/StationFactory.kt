@@ -8,15 +8,15 @@ class StationFactory(
     stationsConfig: StationsConfig,
     linesConfig: LinesConfig
 ) {
-    private var stations =  mutableListOf<Station>()
+    private var stations = mutableListOf<Station>()
 
     init {
-          stationsConfig.stations.forEach{ station ->
-              stations.add(Station(station,
-                  linesConfig.lines.filter { it.stations.contains(station.id) }
-                      .map { it.id }
-              ))
-          }
+        stationsConfig.stations.forEach { station ->
+            stations.add(Station(station,
+                linesConfig.lines.filter { it.stations.contains(station.id) }
+                    .map { it.id }
+            ))
+        }
     }
 
     fun get(id: String): Station? = stations.find { it.id == id }

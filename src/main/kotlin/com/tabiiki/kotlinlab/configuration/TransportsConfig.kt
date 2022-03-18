@@ -6,12 +6,14 @@ import com.tabiiki.kotlinlab.configuration.adapter.TransportAdapter
 import org.springframework.context.annotation.Configuration
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-data class TransportConfig(@JsonProperty("transport-id") val transportId: Int,
-                           @JsonProperty("capacity") val capacity: Int)
+data class TransportConfig(
+    @JsonProperty("transport-id") val transportId: Int,
+    @JsonProperty("capacity") val capacity: Int
+)
 
 @Configuration
 class TransportsConfig(transportAdapter: TransportAdapter) {
-    val trains =  transportAdapter.trains
+    val trains = transportAdapter.trains
     val ferries = transportAdapter.ferries
     val cableCars = transportAdapter.cableCars
 }

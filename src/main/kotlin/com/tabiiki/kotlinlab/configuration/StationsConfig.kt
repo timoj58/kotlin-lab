@@ -5,11 +5,13 @@ import org.springframework.context.annotation.Configuration
 import java.io.File
 
 
-data class StationConfig(val id: String,
-                         val name: String = "",
-                         val latitude: Double = 0.0,
-                         val longitude: Double = 0.0,
-                         val zones: String = "")
+data class StationConfig(
+    val id: String,
+    val name: String = "",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val zones: String = ""
+)
 
 @Configuration
 class StationsConfig(@Value("\${network.stations-csv}") stationsCsv: String) {
