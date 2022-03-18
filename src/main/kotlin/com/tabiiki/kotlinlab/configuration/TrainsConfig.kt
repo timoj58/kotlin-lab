@@ -7,8 +7,8 @@ import com.tabiiki.kotlinlab.model.Train
 import org.springframework.context.annotation.Configuration
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-data class Stations(@JsonProperty("id") val id: Int,
-                    @JsonProperty("capacity") val capacity: Int)
+data class Trains(@JsonProperty("id") val id: Int,
+                  @JsonProperty("capacity") val capacity: Int)
 
 @Configuration
 class TrainsConfig(trainsAdapter: TrainsAdapter) {

@@ -3,11 +3,14 @@ server:
 
 network:
   stations-csv: src/main/resources/network/stations.csv
-  trains:
-    - id: 1
-      capacity: 1000
-    - id: 2
-      capacity: 1500
+  vehicles:
+      ferries:
+      cable-cars:
+      trains:
+       - id: 1
+         capacity: 1000
+       - id: 2
+         capacity: 1500
   lines:
     underground:
       - src/main/resources/network/underground/city.yml
