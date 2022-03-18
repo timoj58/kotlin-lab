@@ -20,8 +20,8 @@ internal class StationFactoryTest{
     fun init(){
         Mockito.`when`(lineConfig.lines).thenReturn(
             listOf(
-                LineConfig("1", "1", 1, 10, listOf("A", "C")),
-                LineConfig("2", "2",2, 15, listOf("A", "B"))
+                LineConfig("1", "1", 1, 10, listOf("A", "C"), listOf("A", "C")),
+                LineConfig("2", "2",2, 15,listOf("A", "B"), listOf("A", "B"))
             )
         )
 

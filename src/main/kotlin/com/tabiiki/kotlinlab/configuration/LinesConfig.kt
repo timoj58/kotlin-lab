@@ -16,6 +16,7 @@ data class LineConfig(
     @JsonProperty("name") val name: String,
     @JsonProperty("transport-id") val transportId: Int,
     @JsonProperty("transport-capacity") val transportCapacity: Int,
+    @JsonProperty("depots") val depots: List<String>,
     @JsonProperty("stations") val stations: List<String>
 ) {
     var type: LineType? = null

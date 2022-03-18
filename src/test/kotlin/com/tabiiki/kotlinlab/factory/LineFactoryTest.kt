@@ -33,8 +33,8 @@ internal class LineFactoryTest{
     fun `get line`(){
         Mockito.`when`(linesConfig.lines).thenReturn(
             listOf(
-                LineConfig("1", "1", 1, 10, listOf("A", "C")),
-                LineConfig("2", "2", 2, 10, listOf("A", "B"))
+                LineConfig("1", "1", 1, 10, listOf("A", "C"), listOf("A", "C")),
+                LineConfig("2", "2", 2, 10, listOf("A", "B"), listOf("A", "B"))
             )
         )
 
