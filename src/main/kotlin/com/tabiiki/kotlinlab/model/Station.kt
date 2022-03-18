@@ -8,7 +8,5 @@ data class Station(
 ) {
     val id = config.id
     val name = config.name
-    val latitude = config.latitude
-    val longitude = config.longitude
-    val capacity = 50000
+    val position = Pair(config.latitude, config.longitude)
 }

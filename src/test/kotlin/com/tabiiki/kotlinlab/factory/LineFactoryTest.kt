@@ -3,8 +3,7 @@ package com.tabiiki.kotlinlab.factory
 import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
-import com.tabiiki.kotlinlab.configuration.TransportsConfig
-import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -13,7 +12,7 @@ import org.mockito.Mockito
 
 internal class LineFactoryTest{
     val linesConfig = Mockito.mock(LinesConfig::class.java)
-    val transportsConfig = Mockito.mock(TransportsConfig::class.java)
+    val transportsConfig = Mockito.mock(TransportersConfig::class.java)
 
 
     @BeforeEach

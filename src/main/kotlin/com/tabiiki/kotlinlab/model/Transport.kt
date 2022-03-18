@@ -10,7 +10,8 @@ data class Transport(private val config: TransportConfig) {
     val linePosition: Pair<String, String>? = null
     val physics = Physics(config)
 
-    companion object class Physics(private val config: TransportConfig){
+    companion object
+    class Physics(config: TransportConfig) {
         var acceleration: Double? = 0.0
         var velocity: Double? = 0.0
         var speed: Double? = 0.0

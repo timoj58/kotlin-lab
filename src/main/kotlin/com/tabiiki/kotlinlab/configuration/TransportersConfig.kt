@@ -15,7 +15,7 @@ data class TransportConfig(
 )
 
 @Configuration
-class TransportsConfig(transportersAdapter: TransportersAdapter) {
+class TransportersConfig(transportersAdapter: TransportersAdapter) {
     val trains = transportersAdapter.trains
     val ferries = transportersAdapter.ferries
     val cableCars = transportersAdapter.cableCars
