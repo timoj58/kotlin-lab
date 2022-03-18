@@ -2,8 +2,8 @@ package com.tabiiki.kotlinlab.factory
 
 import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.LinesConfig
-import com.tabiiki.kotlinlab.configuration.TrainsConfig
-import com.tabiiki.kotlinlab.model.Train
+import com.tabiiki.kotlinlab.configuration.TransportConfig
+import com.tabiiki.kotlinlab.model.Carrier
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -12,8 +12,7 @@ import org.mockito.Mockito
 
 internal class LineFactoryTest{
     val linesConfig = Mockito.mock(LinesConfig::class.java)
-    val trainsConfig = Mockito.mock(TrainsConfig::class.java)
-
+    val transportConfig = Mockito.mock(TransportConfig::class.java)
 
 
     @BeforeEach
@@ -25,10 +24,10 @@ internal class LineFactoryTest{
             )
         )
 
-        Mockito.`when`(trainsConfig.trains).thenReturn(
+        Mockito.`when`(transportConfig.trains).thenReturn(
             listOf(
-                Train(1, 1000),
-                Train(2, 1500),
+                Carrier(1, 1000),
+                Carrier(2, 1500),
             )
         )
 
@@ -37,10 +36,10 @@ internal class LineFactoryTest{
 
     @Test
     fun `get line`(){
-       val line = LineFactory(trainsConfig, linesConfig).get("1")
+       val line = LineFactory(transportConfig, linesConfig).get("1")
 
         assertNotNull(line)
         assertThat(line?.stations).isEqualTo(listOf("A", "C"))
-        assertThat(line?.trains?.size).isEqualTo(10)
+        assertThat(line?.carriers?.size).isEqualTo(10)
     }
 }

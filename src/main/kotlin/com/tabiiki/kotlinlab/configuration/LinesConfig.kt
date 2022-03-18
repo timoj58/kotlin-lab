@@ -13,8 +13,8 @@ import java.nio.file.Files
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 data class LineConfig(@JsonProperty("id") val id: String,
                       @JsonProperty("name") val name: String,
-                      @JsonProperty("train") val train: Int,
-                      @JsonProperty("total-trains") val totalTrains: Int,
+                      @JsonProperty("transport-id") val transportId: Int,
+                      @JsonProperty("transport-capacity") val transportCapacity: Int,
                       @JsonProperty("stations") val stations: List<String>){
     var type: LineType? = null
 }
