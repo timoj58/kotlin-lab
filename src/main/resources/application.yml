@@ -4,24 +4,24 @@ server:
 network:
   stations-csv: src/main/resources/network/stations.csv
   transporters:
-      ferries:
-        - transport-id: 1
-          capacity: 1000
-          weight: 10000
-          top-speed: 60
-          power: 150
-      cable-cars:
-        - transport-id: 2
-          capacity: 1000
-          weight: 10000
-          top-speed: 60
-          power: 150
-      trains:
-       - transport-id: 3
-         capacity: 1000
-         weight: 10000
-         top-speed: 60
-         power: 150
+    ferries:
+      - transport-id: 1
+        capacity: 1000
+        weight: 10000
+        top-speed: 60
+        power: 150
+    cable-cars:
+      - transport-id: 2
+        capacity: 1000
+        weight: 10000
+        top-speed: 60
+        power: 150
+    trains:
+      - transport-id: 3
+        capacity: 1000
+        weight: 10000
+        top-speed: 60
+        power: 150
   lines:
     underground:
       - src/main/resources/network/underground/city.yml

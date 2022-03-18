@@ -5,30 +5,31 @@ import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.StationsConfig
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 
 
-internal class StationFactoryTest{
+internal class StationFactoryTest {
 
     val lineConfig = Mockito.mock(LinesConfig::class.java)
     val stationsConfig = Mockito.mock(StationsConfig::class.java)
 
     @BeforeEach
-    fun init(){
+    fun init() {
         Mockito.`when`(lineConfig.lines).thenReturn(
             listOf(
                 LineConfig("1", "1", 1, 10, listOf("A", "C"), listOf("A", "C")),
-                LineConfig("2", "2",2, 15,listOf("A", "B"), listOf("A", "B"))
+                LineConfig("2", "2", 2, 15, listOf("A", "B"), listOf("A", "B"))
             )
         )
 
     }
 
     @Test
-    fun `get station`(){
+    fun `get station`() {
         Mockito.`when`(stationsConfig.stations).thenReturn(
             listOf(
                 StationConfig(id = "A"),
@@ -43,13 +44,9 @@ internal class StationFactoryTest{
     }
 
     @Test
-    fun `station does not exist`(){
-        Mockito.`when`(stationsConfig.stations).thenReturn(
-            listOf()
-        )
-        val station = StationFactory(stationsConfig, lineConfig).get("A")
-        assertNull(station)
-
+    fun `station does not exist`() {
+        Mockito.`when`(stationsConfig.stations).thenReturn(listOf())
+        assertNull(StationFactory(stationsConfig, lineConfig).get("A"))
     }
 
 }

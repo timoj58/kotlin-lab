@@ -1,4 +1,4 @@
 lines:
   - id: JUBILEE01
     name: Jubilee
-    stations: [X,Y]
+    stations: [ X,Y ]

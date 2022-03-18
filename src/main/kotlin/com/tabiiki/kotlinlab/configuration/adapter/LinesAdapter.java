@@ -1,6 +1,6 @@
 package com.tabiiki.kotlinlab.configuration.adapter;
 
-import com.tabiiki.kotlinlab.enumerator.LineType;
+import com.tabiiki.kotlinlab.configuration.LineType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 

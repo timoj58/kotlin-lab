@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
-import com.tabiiki.kotlinlab.enumerator.LineType
 import org.springframework.context.annotation.Configuration
 import java.io.File
 import java.nio.file.Files
@@ -20,6 +19,10 @@ data class LineConfig(
     @JsonProperty("stations") val stations: List<String>
 ) {
     var type: LineType? = null
+}
+
+enum class LineType {
+    UNDERGROUND, OVERGROUND, RIVER, CABLE
 }
 
 @Configuration

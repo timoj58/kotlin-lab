@@ -1,18 +1,16 @@
 package com.tabiiki.kotlinlab.configuration
 
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
-import com.tabiiki.kotlinlab.enumerator.LineType
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-internal class LinesConfigTest{
+internal class LinesConfigTest {
     private val linesAdapter: LinesAdapter =
         LinesAdapter()
 
     @BeforeEach
-    fun init(){
+    fun init() {
 
         linesAdapter.setCable(
             mutableListOf("src/main/resources/network/cable/cable.yml")
@@ -31,7 +29,7 @@ internal class LinesConfigTest{
 
     @Test
     fun `load network`() {
-        val lines = LinesConfig(linesAdapter);
+        val lines = LinesConfig(linesAdapter)
 
         assertThat(lines.lines.size).isEqualTo(1)
         assertThat(lines.lines[0].type).isEqualTo(LineType.UNDERGROUND)
