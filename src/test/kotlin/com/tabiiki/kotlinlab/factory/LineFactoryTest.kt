@@ -18,12 +18,6 @@ internal class LineFactoryTest{
 
     @BeforeEach
     fun init(){
-        Mockito.`when`(linesConfig.lines).thenReturn(
-            listOf(
-                LineConfig("1", "1", 1, 10, listOf("A", "C")),
-                LineConfig("2", "2", 2, 10, listOf("A", "B"))
-            )
-        )
 
         Mockito.`when`(transportsConfig.trains).thenReturn(
             listOf(
@@ -37,10 +31,29 @@ internal class LineFactoryTest{
 
     @Test
     fun `get line`(){
-       val line = LineFactory(transportsConfig, linesConfig).get("1")
+        Mockito.`when`(linesConfig.lines).thenReturn(
+            listOf(
+                LineConfig("1", "1", 1, 10, listOf("A", "C")),
+                LineConfig("2", "2", 2, 10, listOf("A", "B"))
+            )
+        )
+
+        val factory = LineFactory(transportsConfig, linesConfig)
+        val line = factory.get("1")
 
         assertNotNull(line)
         assertThat(line?.stations).isEqualTo(listOf("A", "C"))
-        assertThat(line?.carriers?.size).isEqualTo(10)
+        assertThat(line?.transporters?.size).isEqualTo(10)
+    }
+
+    @Test
+    fun `line doesnt exist`(){
+        Mockito.`when`(linesConfig.lines).thenReturn(
+            listOf()
+        )
+        val factory = LineFactory(transportsConfig, linesConfig)
+        val line = factory.get("1")
+
+        assertNull(line)
     }
 }

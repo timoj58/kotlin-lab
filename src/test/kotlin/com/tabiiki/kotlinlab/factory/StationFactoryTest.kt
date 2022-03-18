@@ -25,22 +25,31 @@ internal class StationFactoryTest{
             )
         )
 
+    }
+
+    @Test
+    fun `get station`(){
         Mockito.`when`(stationsConfig.stations).thenReturn(
             listOf(
                 StationConfig(id = "A"),
                 StationConfig(id = "B"),
                 StationConfig(id = "C"),
-                )
+            )
         )
-
-    }
-
-    @Test
-    fun `get station`(){
 
         val station = StationFactory(stationsConfig, lineConfig).get("A")
         assertNotNull(station)
         assertThat(station?.lines).isEqualTo(listOf("1", "2"))
+    }
+
+    @Test
+    fun `station does not exist`(){
+        Mockito.`when`(stationsConfig.stations).thenReturn(
+            listOf()
+        )
+        val station = StationFactory(stationsConfig, lineConfig).get("A")
+        assertNull(station)
+
     }
 
 }

@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 
 @Configuration
-@ConfigurationProperties(prefix = "network.transport")
-public class TransportAdapter {
+@ConfigurationProperties(prefix = "network.transporters")
+public class TransportersAdapter {
 
     private List<TransportConfig> trains;
     private List<TransportConfig> ferries;

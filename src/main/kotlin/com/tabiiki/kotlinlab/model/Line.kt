@@ -5,12 +5,12 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 
 data class Line(
     private val config: LineConfig,
-    val transportConfig: List<TransportConfig>
+    private val transportConfig: List<TransportConfig>
 ) {
     val id = config.id
     val name = config.name
     val stations = config.stations
-    val carriers =
+    val transporters =
         generateSequence { transportConfig.map { Transport(it) }.first { it.transportId == config.transportId } }.take(
             config.transportCapacity
         ).toList()

@@ -2,7 +2,7 @@ package com.tabiiki.kotlinlab.configuration
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.tabiiki.kotlinlab.configuration.adapter.TransportAdapter
+import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
 import org.springframework.context.annotation.Configuration
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -15,8 +15,8 @@ data class TransportConfig(
 )
 
 @Configuration
-class TransportsConfig(transportAdapter: TransportAdapter) {
-    val trains = transportAdapter.trains
-    val ferries = transportAdapter.ferries
-    val cableCars = transportAdapter.cableCars
+class TransportsConfig(transportersAdapter: TransportersAdapter) {
+    val trains = transportersAdapter.trains
+    val ferries = transportersAdapter.ferries
+    val cableCars = transportersAdapter.cableCars
 }
