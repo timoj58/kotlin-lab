@@ -8,7 +8,10 @@ import org.springframework.context.annotation.Configuration
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 data class TransportConfig(
     @JsonProperty("transport-id") val transportId: Int,
-    @JsonProperty("capacity") val capacity: Int
+    @JsonProperty("capacity") val capacity: Int,
+    @JsonProperty("weight") val weight: Int = 0,
+    @JsonProperty("top-speed") val topSpeed: Int = 0,
+    @JsonProperty("power") val power: Int = 0
 )
 
 @Configuration

@@ -4,7 +4,7 @@ import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 
 data class Line(
-    val config: LineConfig,
+    private val config: LineConfig,
     val transportConfig: List<TransportConfig>
 ) {
     val id = config.id

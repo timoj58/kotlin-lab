@@ -41,9 +41,9 @@ class LinesConfig(linesAdapter: LinesAdapter) {
                     mapper.readValue(it, Config::class.java)
                 }
 
-                loaded.lines.forEach {
-                    loadLines.add(it.apply { it.type = type })
-                }
+                loadLines.addAll(
+                    loaded.lines.map { it.apply { it.type = type } }
+                )
             }
         }
     }
