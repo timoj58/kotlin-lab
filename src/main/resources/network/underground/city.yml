@@ -3,9 +3,6 @@ lines:
     transport-id: 1
     transport-capacity: 10
     name: WaterLoo & City
-    depots:
-      - 26
-      - 598
     stations:
       - 26
       - 598

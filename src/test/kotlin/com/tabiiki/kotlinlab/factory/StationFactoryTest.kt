@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.StationsConfig
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
@@ -21,8 +22,8 @@ internal class StationFactoryTest {
     fun init() {
         Mockito.`when`(lineConfig.lines).thenReturn(
             listOf(
-                LineConfig("1", "1", 1, 10, listOf("A", "C"), listOf("A", "C")),
-                LineConfig("2", "2", 2, 15, listOf("A", "B"), listOf("A", "B"))
+                LineConfig("1", "1", 1, 10, listOf("A", "C")),
+                LineConfig("2", "2", 2, 15, listOf("A", "B"))
             )
         )
 
@@ -46,7 +47,8 @@ internal class StationFactoryTest {
     @Test
     fun `station does not exist`() {
         Mockito.`when`(stationsConfig.stations).thenReturn(listOf())
-        assertNull(StationFactory(stationsConfig, lineConfig).get("A"))
+        Assertions.assertThrows(NoSuchElementException::class.java) {
+            StationFactory(stationsConfig, lineConfig).get("A")
+        }
     }
-
 }
