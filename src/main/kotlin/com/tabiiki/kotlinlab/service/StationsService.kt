@@ -26,7 +26,6 @@ class StationsServiceImpl(
 
     }
 
-    override fun get(): List<Station> {
-        return stations.toList()
-    }
+    override fun get(): List<Station> = stations.toList()
+
 }
