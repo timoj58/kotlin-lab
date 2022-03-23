@@ -7,7 +7,6 @@ import com.tabiiki.kotlinlab.configuration.StationsConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -41,7 +40,7 @@ internal class StationFactoryTest {
 
         val station = StationFactory(stationsConfig, lineConfig).get("A")
         assertNotNull(station)
-        assertThat(station?.lines).isEqualTo(listOf("1", "2"))
+        assertThat(station.lines).isEqualTo(listOf("1", "2"))
     }
 
     @Test

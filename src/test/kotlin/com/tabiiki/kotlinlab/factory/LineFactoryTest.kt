@@ -5,7 +5,8 @@ import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -32,7 +33,7 @@ internal class LineFactoryTest {
     fun `get line`() {
         Mockito.`when`(linesConfig.lines).thenReturn(
             listOf(
-                LineConfig("1", "1", 1, 10,  listOf("A", "C")),
+                LineConfig("1", "1", 1, 10, listOf("A", "C")),
                 LineConfig("2", "2", 2, 10, listOf("A", "B"))
             )
         )
@@ -41,14 +42,14 @@ internal class LineFactoryTest {
         val line = factory.get("1")
 
         assertNotNull(line)
-        assertThat(line?.stations).isEqualTo(listOf("A", "C"))
-        assertThat(line?.transporters?.size).isEqualTo(10)
+        assertThat(line.stations).isEqualTo(listOf("A", "C"))
+        assertThat(line.transporters.size).isEqualTo(10)
     }
 
     @Test
     fun `line does not exist`() {
         Mockito.`when`(linesConfig.lines).thenReturn(listOf())
-        assertThrows(NoSuchElementException::class.java){
+        assertThrows(NoSuchElementException::class.java) {
             LineFactory(transportsConfig, linesConfig).get("1")
         }
     }
