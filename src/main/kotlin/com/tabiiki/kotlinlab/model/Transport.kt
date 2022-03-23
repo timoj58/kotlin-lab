@@ -2,9 +2,7 @@ package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.util.HaversineCalculator
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -16,9 +14,9 @@ data class Transport(private val config: TransportConfig) {
     val id = UUID.randomUUID()
     val transportId = config.transportId
     val capacity = config.capacity
-    var linePosition: Pair<String, String> = Pair("","") //current, next
+    var linePosition = Pair("", "") //current(from), next(to)
     val physics = Physics(config)
-    val haversineCalculator = HaversineCalculator()
+    private val haversineCalculator = HaversineCalculator()
 
     companion object
     class Physics(config: TransportConfig) {
@@ -30,14 +28,14 @@ data class Transport(private val config: TransportConfig) {
         val topSpeed = config.topSpeed
     }
 
-    suspend fun sendCurrentState(channel: SendChannel<Pair<UUID, Boolean>>){
+    suspend fun track(channel: SendChannel<Transport>) {
         while (true) {
-            channel.send(Pair(id, physics.velocity != 0.0))
+            channel.send(this)
             delay(1000)
         }
     }
 
-    suspend fun depart(from: Station, to: Station) {
+    suspend fun depart(from: Station, to: Station, next: Station) {
         logger.info("$id departing $from")
 
         physics.distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
@@ -48,7 +46,7 @@ data class Transport(private val config: TransportConfig) {
 
         } while (physics.distance > 0.0)
 
-        stop()
+        stop(next)
     }
 
     private fun topSpeedAsMetresPerSecond(): Double = physics.topSpeed / 3600.0
@@ -71,15 +69,16 @@ data class Transport(private val config: TransportConfig) {
         return if (physics.distance - physics.velocity * 4 < 0.0) brake() else physics.distance - physics.velocity
     }
 
-    private fun stop() {
+    private fun stop(next: Station) {
+        logger.info("$id arrived ${linePosition.second}")
+
         physics.distance = 0.0
         physics.acceleration = 0.0
         physics.velocity = 0.0
         physics.power = config.power
+        linePosition = Pair(linePosition.second, next.id)
 
-        logger.info("$id arrived ${linePosition.second}")
     }
-
 
 
 }

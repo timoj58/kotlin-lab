@@ -2,39 +2,37 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.*
 
+
 interface LineControllerService {
-    suspend fun start()
+    suspend fun start(channel: Channel<Transport>)
     fun regulate()
-    fun areAnyTransportsRunning(): Boolean
 }
 
 class LineControllerServiceImpl(
     private val line: List<Line>,
     private val stations: List<Station>
 ) : LineControllerService {
-    private val channel = Channel<Pair<UUID, Boolean>>()
     private val statuses = mutableMapOf<UUID, Boolean>()
 
-    override suspend fun start() = coroutineScope {
-        launch(Dispatchers.Default) {
-            statusListener()
-        }
+    override suspend fun start(channel: Channel<Transport>) = coroutineScope {
         line.forEach { section ->
             section.transporters.groupBy { it.linePosition }.values.forEach {
                 val transport = it.first()
                 statuses[transport.id] = false
 
-                launch(Dispatchers.Default) { transport.sendCurrentState(channel) }
+                launch(Dispatchers.Default) { transport.track(channel) }
                 launch(Dispatchers.Default) {
                     transport.depart(
                         stations.first { it.id == transport.linePosition.first },
-                        stations.first { it.id == transport.linePosition.second }
+                        stations.first { it.id == transport.linePosition.second },
+                        getNextStation(transport.linePosition)
                     )
                 }
             }
@@ -45,13 +43,15 @@ class LineControllerServiceImpl(
         TODO("Not yet implemented")
     }
 
-    override fun areAnyTransportsRunning(): Boolean = statuses.values.toList().any { it }
+    private fun getNextStation(linePosition: Pair<String, String>): Station {
 
-    private suspend fun statusListener() {
-        while (true) {
-            val status = channel.receive()
-            if (statuses[status.first] != status.second) statuses[status.first] = status.second
-        }
+        val stationCodes = stations.map { it.id }
+        val fromStationIdx = stationCodes.indexOf(linePosition.first)
+        val toStationIdx = stationCodes.indexOf(linePosition.second)
+        val direction = fromStationIdx - toStationIdx
+
+        return if (direction > 0) if (toStationIdx > 0) stations[toStationIdx - 1] else stations[1] else
+            if (toStationIdx < stations.size - 1) stations[toStationIdx + 1] else stations.reversed()[1]
+
     }
-
 }

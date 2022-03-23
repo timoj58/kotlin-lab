@@ -15,13 +15,14 @@ class NetworkServiceImpl(
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
     private val stations = stationFactory.get().map { stationFactory.get(it) }
-    private val lineControllers = lines.groupBy { line -> line.name }.values.map { byLine -> LineControllerServiceImpl(byLine, stations) }
+    private val lineControllers =
+        lines.groupBy { line -> line.name }.values.map { byLine -> LineControllerServiceImpl(byLine, stations) }
 
 
     override fun start() {
-        lineControllers.parallelStream().forEach{ controller ->
+        lineControllers.parallelStream().forEach { controller ->
             run {
-               // controller.start()
+                // controller.start()
                 controller.regulate()
             }
         }

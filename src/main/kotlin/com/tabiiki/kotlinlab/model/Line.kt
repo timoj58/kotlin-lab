@@ -21,13 +21,13 @@ data class Line(
         var startIndex = 0
         depots.forEach { depot ->
 
-            transporters.slice(startIndex until startIndex+perDepot)
+            transporters.slice(startIndex until startIndex + perDepot)
                 .forEach { transport -> transport.linePosition = Pair(depot, nextStationFromDepot(depot)) }
 
-            startIndex+=perDepot
+            startIndex += perDepot
         }
     }
 
     private fun nextStationFromDepot(currentStation: String): String =
-        if (stations.last() == currentStation) stations.reversed()[1] else stations[stations.indexOf(currentStation)+1]
+        if (stations.last() == currentStation) stations.reversed()[1] else stations[stations.indexOf(currentStation) + 1]
 }

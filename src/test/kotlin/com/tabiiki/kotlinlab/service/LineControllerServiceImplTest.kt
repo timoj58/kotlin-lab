@@ -5,10 +5,13 @@ import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.util.*
 
 internal class LineControllerServiceImplTest {
 
@@ -34,14 +37,22 @@ internal class LineControllerServiceImplTest {
         ))
 
         @Test
-        fun `start line test`() = runBlocking<Unit> {
-            val running = async {  lineControllerService.start() }
+        fun `start line and expect two trains to arrive at station B`() = runBlocking {
+            val channel = Channel<Transport>()
+            val res = async { lineControllerService.start(channel) }
+            val testRes = async{ testChannel(channel, res)}
+        }
 
-            delay(1000 * 10)
-            assertThat(lineControllerService.areAnyTransportsRunning()).isEqualTo(true)
-            delay(1000 * 40)
-            assertThat( lineControllerService.areAnyTransportsRunning()).isEqualTo(false)
-            running.cancelAndJoin()
+       suspend fun testChannel(channel: Channel<Transport>, job: Job){
+          var trains = mutableMapOf<UUID, Transport>()
+           do {
+               val msg = channel.receive()
+               if(!trains.containsKey(msg.id)) trains[msg.id] = msg
+
+           }while (trains.values.map { it.linePosition }.any { it.first != "B" } )
+
+           assertThat(trains.values.map { it.linePosition.second }.containsAll(listOf("A", "C"))).isEqualTo(true)
+           job.cancelAndJoin()
         }
 
 }
