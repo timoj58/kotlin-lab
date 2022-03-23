@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 
-internal class NetworkControlServiceTest{
+internal class NetworkControllerServiceTest{
 
     val networkService  = mock(NetworkService::class.java)
-    val networkControlService = NetworkControlServiceImpl(networkService)
+    val networkControllerService = NetworkControllerServiceImpl(networkService)
 
     @Test
     fun `network controller init`(){

@@ -2,14 +2,21 @@ package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.util.HaversineCalculator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
+import org.slf4j.LoggerFactory
 import java.util.*
 
 data class Transport(private val config: TransportConfig) {
+
+    private val logger = LoggerFactory.getLogger(this.javaClass.name)
+
     val id = UUID.randomUUID()
     val transportId = config.transportId
     val capacity = config.capacity
-    var linePosition: Pair<String, String>? = null //current, next
+    var linePosition: Pair<String, String> = Pair("","") //current, next
     val physics = Physics(config)
     val haversineCalculator = HaversineCalculator()
 
@@ -23,7 +30,16 @@ data class Transport(private val config: TransportConfig) {
         val topSpeed = config.topSpeed
     }
 
+    suspend fun sendCurrentState(channel: SendChannel<Pair<UUID, Boolean>>){
+        while (true) {
+            channel.send(Pair(id, physics.velocity != 0.0))
+            delay(1000)
+        }
+    }
+
     suspend fun depart(from: Station, to: Station) {
+        logger.info("$id departing $from")
+
         physics.distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
         physics.acceleration = calcAcceleration()
         do {
@@ -43,6 +59,7 @@ data class Transport(private val config: TransportConfig) {
     }
 
     private fun brake(): Double {
+        logger.info("$id braking for ${linePosition.second}")
         physics.acceleration = -calcAcceleration()
         physics.velocity = calcVelocity()
         return physics.distance - physics.velocity
@@ -59,6 +76,10 @@ data class Transport(private val config: TransportConfig) {
         physics.acceleration = 0.0
         physics.velocity = 0.0
         physics.power = config.power
+
+        logger.info("$id arrived ${linePosition.second}")
     }
+
+
 
 }

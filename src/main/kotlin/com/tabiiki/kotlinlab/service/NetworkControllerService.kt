@@ -1,14 +1,14 @@
 package com.tabiiki.kotlinlab.service
 
 
-interface NetworkControlService {
+interface NetworkControllerService {
     //TODO need to add things to display positions of items on network etc.
     //and send events to it etc....leave for now.
 }
 
-class NetworkControlServiceImpl(
+class NetworkControllerServiceImpl(
     private val networkService: NetworkService
-) : NetworkControlService {
+) : NetworkControllerService {
     init {
         networkService.start()
     }

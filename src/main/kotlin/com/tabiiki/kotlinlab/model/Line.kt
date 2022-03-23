@@ -14,20 +14,20 @@ data class Line(
         generateSequence { transportConfig.map { Transport(it) }.first { it.transportId == config.transportId } }.take(
             config.transportCapacity
         ).toList()
+    private val depots = config.depots
 
     init {
-        val divider = transporters.size / 2 + transporters.size % 2
-        val startDepot = stations.first()
-        val endDepot = stations.last()
+        val perDepot = if (depots.isEmpty()) 0 else transporters.size / depots.size
+        var startIndex = 0
+        depots.forEach { depot ->
 
-        transporters.slice(0..divider)
-            .forEach { transport -> transport.linePosition = Pair(startDepot, nextStationFromDepot(startDepot)) }
+            transporters.slice(startIndex until startIndex+perDepot)
+                .forEach { transport -> transport.linePosition = Pair(depot, nextStationFromDepot(depot)) }
 
-        transporters.slice(divider + 1 until transporters.size)
-            .forEach { transport -> transport.linePosition = Pair(endDepot, nextStationFromDepot(endDepot)) }
-
+            startIndex+=perDepot
+        }
     }
 
     private fun nextStationFromDepot(currentStation: String): String =
-        if (stations.last() == currentStation) stations.reversed()[1] else stations[1]
+        if (stations.last() == currentStation) stations.reversed()[1] else stations[stations.indexOf(currentStation)+1]
 }

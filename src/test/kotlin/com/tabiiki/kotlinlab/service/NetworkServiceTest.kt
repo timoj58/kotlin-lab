@@ -14,6 +14,7 @@ internal class NetworkServiceTest{
 
     @Test
     fun `network start test`(){
+        //need to mock and confirm its launched....
         networkService.start()
     }
 

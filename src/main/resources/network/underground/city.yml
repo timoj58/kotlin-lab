@@ -1,8 +1,11 @@
 lines:
   - id: CITY01
     transport-id: 1
-    transport-capacity: 10
-    name: WaterLoo & City
+    transport-capacity: 4
+    name: Waterloo & City
     stations:
+      - 26
+      - 598
+    depots:
       - 26
       - 598
