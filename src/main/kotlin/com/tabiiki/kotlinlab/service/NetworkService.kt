@@ -20,7 +20,7 @@ class NetworkServiceImpl(
 
 
     override fun start() {
-        lineControllers.parallelStream().forEach { controller ->
+        lineControllers.forEach { controller ->
             run {
                 // controller.start()
                 controller.regulate()
