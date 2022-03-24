@@ -25,6 +25,7 @@ network:
   lines:
     underground:
       - src/main/resources/network/underground/city.yml
+      - src/main/resources/network/underground/jubilee.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:

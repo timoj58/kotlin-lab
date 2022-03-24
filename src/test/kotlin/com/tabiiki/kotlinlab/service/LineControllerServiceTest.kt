@@ -12,7 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 
-internal class LineControllerServiceImplTest {
+internal class LineControllerServiceTest {
 
     private val transportConfig = TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
 
@@ -30,7 +30,7 @@ internal class LineControllerServiceImplTest {
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val conductor = mock(Conductor::class.java)
-        val lineControllerService = LineControllerServiceImpl(listOf(line), conductor)
+        val lineControllerService = LineControllerService(listOf(line), conductor)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -46,7 +46,7 @@ internal class LineControllerServiceImplTest {
     @Test
     fun `test regulation that train is held before moving to next stop`() = runBlocking {
         val conductor = mock(Conductor::class.java)
-        val lineControllerService = LineControllerServiceImpl(listOf(line), conductor)
+        val lineControllerService = LineControllerService(listOf(line), conductor)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.regulate(channel) }

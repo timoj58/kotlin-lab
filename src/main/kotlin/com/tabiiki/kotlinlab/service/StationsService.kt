@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Station
+import org.springframework.stereotype.Service
 
 
 interface StationsService {
@@ -9,6 +10,7 @@ interface StationsService {
     fun get(): List<Station>
 }
 
+@Service
 class StationsServiceImpl(
     stationFactory: StationFactory
 ) : StationsService {

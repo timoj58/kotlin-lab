@@ -5,6 +5,8 @@ import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 import java.util.*
 
 interface Conductor {
@@ -12,6 +14,7 @@ interface Conductor {
     suspend fun depart(transport: Transport)
 }
 
+@Service
 class ConductorImpl(private val stationsService: StationsService) : Conductor {
     override suspend fun hold(transport: Transport, delay: Int): Unit = coroutineScope {
         if (transport.holdCounter > delay) launch(Dispatchers.Default) { depart(transport) }
@@ -26,15 +29,16 @@ class ConductorImpl(private val stationsService: StationsService) : Conductor {
     }
 }
 
-interface LineControllerService {
+interface LineController {
     suspend fun start(channel: Channel<Transport>)
     suspend fun regulate(channel: Channel<Transport>)
 }
 
-class LineControllerServiceImpl(
+@Service
+class LineControllerService(
     private val line: List<Line>,
     private val conductor: Conductor
-) : LineControllerService {
+) : LineController {
 
     private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 

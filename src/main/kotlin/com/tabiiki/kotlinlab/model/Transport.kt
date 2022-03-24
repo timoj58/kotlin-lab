@@ -16,8 +16,6 @@ enum class Status {
 
 data class Transport(private val config: TransportConfig) {
 
-    private val logger = LoggerFactory.getLogger(this.javaClass.name)
-
     var id = UUID.randomUUID()
     val transportId = config.transportId
     val capacity = config.capacity
@@ -58,7 +56,6 @@ data class Transport(private val config: TransportConfig) {
     }
 
     suspend fun depart(from: Station, to: Station, next: Station) {
-        logger.info("$id departed from ${from.id}")
         startJourney(from, to)
         do {
             delay(1000)
@@ -98,7 +95,6 @@ data class Transport(private val config: TransportConfig) {
     }
 
     private suspend fun stopJourney(next: Station) = coroutineScope {
-        logger.info("$id arrived at ${linePosition.second}")
         physics.reset(config)
         previousLinePosition = linePosition
         linePosition = Pair(linePosition.second, next.id)

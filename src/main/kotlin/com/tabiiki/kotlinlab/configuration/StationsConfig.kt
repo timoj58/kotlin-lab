@@ -21,7 +21,7 @@ class StationsConfig(@Value("\${network.stations-csv}") stationsCsv: String) {
         get() = loadStations.toList()
 
     init {
-        var counter = 0
+        var counter = 1
         //headers: Station,OS X,OS Y,Latitude,Longitude,Zone,Postcode
         File(stationsCsv).forEachLine {
             val station = it.split(",")

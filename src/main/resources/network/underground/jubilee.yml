@@ -1,4 +1,29 @@
 lines:
-  - id: JUBILEE01
+  - id: JUB01
+    transport-id: 3
+    transport-capacity: 18
+    hold-delay: 45
     name: Jubilee
-    stations: [ X,Y ]
+    stations:
+      - 528
+      - 615
+      - 95
+      - 396
+      - 94
+      - 93
+      - 50
+      - 345
+      - 509
+      - 598
+      - 629
+      - 235
+      - 63
+      - 24
+      - 517
+      - 544
+      - 212
+      - 616
+    depots:
+      - 396
+      - 528
+      - 616
