@@ -7,15 +7,12 @@ import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Transport
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
+import org.mockito.Mockito.*
 import java.util.*
 
 internal class LineControllerServiceImplTest {
@@ -42,16 +39,18 @@ internal class LineControllerServiceImplTest {
         ), listOf(TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100))
     )
 
+    @BeforeEach
+    fun init(){
+        `when`(stationFactory.get()).thenReturn(stations.map { it.id })
+        `when`(stationFactory.get("A")).thenReturn(stations[0])
+        `when`(stationFactory.get("B")).thenReturn(stations[1])
+        `when`(stationFactory.get("C")).thenReturn(stations[2])
+    }
+
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
-        Mockito.`when`(stationFactory.get()).thenReturn(stations.map { it.id })
-        Mockito.`when`(stationFactory.get("A")).thenReturn(stations.get(0))
-        Mockito.`when`(stationFactory.get("B")).thenReturn(stations.get(1))
-        Mockito.`when`(stationFactory.get("C")).thenReturn(stations.get(2))
-
         val stationsService = StationsServiceImpl(stationFactory)
-
-        val lineControllerService = LineControllerServiceImpl(listOf(line), stationsService)
+        val lineControllerService = LineControllerServiceImpl(listOf(line), ConductorImpl(stationsService))
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -70,6 +69,22 @@ internal class LineControllerServiceImplTest {
 
         assertThat(trains.values.map { it.linePosition.second }.containsAll(listOf("A", "C"))).isEqualTo(true)
         job.cancelAndJoin()
+    }
+
+    @Test
+    fun `test regulation that train is held before moving to next stop`() = runBlocking{
+        val conductor = mock(Conductor::class.java)
+        val lineControllerService = LineControllerServiceImpl(listOf(line), conductor)
+
+        val channel = Channel<Transport>()
+        val res = async { lineControllerService.regulate(channel) }
+
+        val transport = Transport(TransportConfig(transportId = 1, capacity = 10))
+        channel.send(transport)
+        delay(100)
+        verify(conductor).hold(transport)
+        res.cancelAndJoin()
+
     }
 
 }
