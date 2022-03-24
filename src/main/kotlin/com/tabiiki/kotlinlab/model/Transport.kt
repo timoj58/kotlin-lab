@@ -58,7 +58,7 @@ data class Transport(private val config: TransportConfig) {
     }
 
     suspend fun depart(from: Station, to: Station, next: Station) {
-        logger.info("$id departing from ${from.id}")
+        logger.info("$id departed from ${from.id}")
         startJourney(from, to)
         do {
             delay(1000)

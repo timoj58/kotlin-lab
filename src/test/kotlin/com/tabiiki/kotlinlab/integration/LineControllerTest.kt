@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.service.ConductorImpl
 import com.tabiiki.kotlinlab.service.LineControllerServiceImpl
@@ -15,7 +16,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -40,6 +40,7 @@ class LineControllerTest {
             name = "2",
             transportId = 1,
             transportCapacity = 4,
+            holdDelay = 1,
             stations = listOf("A", "B", "C"),
             depots = listOf("A", "C")
         ), listOf(TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100))
@@ -59,25 +60,28 @@ class LineControllerTest {
         val lineControllerService = LineControllerServiceImpl(listOf(line), ConductorImpl(stationsService))
 
         val channel = Channel<Transport>()
+        val channel2 = Channel<Transport>()
+
         val res = async { lineControllerService.start(channel) }
-        val testRes = async { testChannel(channel, res) }
+        val res2 = async { lineControllerService.regulate(channel2) }
+
+        val testRes = async { testChannel(channel, channel2, listOf(res, res2)) }
     }
 
 
-    suspend fun testChannel(channel: Channel<Transport>, job: Job) {
-        var trains = mutableMapOf<UUID, Transport>()
+    suspend fun testChannel(channel: Channel<Transport>, channel2: Channel<Transport>, jobs: List<Job>) {
+        val trains = mutableMapOf<UUID, Transport>()
+        line.transporters.forEach { trains[it.id] = it }
         val timeout = 1000 * 60
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
-            if (!trains.containsKey(msg.id)) trains[msg.id] = msg
+            channel2.send(msg)
+            trains[msg.id] = msg
 
-        } while (trains.values.map { it.linePosition }
-                .any { it.first != "B" } && startTime + timeout > System.currentTimeMillis())
+        } while (trains.values.map { it.status }.any { it == Status.DEPOT } && startTime + timeout > System.currentTimeMillis())
 
-        Assertions.assertThat(trains.values.map { it.linePosition.second }.containsAll(listOf("A", "C")))
-            .isEqualTo(true)
-        job.cancelAndJoin()
+        jobs.forEach { it.cancelAndJoin()}
     }
 
 }

@@ -47,7 +47,7 @@ class LineControllerServiceImpl(
                 section.transporters.filter { it.status == Status.DEPOT }
                     .groupBy { it.linePosition }.values.forEach {
                         val transport = it.first()
-                        if (isLineSegmentClear(section, transport.linePosition)
+                        if (isLineSegmentClear(section, transport)
                             && isJourneyTimeGreaterThanHoldingDelay(transport)) async { dispatch(transport, channel) }
                     }
             }
@@ -73,8 +73,13 @@ class LineControllerServiceImpl(
         launch(Dispatchers.Default) { conductor.depart(transport) }
     }
 
-    private fun isJourneyTimeGreaterThanHoldingDelay(transport: Transport) = journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(transport.id)
-    private fun isLineSegmentClear(section: Line, linePosition: Pair<String, String>) = section.transporters.all { it.linePosition != linePosition }
-    private fun getDefaultHoldDelay(id: UUID): Int = line.first { l -> l.transporters.any { it.id == id } }.holdDelay
+    private fun isJourneyTimeGreaterThanHoldingDelay(transport: Transport) =
+        if(!journeyTimes.containsKey(transport.linePosition)) false else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(transport.id)
+
+    private fun isLineSegmentClear(section: Line, transport: Transport) =
+        section.transporters.filter { it.id != transport.id }.all { it.linePosition != transport.linePosition }
+
+    private fun getDefaultHoldDelay(id: UUID): Int =
+        line.first { l -> l.transporters.any { it.id == id } }.holdDelay
 
 }

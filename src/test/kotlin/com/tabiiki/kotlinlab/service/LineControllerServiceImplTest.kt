@@ -21,7 +21,7 @@ internal class LineControllerServiceImplTest {
             id = "1",
             name = "2",
             transportId = 1,
-            transportCapacity = 4,
+            transportCapacity = 8,
             stations = listOf("A", "B", "C"),
             depots = listOf("A", "C")
         ), listOf(transportConfig)
