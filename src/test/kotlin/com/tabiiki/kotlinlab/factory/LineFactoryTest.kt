@@ -19,12 +19,13 @@ internal class LineFactoryTest {
     @BeforeEach
     fun init() {
 
-        Mockito.`when`(transportsConfig.trains).thenReturn(
+        Mockito.`when`(transportsConfig.get()).thenReturn(
             listOf(
                 TransportConfig(1, 1000),
                 TransportConfig(2, 1500),
             )
         )
+
 
     }
 

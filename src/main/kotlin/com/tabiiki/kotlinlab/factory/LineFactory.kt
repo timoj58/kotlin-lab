@@ -10,7 +10,7 @@ class LineFactory(
     transportConfig: TransportersConfig,
     linesConfig: LinesConfig
 ) {
-    private val lines = linesConfig.lines.map { Line(it, transportConfig.trains) }
+    private val lines = linesConfig.lines.map { Line(it, transportConfig.get()) }
     fun get(id: String): Line = lines.find { it.id == id } ?: throw NoSuchElementException("Line missing")
     fun get(): List<String> = lines.map { it.id }
 }

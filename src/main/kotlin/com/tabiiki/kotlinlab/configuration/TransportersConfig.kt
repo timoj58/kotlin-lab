@@ -19,4 +19,6 @@ class TransportersConfig(transportersAdapter: TransportersAdapter) {
     val trains = transportersAdapter.trains
     val ferries = transportersAdapter.ferries
     val cableCars = transportersAdapter.cableCars
+
+    fun get() = trains + ferries + cableCars
 }

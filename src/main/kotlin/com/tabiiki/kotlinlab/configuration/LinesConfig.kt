@@ -47,9 +47,7 @@ class LinesConfig(linesAdapter: LinesAdapter) {
                     mapper.readValue(it, Config::class.java)
                 }
 
-                loadLines.addAll(
-                    loaded.lines.map { it.apply { it.type = type } }
-                )
+                loadLines.addAll(loaded.lines.map { it.apply { it.type = type } })
             }
         }
     }
