@@ -9,16 +9,24 @@ import kotlinx.coroutines.delay
 import org.slf4j.LoggerFactory
 import java.util.*
 
+
+enum class Status {
+    ACTIVE, DEPOT
+}
+
 data class Transport(private val config: TransportConfig) {
 
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
-    val id = UUID.randomUUID()
+    var id = UUID.randomUUID()
     val transportId = config.transportId
     val capacity = config.capacity
     var linePosition = Pair("", "") //current(from), next(to)
+    private var previousLinePosition = Pair("", "")
     val physics = Physics(config)
     var holdCounter = 0
+    var status = Status.DEPOT
+    private var journeyTime = 0
     private val haversineCalculator = HaversineCalculator()
 
     companion object
@@ -30,7 +38,7 @@ data class Transport(private val config: TransportConfig) {
         var power = config.power
         val topSpeed = config.topSpeed
 
-        fun reset(config: TransportConfig){
+        fun reset(config: TransportConfig) {
             distance = 0.0
             acceleration = 0.0
             velocity = 0.0
@@ -39,6 +47,7 @@ data class Transport(private val config: TransportConfig) {
         }
     }
 
+    fun getJourneyTime() = Pair(journeyTime, previousLinePosition)
     fun isStationary() = physics.acceleration == 0.0
 
     suspend fun track(channel: SendChannel<Transport>) {
@@ -50,16 +59,15 @@ data class Transport(private val config: TransportConfig) {
 
     suspend fun depart(from: Station, to: Station, next: Station) {
         logger.info("$id departing from ${from.id}")
-
-        physics.distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
-        physics.acceleration = calcAcceleration()
+        startJourney(from, to)
         do {
             delay(1000)
+            journeyTime++
             physics.distance = calcNewPosition()
 
         } while (physics.distance > 0.0)
 
-        stop(next)
+        stopJourney(next)
     }
 
     private fun topSpeedAsMetresPerSecond(): Double = physics.topSpeed / 3600.0
@@ -81,19 +89,28 @@ data class Transport(private val config: TransportConfig) {
         return if (physics.distance - physics.velocity * 4 < 0.0) brake() else physics.distance - physics.velocity
     }
 
-    private suspend fun stop(next: Station) = coroutineScope {
-        logger.info("$id arrived at ${linePosition.second}")
-        physics.reset(config)
-        linePosition = Pair(linePosition.second, next.id)
+    private fun startJourney(from: Station, to: Station) {
+        status = Status.ACTIVE
+        journeyTime = 0
 
-        async{hold()}
+        physics.distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
+        physics.acceleration = calcAcceleration()
     }
 
-    private suspend fun hold(){
+    private suspend fun stopJourney(next: Station) = coroutineScope {
+        logger.info("$id arrived at ${linePosition.second}")
+        physics.reset(config)
+        previousLinePosition = linePosition
+        linePosition = Pair(linePosition.second, next.id)
+
+        async { hold() }
+    }
+
+    private suspend fun hold() {
         do {
             delay(1000)
             holdCounter++
-        }while (isStationary())
+        } while (isStationary())
 
         holdCounter = 0
     }

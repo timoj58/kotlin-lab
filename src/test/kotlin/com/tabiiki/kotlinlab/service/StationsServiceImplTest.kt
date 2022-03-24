@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 
-internal class StationsServiceImplTest{
+internal class StationsServiceImplTest {
 
     private val stationFactory = Mockito.mock(StationFactory::class.java)
 
@@ -22,7 +22,7 @@ internal class StationsServiceImplTest{
     )
 
     @BeforeEach
-    fun `init`(){
+    fun `init`() {
         Mockito.`when`(stationFactory.get()).thenReturn(stations.map { it.id })
         Mockito.`when`(stationFactory.get("A")).thenReturn(stations.get(0))
         Mockito.`when`(stationFactory.get("B")).thenReturn(stations.get(1))
@@ -31,27 +31,27 @@ internal class StationsServiceImplTest{
 
 
     @Test
-    fun `next station is first in line`(){
+    fun `next station is first in line`() {
         val stationsService = StationsServiceImpl(stationFactory)
         assertThat(stationsService.getNextStation(Pair("B", "A")).id).isEqualTo("B")
     }
 
     @Test
-    fun `next station is last in line`(){
+    fun `next station is last in line`() {
         val stationsService = StationsServiceImpl(stationFactory)
         assertThat(stationsService.getNextStation(Pair("B", "C")).id).isEqualTo("B")
 
     }
 
     @Test
-    fun `next station is going forwards`(){
+    fun `next station is going forwards`() {
         val stationsService = StationsServiceImpl(stationFactory)
         assertThat(stationsService.getNextStation(Pair("A", "B")).id).isEqualTo("C")
 
     }
 
     @Test
-    fun `next station is going reverse`(){
+    fun `next station is going reverse`() {
         val stationsService = StationsServiceImpl(stationFactory)
         assertThat(stationsService.getNextStation(Pair("C", "B")).id).isEqualTo("A")
 

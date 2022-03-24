@@ -1,18 +1,20 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import java.util.*
 
 interface Conductor {
-    suspend fun hold(transport: Transport)
+    suspend fun hold(transport: Transport, delay: Int)
     suspend fun depart(transport: Transport)
 }
 
-class ConductorImpl(private val stationsService: StationsService): Conductor {
-    override suspend fun hold(transport: Transport): Unit = coroutineScope {
-        if(transport.holdCounter > 15) launch(Dispatchers.Default) { depart(transport) }
+class ConductorImpl(private val stationsService: StationsService) : Conductor {
+    override suspend fun hold(transport: Transport, delay: Int): Unit = coroutineScope {
+        if (transport.holdCounter > delay) launch(Dispatchers.Default) { depart(transport) }
     }
 
     override suspend fun depart(transport: Transport) {
@@ -34,23 +36,45 @@ class LineControllerServiceImpl(
     private val conductor: Conductor
 ) : LineControllerService {
 
-    override suspend fun start(channel: Channel<Transport>) = coroutineScope {
-        line.forEach { section ->
-            section.transporters.groupBy { it.linePosition }.values.forEach {
-                val transport = it.first()
+    private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 
-                launch(Dispatchers.Default) { transport.track(channel) }
-                launch(Dispatchers.Default) { conductor.depart(transport) }
+    override suspend fun start(channel: Channel<Transport>) = coroutineScope {
+        line.forEach { section -> section.transporters.groupBy { it.linePosition }.values.forEach { async { dispatch(it.first(), channel) }} }
+
+        do {
+            delay(10000) //per 10 seconds is fine.
+            line.forEach { section ->
+                section.transporters.filter { it.status == Status.DEPOT }
+                    .groupBy { it.linePosition }.values.forEach {
+                        val transport = it.first()
+                        if (isLineSegmentClear(section, transport.linePosition)
+                            && isJourneyTimeGreaterThanHoldingDelay(transport)) async { dispatch(transport, channel) }
+                    }
             }
-        }
-        //TODO tricky part.  how to release the next trains into it.
+
+        } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
+
     }
 
     override suspend fun regulate(channel: Channel<Transport>) = coroutineScope {
         do {
             val message = channel.receive()
-            if (message.isStationary()) async { conductor.hold(message) }
+            if (message.isStationary()) {
+                val journeyTime = message.getJourneyTime()
+                if (journeyTime.first != 0) journeyTimes[journeyTime.second] = journeyTime.first
+
+                async { conductor.hold(message, getDefaultHoldDelay(message.id)) }
+            }
         } while (true)
     }
+
+    private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
+        launch(Dispatchers.Default) { transport.track(channel) }
+        launch(Dispatchers.Default) { conductor.depart(transport) }
+    }
+
+    private fun isJourneyTimeGreaterThanHoldingDelay(transport: Transport) = journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(transport.id)
+    private fun isLineSegmentClear(section: Line, linePosition: Pair<String, String>) = section.transporters.all { it.linePosition != linePosition }
+    private fun getDefaultHoldDelay(id: UUID): Int = line.first { l -> l.transporters.any { it.id == id } }.holdDelay
 
 }
