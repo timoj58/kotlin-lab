@@ -15,26 +15,24 @@ interface NetworkService {
 }
 
 @Service
-class NetworkServiceImpl(lineFactory: LineFactory, stationFactory: StationFactory): NetworkService {
+class NetworkServiceImpl(lineFactory: LineFactory, stationFactory: StationFactory) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
     private val stationsService = StationsServiceImpl(stationFactory)
     private val controllers = mutableListOf<LineControllerService>()
 
     init {
-
         lines.groupBy { it.name }.values.forEach { line ->
-            val conductor = ConductorImpl(stationsService)
-            controllers.add(LineControllerService(line, conductor))
+            controllers.add(LineControllerService(line, LineConductorImpl(stationsService)))
         }
 
     }
 
     override suspend fun start() = coroutineScope {
-        controllers.forEach{controller ->
+        controllers.forEach { controller ->
             val channel = Channel<Transport>()
-            launch(Dispatchers.Default){controller.start(channel)}
-            launch(Dispatchers.Default){controller.regulate(channel)}
+            launch(Dispatchers.Default) { controller.start(channel) }
+            launch(Dispatchers.Default) { controller.regulate(channel) }
         }
     }
 }

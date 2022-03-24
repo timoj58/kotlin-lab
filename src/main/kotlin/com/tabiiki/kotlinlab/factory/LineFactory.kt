@@ -3,7 +3,6 @@ package com.tabiiki.kotlinlab.factory
 import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.model.Line
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 
 @Repository

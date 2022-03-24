@@ -10,8 +10,8 @@ internal class StationsTest {
 
         val stations = StationsConfig("src/main/resources/network/stations.csv")
         assertThat(stations.stations.size).isEqualTo(653)
-        assertThat(stations.stations[0].id).isEqualTo("0")
-        assertThat(stations.stations[652].id).isEqualTo("652")
+        assertThat(stations.stations[0].id).isEqualTo("1")
+        assertThat(stations.stations[652].id).isEqualTo("653")
     }
 
 }

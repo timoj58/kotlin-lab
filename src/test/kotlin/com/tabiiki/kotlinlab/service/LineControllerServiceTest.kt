@@ -14,7 +14,8 @@ import org.mockito.Mockito.*
 
 internal class LineControllerServiceTest {
 
-    private val transportConfig = TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
+    private val transportConfig =
+        TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
 
     private val line = Line(
         LineConfig(
@@ -29,7 +30,7 @@ internal class LineControllerServiceTest {
 
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
-        val conductor = mock(Conductor::class.java)
+        val conductor = mock(LineConductor::class.java)
         val lineControllerService = LineControllerService(listOf(line), conductor)
 
         val channel = Channel<Transport>()
@@ -45,7 +46,7 @@ internal class LineControllerServiceTest {
 
     @Test
     fun `test regulation that train is held before moving to next stop`() = runBlocking {
-        val conductor = mock(Conductor::class.java)
+        val conductor = mock(LineConductor::class.java)
         val lineControllerService = LineControllerService(listOf(line), conductor)
 
         val channel = Channel<Transport>()

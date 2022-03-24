@@ -8,7 +8,7 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.service.ConductorImpl
+import com.tabiiki.kotlinlab.service.LineConductorImpl
 import com.tabiiki.kotlinlab.service.LineControllerService
 import com.tabiiki.kotlinlab.service.StationsServiceImpl
 import kotlinx.coroutines.Job
@@ -57,7 +57,7 @@ class LineControllerTest {
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val stationsService = StationsServiceImpl(stationFactory)
-        val lineControllerService = LineControllerService(listOf(line), ConductorImpl(stationsService))
+        val lineControllerService = LineControllerService(listOf(line), LineConductorImpl(stationsService))
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()
@@ -79,9 +79,10 @@ class LineControllerTest {
             channel2.send(msg)
             trains[msg.id] = msg
 
-        } while (trains.values.map { it.status }.any { it == Status.DEPOT } && startTime + timeout > System.currentTimeMillis())
+        } while (trains.values.map { it.status }
+                .any { it == Status.DEPOT } && startTime + timeout > System.currentTimeMillis())
 
-        jobs.forEach { it.cancelAndJoin()}
+        jobs.forEach { it.cancelAndJoin() }
     }
 
 }

@@ -5,29 +5,9 @@ import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.*
 
-interface Conductor {
-    suspend fun hold(transport: Transport, delay: Int)
-    suspend fun depart(transport: Transport)
-}
-
-@Service
-class ConductorImpl(private val stationsService: StationsService) : Conductor {
-    override suspend fun hold(transport: Transport, delay: Int): Unit = coroutineScope {
-        if (transport.holdCounter > delay) launch(Dispatchers.Default) { depart(transport) }
-    }
-
-    override suspend fun depart(transport: Transport) {
-        transport.depart(
-            stationsService.get().first { it.id == transport.linePosition.first },
-            stationsService.get().first { it.id == transport.linePosition.second },
-            stationsService.getNextStation(transport.linePosition)
-        )
-    }
-}
 
 interface LineController {
     suspend fun start(channel: Channel<Transport>)
@@ -37,13 +17,22 @@ interface LineController {
 @Service
 class LineControllerService(
     private val line: List<Line>,
-    private val conductor: Conductor
+    private val conductor: LineConductor
 ) : LineController {
 
     private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
-        line.forEach { section -> section.transporters.groupBy { it.linePosition }.values.forEach { async { dispatch(it.first(), channel) }} }
+        line.forEach { section ->
+            section.transporters.groupBy { it.linePosition }.values.forEach {
+                async {
+                    dispatch(
+                        it.first(),
+                        channel
+                    )
+                }
+            }
+        }
 
         do {
             delay(10000) //per 10 seconds is fine.
@@ -52,7 +41,8 @@ class LineControllerService(
                     .groupBy { it.linePosition }.values.forEach {
                         val transport = it.first()
                         if (isLineSegmentClear(section, transport)
-                            && isJourneyTimeGreaterThanHoldingDelay(transport)) async { dispatch(transport, channel) }
+                            && isJourneyTimeGreaterThanHoldingDelay(transport)
+                        ) async { dispatch(transport, channel) }
                     }
             }
 
@@ -78,7 +68,9 @@ class LineControllerService(
     }
 
     private fun isJourneyTimeGreaterThanHoldingDelay(transport: Transport) =
-        if(!journeyTimes.containsKey(transport.linePosition)) false else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(transport.id)
+        if (!journeyTimes.containsKey(transport.linePosition)) false else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(
+            transport.id
+        )
 
     private fun isLineSegmentClear(section: Line, transport: Transport) =
         section.transporters.filter { it.id != transport.id }.all { it.linePosition != transport.linePosition }
