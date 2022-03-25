@@ -4,7 +4,7 @@ import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.JourneyTimeRepoImpl
+import com.tabiiki.kotlinlab.util.JourneyRepoImpl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -15,7 +15,7 @@ import org.mockito.Mockito.*
 
 internal class LineControllerTest {
 
-    private val lineControllerUtilsImpl = JourneyTimeRepoImpl()
+    private val journeyRepoImpl = JourneyRepoImpl()
 
     private val transportConfig =
         TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
@@ -35,7 +35,7 @@ internal class LineControllerTest {
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, lineControllerUtilsImpl)
+        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -51,7 +51,7 @@ internal class LineControllerTest {
     @Test
     fun `test regulation that train is held before moving to next stop`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, lineControllerUtilsImpl)
+        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.regulate(channel) }

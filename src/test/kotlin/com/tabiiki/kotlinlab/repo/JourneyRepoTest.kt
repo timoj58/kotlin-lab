@@ -3,13 +3,13 @@ package com.tabiiki.kotlinlab.repo
 import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Line
-import com.tabiiki.kotlinlab.util.JourneyTimeRepoImpl
+import com.tabiiki.kotlinlab.util.JourneyRepoImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-internal class JourneyTimeRepoTest {
+internal class JourneyRepoTest {
 
-    private val journeyTimeRepoImpl = JourneyTimeRepoImpl()
+    private val journeyTimeRepoImpl = JourneyRepoImpl()
 
     private val transportConfig =
         TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)

@@ -3,7 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.JourneyTimeRepo
+import com.tabiiki.kotlinlab.util.JourneyRepo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 
@@ -16,7 +16,7 @@ class LineControllerImpl(
     private val startDelay: Long,
     private val line: List<Line>,
     private val conductor: LineConductor,
-    private val journeyTimeRepo: JourneyTimeRepo
+    private val journeyRepo: JourneyRepo
 ) : LineController {
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
@@ -32,8 +32,8 @@ class LineControllerImpl(
                 section.transporters.filter { it.status == Status.DEPOT }
                     .groupBy { it.linePosition }.values.forEach {
                         val transport = it.first()
-                        if (journeyTimeRepo.isLineSegmentClear(section, transport)
-                            && journeyTimeRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
+                        if (journeyRepo.isLineSegmentClear(section, transport)
+                            && journeyRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
                         ) async { dispatch(transport, channel) }
                     }
             }
@@ -47,9 +47,9 @@ class LineControllerImpl(
             val message = channel.receive()
             if (message.isStationary()) {
                 val journeyTime = message.getJourneyTime()
-                if (journeyTime.first != 0) journeyTimeRepo.addJourneyTime(journeyTime.second, journeyTime.first)
+                if (journeyTime.first != 0) journeyRepo.addJourneyTime(journeyTime.second, journeyTime.first)
 
-                async { conductor.hold(message, journeyTimeRepo.getDefaultHoldDelay(line, message.id)) }
+                async { conductor.hold(message, journeyRepo.getDefaultHoldDelay(line, message.id)) }
             }
         } while (true)
     }

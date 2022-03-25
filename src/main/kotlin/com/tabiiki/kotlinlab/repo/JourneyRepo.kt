@@ -5,7 +5,7 @@ import com.tabiiki.kotlinlab.model.Transport
 import org.springframework.stereotype.Repository
 import java.util.*
 
-interface JourneyTimeRepo {
+interface JourneyRepo {
     fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport): Boolean
     fun isLineSegmentClear(section: Line, transport: Transport): Boolean
     fun getDefaultHoldDelay(line: List<Line>, id: UUID): Int
@@ -13,7 +13,7 @@ interface JourneyTimeRepo {
 }
 
 @Repository
-class JourneyTimeRepoImpl : JourneyTimeRepo {
+class JourneyRepoImpl : JourneyRepo {
     private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 
     override fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport) =

@@ -2,7 +2,7 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.JourneyTimeRepoImpl
+import com.tabiiki.kotlinlab.util.JourneyRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -20,6 +20,7 @@ class NetworkServiceImpl(
     @Value("\${network.start-delay}") startDelay: Long,
     lineFactory: LineFactory,
     lineConductor: LineConductor,
+    journeyRepo: JourneyRepo,
 ) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
@@ -32,7 +33,7 @@ class NetworkServiceImpl(
                     startDelay,
                     line,
                     lineConductor,
-                    JourneyTimeRepoImpl()
+                    journeyRepo
                 )
             )
         }
