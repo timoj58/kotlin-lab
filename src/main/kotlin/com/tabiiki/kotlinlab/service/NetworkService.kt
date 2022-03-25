@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 
@@ -15,7 +16,10 @@ interface NetworkService {
 }
 
 @Service
-class NetworkServiceImpl(lineFactory: LineFactory, stationFactory: StationFactory) : NetworkService {
+class NetworkServiceImpl(
+    @Value("\${network.start-delay}") startDelay: Long,
+    lineFactory: LineFactory,
+    stationFactory: StationFactory) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
     private val stationsService = StationsServiceImpl(stationFactory)
@@ -23,7 +27,7 @@ class NetworkServiceImpl(lineFactory: LineFactory, stationFactory: StationFactor
 
     init {
         lines.groupBy { it.name }.values.forEach { line ->
-            controllers.add(LineControllerService(line, LineConductorImpl(stationsService)))
+            controllers.add(LineControllerService(startDelay, line, LineConductorImpl(stationsService)))
         }
 
     }

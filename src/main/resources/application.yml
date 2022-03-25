@@ -2,6 +2,7 @@ server:
   port: 8080
 
 network:
+  start-delay: 10000
   stations-csv: src/main/resources/network/stations.csv
   transporters:
     ferries:

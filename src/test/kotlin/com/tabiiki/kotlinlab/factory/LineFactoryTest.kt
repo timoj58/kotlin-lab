@@ -25,8 +25,6 @@ internal class LineFactoryTest {
                 TransportConfig(2, 1500),
             )
         )
-
-
     }
 
 

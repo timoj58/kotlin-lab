@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -14,12 +15,11 @@ interface LineController {
     suspend fun regulate(channel: Channel<Transport>)
 }
 
-@Service
 class LineControllerService(
+    private val startDelay: Long,
     private val line: List<Line>,
     private val conductor: LineConductor
 ) : LineController {
-
     private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
@@ -35,7 +35,7 @@ class LineControllerService(
         }
 
         do {
-            delay(10000) //per 10 seconds is fine.
+            delay(startDelay)
             line.forEach { section ->
                 section.transporters.filter { it.status == Status.DEPOT }
                     .groupBy { it.linePosition }.values.forEach {
