@@ -20,7 +20,7 @@ interface NetworkService {
 class NetworkServiceImpl(
     @Value("\${network.start-delay}") startDelay: Long,
     lineFactory: LineFactory,
-    stationsService: StationsService
+    lineConductor: LineConductor,
 ) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
@@ -32,7 +32,7 @@ class NetworkServiceImpl(
                 LineControllerImpl(
                     startDelay,
                     line,
-                    LineConductorImpl(stationsService),
+                    lineConductor,
                     JourneyTimeRepoImpl()
                 )
             )
