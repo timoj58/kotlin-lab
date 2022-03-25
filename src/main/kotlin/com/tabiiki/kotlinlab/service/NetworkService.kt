@@ -20,17 +20,16 @@ interface NetworkService {
 class NetworkServiceImpl(
     @Value("\${network.start-delay}") startDelay: Long,
     lineFactory: LineFactory,
-    stationFactory: StationFactory
+    stationsService: StationsService
 ) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
-    private val stationsService = StationsServiceImpl(stationFactory)
-    private val controllers = mutableListOf<LineControllerService>()
+    private val controllers = mutableListOf<LineController>()
 
     init {
         lines.groupBy { it.name }.values.forEach { line ->
             controllers.add(
-                LineControllerService(
+                LineControllerImpl(
                     startDelay,
                     line,
                     LineConductorImpl(stationsService),
@@ -38,7 +37,6 @@ class NetworkServiceImpl(
                 )
             )
         }
-
     }
 
     override suspend fun start() = coroutineScope {

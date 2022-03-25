@@ -9,7 +9,7 @@ import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.service.LineConductorImpl
-import com.tabiiki.kotlinlab.service.LineControllerService
+import com.tabiiki.kotlinlab.service.LineControllerImpl
 import com.tabiiki.kotlinlab.service.StationsServiceImpl
 import com.tabiiki.kotlinlab.util.JourneyTimeRepoImpl
 import kotlinx.coroutines.Job
@@ -59,7 +59,7 @@ class LineControllerTest {
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val stationsService = StationsServiceImpl(stationFactory)
         val lineControllerService =
-            LineControllerService(10000, listOf(line), LineConductorImpl(stationsService), JourneyTimeRepoImpl())
+            LineControllerImpl(10000, listOf(line), LineConductorImpl(stationsService), JourneyTimeRepoImpl())
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()

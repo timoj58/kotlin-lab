@@ -12,7 +12,7 @@ interface LineController {
     suspend fun regulate(channel: Channel<Transport>)
 }
 
-class LineControllerService(
+class LineControllerImpl(
     private val startDelay: Long,
     private val line: List<Line>,
     private val conductor: LineConductor,
@@ -22,12 +22,7 @@ class LineControllerService(
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
         line.forEach { section ->
             section.transporters.groupBy { it.linePosition }.values.forEach {
-                async {
-                    dispatch(
-                        it.first(),
-                        channel
-                    )
-                }
+                async { dispatch(it.first(), channel) }
             }
         }
 
