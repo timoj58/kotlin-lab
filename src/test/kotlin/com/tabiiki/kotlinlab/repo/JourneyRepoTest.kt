@@ -1,35 +1,18 @@
 package com.tabiiki.kotlinlab.repo
 
-import com.tabiiki.kotlinlab.configuration.LineConfig
-import com.tabiiki.kotlinlab.configuration.TransportConfig
-import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.util.JourneyRepoImpl
+import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class JourneyRepoTest {
 
     private val journeyTimeRepoImpl = JourneyRepoImpl()
-
-    private val transportConfig =
-        TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
-
-    private val line = Line(
-        LineConfig(
-            id = "1",
-            name = "2",
-            transportId = 1,
-            holdDelay = 45,
-            transportCapacity = 8,
-            stations = listOf("A", "B", "C"),
-            depots = listOf("A", "C")
-        ), listOf(transportConfig)
-    )
-
+    private val line = LineBuilder().getLine()
 
     @Test
     fun `journey time is greater than holding delay`() {
-        journeyTimeRepoImpl.addJourneyTime(Pair("A", "B"), 100)
+        journeyTimeRepoImpl.addJourneyTime(Pair(100, Pair("A", "B")))
         val train = line.transporters.first()
         train.linePosition = Pair("A", "B")
         assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(true)
@@ -37,7 +20,7 @@ internal class JourneyRepoTest {
 
     @Test
     fun `journey time is less than holding delay`() {
-        journeyTimeRepoImpl.addJourneyTime(Pair("B", "C"), 10)
+        journeyTimeRepoImpl.addJourneyTime(Pair(10, Pair("B", "C")))
         val train = line.transporters.first()
         train.linePosition = Pair("B", "C")
         assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(false)

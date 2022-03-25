@@ -9,7 +9,7 @@ interface JourneyRepo {
     fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport): Boolean
     fun isLineSegmentClear(section: Line, transport: Transport): Boolean
     fun getDefaultHoldDelay(line: List<Line>, id: UUID): Int
-    fun addJourneyTime(key: Pair<String, String>, value: Int)
+    fun addJourneyTime(journeyTime: Pair<Int, Pair<String, String>>)
 }
 
 @Repository
@@ -17,10 +17,8 @@ class JourneyRepoImpl : JourneyRepo {
     private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 
     override fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport) =
-        if (!journeyTimes.containsKey(transport.linePosition)) false else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(
-            line,
-            transport.id
-        )
+        if (!journeyTimes.containsKey(transport.linePosition)) false
+        else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(line, transport.id)
 
     override fun isLineSegmentClear(section: Line, transport: Transport) =
         section.transporters.filter { it.id != transport.id }.all { it.linePosition != transport.linePosition }
@@ -28,7 +26,7 @@ class JourneyRepoImpl : JourneyRepo {
     override fun getDefaultHoldDelay(line: List<Line>, id: UUID): Int =
         line.first { l -> l.transporters.any { it.id == id } }.holdDelay
 
-    override fun addJourneyTime(key: Pair<String, String>, value: Int) {
-        journeyTimes[key] = value
+    override fun addJourneyTime(journeyTime: Pair<Int, Pair<String, String>>) {
+        if (journeyTime.first != 0) journeyTimes[journeyTime.second] = journeyTime.first
     }
 }

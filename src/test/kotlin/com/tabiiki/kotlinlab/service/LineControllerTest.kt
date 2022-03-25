@@ -1,10 +1,9 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
-import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.JourneyRepoImpl
+import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -16,21 +15,7 @@ import org.mockito.Mockito.*
 internal class LineControllerTest {
 
     private val journeyRepoImpl = JourneyRepoImpl()
-
-    private val transportConfig =
-        TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
-
-    private val line = Line(
-        LineConfig(
-            id = "1",
-            name = "2",
-            transportId = 1,
-            transportCapacity = 8,
-            stations = listOf("A", "B", "C"),
-            depots = listOf("A", "C")
-        ), listOf(transportConfig)
-    )
-
+    private val line = LineBuilder().getLine(holdDelay = 15)
 
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
@@ -42,7 +27,7 @@ internal class LineControllerTest {
         delay(100)
 
         verify(conductor, atLeast(2)).depart(
-            Transport(TransportConfig(transportId = 1, capacity = 100, topSpeed = 75, power = 100, weight = 1000))
+            Transport(LineBuilder().transportConfig)
         )
         res.cancelAndJoin()
     }
@@ -56,7 +41,7 @@ internal class LineControllerTest {
         val channel = Channel<Transport>()
         val res = async { lineControllerService.regulate(channel) }
 
-        val transport = Transport(transportConfig)
+        val transport = Transport(LineBuilder().transportConfig)
         transport.id = line.transporters.first().id
         channel.send(transport)
         delay(100)

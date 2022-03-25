@@ -15,7 +15,6 @@ internal class LineFactoryTest {
     val linesConfig = Mockito.mock(LinesConfig::class.java)
     val transportsConfig = Mockito.mock(TransportersConfig::class.java)
 
-
     @BeforeEach
     fun init() {
 

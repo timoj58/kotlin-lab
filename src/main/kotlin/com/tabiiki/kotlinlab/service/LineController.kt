@@ -46,9 +46,7 @@ class LineControllerImpl(
         do {
             val message = channel.receive()
             if (message.isStationary()) {
-                val journeyTime = message.getJourneyTime()
-                if (journeyTime.first != 0) journeyRepo.addJourneyTime(journeyTime.second, journeyTime.first)
-
+                journeyRepo.addJourneyTime(message.getJourneyTime())
                 async { conductor.hold(message, journeyRepo.getDefaultHoldDelay(line, message.id)) }
             }
         } while (true)

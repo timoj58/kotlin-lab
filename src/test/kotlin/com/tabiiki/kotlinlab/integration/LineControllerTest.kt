@@ -12,6 +12,7 @@ import com.tabiiki.kotlinlab.service.LineConductorImpl
 import com.tabiiki.kotlinlab.service.LineControllerImpl
 import com.tabiiki.kotlinlab.service.StationsServiceImpl
 import com.tabiiki.kotlinlab.util.JourneyRepoImpl
+import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -34,18 +35,7 @@ class LineControllerTest {
         Station(StationConfig(id = "B", latitude = 51.528525530727, longitude = 0.00531739383278791), listOf()),
         Station(StationConfig(id = "C", latitude = 51.5002551610895, longitude = 0.00358625912595083), listOf())
     )
-
-    private val line = Line(
-        LineConfig(
-            id = "1",
-            name = "2",
-            transportId = 1,
-            transportCapacity = 4,
-            holdDelay = 1,
-            stations = listOf("A", "B", "C"),
-            depots = listOf("A", "C")
-        ), listOf(TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100))
-    )
+    private val line = LineBuilder().getLine()
 
     @BeforeEach
     fun init() {

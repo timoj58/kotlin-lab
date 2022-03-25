@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
+import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -9,10 +10,7 @@ import javax.naming.ConfigurationException
 
 internal class LineTest {
 
-    private val transportConfig = TransportConfig(
-        transportId = 1,
-        capacity = 100
-    )
+    private val transportConfig = LineBuilder().transportConfig
 
     private val lineConfig = LineConfig(
         id = "1",
@@ -31,7 +29,6 @@ internal class LineTest {
         stations = listOf("A", "B", "C", "D"),
         depots = listOf("A", "D")
     )
-
 
     @Test
     fun `init line test with more than one train per station average`() {
