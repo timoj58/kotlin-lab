@@ -35,4 +35,12 @@ internal class JourneyRepoTest {
 
     }
 
+    @Test
+    fun `journey time is zero and therefore doesnt exist test`(){
+        journeyTimeRepoImpl.addJourneyTime(Pair(0, Pair("B", "C")))
+        val train = line.transporters.first()
+        train.linePosition = Pair("B", "C")
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(false)
+    }
+
 }

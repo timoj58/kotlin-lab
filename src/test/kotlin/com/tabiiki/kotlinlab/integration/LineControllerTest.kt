@@ -1,10 +1,7 @@
 package com.tabiiki.kotlinlab.integration
 
-import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.StationConfig
-import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
@@ -18,6 +15,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -35,7 +33,7 @@ class LineControllerTest {
         Station(StationConfig(id = "B", latitude = 51.528525530727, longitude = 0.00531739383278791), listOf()),
         Station(StationConfig(id = "C", latitude = 51.5002551610895, longitude = 0.00358625912595083), listOf())
     )
-    private val line = LineBuilder().getLine()
+    private val line = LineBuilder().getLine(holdDelay = 15)
 
     @BeforeEach
     fun init() {
@@ -49,7 +47,7 @@ class LineControllerTest {
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val stationsService = StationsServiceImpl(stationFactory)
         val lineControllerService =
-            LineControllerImpl(10000, listOf(line), LineConductorImpl(stationsService), JourneyRepoImpl())
+            LineControllerImpl(1, listOf(line), LineConductorImpl(stationsService), JourneyRepoImpl())
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()
@@ -74,6 +72,7 @@ class LineControllerTest {
         } while (trains.values.map { it.status }
                 .any { it == Status.DEPOT } && startTime + timeout > System.currentTimeMillis())
 
+        assertThat(startTime + timeout).isLessThan(System.currentTimeMillis())
         jobs.forEach { it.cancelAndJoin() }
     }
 
