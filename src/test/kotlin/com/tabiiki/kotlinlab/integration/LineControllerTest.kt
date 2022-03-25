@@ -11,6 +11,7 @@ import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.service.LineConductorImpl
 import com.tabiiki.kotlinlab.service.LineControllerService
 import com.tabiiki.kotlinlab.service.StationsServiceImpl
+import com.tabiiki.kotlinlab.util.LineControllerUtilsImpl
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -57,7 +58,7 @@ class LineControllerTest {
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val stationsService = StationsServiceImpl(stationFactory)
-        val lineControllerService = LineControllerService(10000, listOf(line), LineConductorImpl(stationsService))
+        val lineControllerService = LineControllerService(10000, listOf(line), LineConductorImpl(stationsService), LineControllerUtilsImpl())
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()

@@ -3,12 +3,12 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.util.LineControllerUtilsImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
-
 
 interface LineController {
     suspend fun start(channel: Channel<Transport>)
@@ -18,9 +18,9 @@ interface LineController {
 class LineControllerService(
     private val startDelay: Long,
     private val line: List<Line>,
-    private val conductor: LineConductor
+    private val conductor: LineConductor,
+    private val lineControllerUtils: LineControllerUtilsImpl
 ) : LineController {
-    private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
         line.forEach { section ->
@@ -40,8 +40,8 @@ class LineControllerService(
                 section.transporters.filter { it.status == Status.DEPOT }
                     .groupBy { it.linePosition }.values.forEach {
                         val transport = it.first()
-                        if (isLineSegmentClear(section, transport)
-                            && isJourneyTimeGreaterThanHoldingDelay(transport)
+                        if (lineControllerUtils.isLineSegmentClear(section, transport)
+                            && lineControllerUtils.isJourneyTimeGreaterThanHoldingDelay(line, transport)
                         ) async { dispatch(transport, channel) }
                     }
             }
@@ -55,9 +55,9 @@ class LineControllerService(
             val message = channel.receive()
             if (message.isStationary()) {
                 val journeyTime = message.getJourneyTime()
-                if (journeyTime.first != 0) journeyTimes[journeyTime.second] = journeyTime.first
+                if (journeyTime.first != 0) lineControllerUtils.addJourneyTime(journeyTime.second, journeyTime.first)
 
-                async { conductor.hold(message, getDefaultHoldDelay(message.id)) }
+                async { conductor.hold(message, lineControllerUtils.getDefaultHoldDelay(line, message.id)) }
             }
         } while (true)
     }
@@ -66,16 +66,5 @@ class LineControllerService(
         launch(Dispatchers.Default) { transport.track(channel) }
         launch(Dispatchers.Default) { conductor.depart(transport) }
     }
-
-    private fun isJourneyTimeGreaterThanHoldingDelay(transport: Transport) =
-        if (!journeyTimes.containsKey(transport.linePosition)) false else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(
-            transport.id
-        )
-
-    private fun isLineSegmentClear(section: Line, transport: Transport) =
-        section.transporters.filter { it.id != transport.id }.all { it.linePosition != transport.linePosition }
-
-    private fun getDefaultHoldDelay(id: UUID): Int =
-        line.first { l -> l.transporters.any { it.id == id } }.holdDelay
 
 }

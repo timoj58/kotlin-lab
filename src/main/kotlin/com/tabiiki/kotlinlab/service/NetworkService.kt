@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.util.LineControllerUtilsImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -27,7 +28,13 @@ class NetworkServiceImpl(
 
     init {
         lines.groupBy { it.name }.values.forEach { line ->
-            controllers.add(LineControllerService(startDelay, line, LineConductorImpl(stationsService)))
+            controllers.add(
+                LineControllerService(
+                    startDelay,
+                    line,
+                    LineConductorImpl(stationsService),
+                    LineControllerUtilsImpl())
+            )
         }
 
     }
