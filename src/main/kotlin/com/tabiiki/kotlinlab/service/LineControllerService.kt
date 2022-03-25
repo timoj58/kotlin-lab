@@ -3,12 +3,9 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.LineControllerUtilsImpl
+import com.tabiiki.kotlinlab.util.JourneyTimeRepo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
-import java.util.*
 
 interface LineController {
     suspend fun start(channel: Channel<Transport>)
@@ -19,7 +16,7 @@ class LineControllerService(
     private val startDelay: Long,
     private val line: List<Line>,
     private val conductor: LineConductor,
-    private val lineControllerUtils: LineControllerUtilsImpl
+    private val journeyTimeRepo: JourneyTimeRepo
 ) : LineController {
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
@@ -40,8 +37,8 @@ class LineControllerService(
                 section.transporters.filter { it.status == Status.DEPOT }
                     .groupBy { it.linePosition }.values.forEach {
                         val transport = it.first()
-                        if (lineControllerUtils.isLineSegmentClear(section, transport)
-                            && lineControllerUtils.isJourneyTimeGreaterThanHoldingDelay(line, transport)
+                        if (journeyTimeRepo.isLineSegmentClear(section, transport)
+                            && journeyTimeRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
                         ) async { dispatch(transport, channel) }
                     }
             }
@@ -55,9 +52,9 @@ class LineControllerService(
             val message = channel.receive()
             if (message.isStationary()) {
                 val journeyTime = message.getJourneyTime()
-                if (journeyTime.first != 0) lineControllerUtils.addJourneyTime(journeyTime.second, journeyTime.first)
+                if (journeyTime.first != 0) journeyTimeRepo.addJourneyTime(journeyTime.second, journeyTime.first)
 
-                async { conductor.hold(message, lineControllerUtils.getDefaultHoldDelay(line, message.id)) }
+                async { conductor.hold(message, journeyTimeRepo.getDefaultHoldDelay(line, message.id)) }
             }
         } while (true)
     }

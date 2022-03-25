@@ -2,20 +2,25 @@ package com.tabiiki.kotlinlab.util
 
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
+import org.springframework.stereotype.Repository
 import java.util.*
 
-interface LineControllerUtils{
-    fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport) : Boolean
-    fun isLineSegmentClear(section: Line, transport: Transport) : Boolean
+interface JourneyTimeRepo {
+    fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport): Boolean
+    fun isLineSegmentClear(section: Line, transport: Transport): Boolean
     fun getDefaultHoldDelay(line: List<Line>, id: UUID): Int
     fun addJourneyTime(key: Pair<String, String>, value: Int)
 }
 
-class LineControllerUtilsImpl(): LineControllerUtils {
+@Repository
+class JourneyTimeRepoImpl : JourneyTimeRepo {
     private val journeyTimes = mutableMapOf<Pair<String, String>, Int>()
 
     override fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport) =
-        if (!journeyTimes.containsKey(transport.linePosition)) false else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(line, transport.id)
+        if (!journeyTimes.containsKey(transport.linePosition)) false else journeyTimes[transport.linePosition]!! > getDefaultHoldDelay(
+            line,
+            transport.id
+        )
 
     override fun isLineSegmentClear(section: Line, transport: Transport) =
         section.transporters.filter { it.id != transport.id }.all { it.linePosition != transport.linePosition }

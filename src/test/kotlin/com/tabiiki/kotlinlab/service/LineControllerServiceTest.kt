@@ -4,7 +4,7 @@ import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.LineControllerUtilsImpl
+import com.tabiiki.kotlinlab.util.JourneyTimeRepoImpl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -15,7 +15,7 @@ import org.mockito.Mockito.*
 
 internal class LineControllerServiceTest {
 
-    private val lineControllerUtilsImpl = LineControllerUtilsImpl()
+    private val lineControllerUtilsImpl = JourneyTimeRepoImpl()
 
     private val transportConfig =
         TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)

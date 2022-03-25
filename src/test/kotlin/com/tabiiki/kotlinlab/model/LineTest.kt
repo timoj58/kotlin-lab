@@ -44,7 +44,7 @@ internal class LineTest {
     }
 
     @Test
-    fun `invalid config test`(){
+    fun `invalid config test`() {
         Assertions.assertThrows(ConfigurationException::class.java) {
             Line(badLineConfig, listOf(transportConfig))
         }

@@ -3,7 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.LineControllerUtilsImpl
+import com.tabiiki.kotlinlab.util.JourneyTimeRepoImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -20,7 +20,8 @@ interface NetworkService {
 class NetworkServiceImpl(
     @Value("\${network.start-delay}") startDelay: Long,
     lineFactory: LineFactory,
-    stationFactory: StationFactory) : NetworkService {
+    stationFactory: StationFactory
+) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
     private val stationsService = StationsServiceImpl(stationFactory)
@@ -33,7 +34,8 @@ class NetworkServiceImpl(
                     startDelay,
                     line,
                     LineConductorImpl(stationsService),
-                    LineControllerUtilsImpl())
+                    JourneyTimeRepoImpl()
+                )
             )
         }
 

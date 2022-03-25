@@ -1,15 +1,15 @@
-package com.tabiiki.kotlinlab.util
+package com.tabiiki.kotlinlab.repo
 
 import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.util.JourneyTimeRepoImpl
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
-internal class LineControllerUtilsImplTest{
+internal class JourneyTimeRepoTest {
 
-    private val lineControllerUtilsImpl = LineControllerUtilsImpl()
+    private val journeyTimeRepoImpl = JourneyTimeRepoImpl()
 
     private val transportConfig =
         TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
@@ -28,27 +28,27 @@ internal class LineControllerUtilsImplTest{
 
 
     @Test
-    fun `journey time is greater than holding delay`(){
-        lineControllerUtilsImpl.addJourneyTime(Pair("A", "B"), 100)
+    fun `journey time is greater than holding delay`() {
+        journeyTimeRepoImpl.addJourneyTime(Pair("A", "B"), 100)
         val train = line.transporters.first()
         train.linePosition = Pair("A", "B")
-        assertThat(lineControllerUtilsImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line),train)).isEqualTo(true)
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(true)
     }
 
     @Test
-    fun `journey time is less than holding delay`(){
-        lineControllerUtilsImpl.addJourneyTime(Pair("B", "C"), 10)
+    fun `journey time is less than holding delay`() {
+        journeyTimeRepoImpl.addJourneyTime(Pair("B", "C"), 10)
         val train = line.transporters.first()
         train.linePosition = Pair("B", "C")
-        assertThat(lineControllerUtilsImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line),train)).isEqualTo(false)
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(false)
 
     }
 
     @Test
-    fun `journey time does not exist`(){
+    fun `journey time does not exist`() {
         val train = line.transporters.first()
         train.linePosition = Pair("X", "Y")
-        assertThat(lineControllerUtilsImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line),train)).isEqualTo(false)
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(false)
 
     }
 
