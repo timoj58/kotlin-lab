@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -11,15 +12,7 @@ import org.mockito.Mockito
 internal class StationsServiceImplTest {
 
     private val stationFactory = Mockito.mock(StationFactory::class.java)
-
-    private val stations = listOf(
-        Station(
-            StationConfig(id = "A", latitude = 51.541692575874, longitude = -0.00375164102719075),
-            listOf()
-        ),
-        Station(StationConfig(id = "B", latitude = 51.528525530727, longitude = 0.00531739383278791), listOf()),
-        Station(StationConfig(id = "C", latitude = 51.5002551610895, longitude = 0.00358625912595083), listOf())
-    )
+    private val stations = LineBuilder().stations
 
     @BeforeEach
     fun `init`() {
@@ -56,4 +49,5 @@ internal class StationsServiceImplTest {
         assertThat(stationsService.getNextStation(Pair("C", "B")).id).isEqualTo("A")
 
     }
+
 }

@@ -10,13 +10,15 @@ import kotlinx.coroutines.channels.Channel
 interface LineController {
     suspend fun start(channel: Channel<Transport>)
     suspend fun regulate(channel: Channel<Transport>)
+    fun getStationChannels(): Map<String, Channel<Transport>>
 }
 
 class LineControllerImpl(
     private val startDelay: Long,
     private val line: List<Line>,
     private val conductor: LineConductor,
-    private val journeyRepo: JourneyRepo
+    private val journeyRepo: JourneyRepo,
+    private val stationChannels: Map<String, Channel<Transport>>
 ) : LineController {
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
@@ -45,11 +47,18 @@ class LineControllerImpl(
     override suspend fun regulate(channel: Channel<Transport>) = coroutineScope {
         do {
             val message = channel.receive()
+            listOf(message.linePosition.first, message.linePosition.second)
+                .forEach { stationChannels[it]?.send(message) }
+
             if (message.isStationary()) {
                 journeyRepo.addJourneyTime(message.getJourneyTime())
                 async { conductor.hold(message, journeyRepo.getDefaultHoldDelay(line, message.id)) }
             }
         } while (true)
+    }
+
+    override fun getStationChannels(): Map<String, Channel<Transport>> {
+        return stationChannels
     }
 
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {

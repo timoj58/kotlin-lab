@@ -18,6 +18,7 @@ interface NetworkService {
 @Service
 class NetworkServiceImpl(
     @Value("\${network.start-delay}") startDelay: Long,
+    private val stationService: StationService,
     lineFactory: LineFactory,
     lineConductor: LineConductor,
     journeyRepo: JourneyRepo,
@@ -33,17 +34,24 @@ class NetworkServiceImpl(
                     startDelay,
                     line,
                     lineConductor,
-                    journeyRepo
+                    journeyRepo,
+                    listOf(line).flatten().flatMap { it.stations }.distinct().associateWith { Channel() }
                 )
             )
         }
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun start(): Unit = coroutineScope {
         controllers.forEach { controller ->
             val channel = Channel<Transport>()
+
+            controller.getStationChannels().forEach { (k, v) ->
+                launch(Dispatchers.Default) { stationService.monitor(k, v)}
+            }
             launch(Dispatchers.Default) { controller.start(channel) }
             launch(Dispatchers.Default) { controller.regulate(channel) }
         }
+
     }
+
 }

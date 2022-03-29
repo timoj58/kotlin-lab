@@ -35,6 +35,7 @@ data class Transport(private val config: TransportConfig) {
         var power = config.power
         val topSpeed = config.topSpeed
 
+        //TODO probably dont need config as a param now
         fun reset(config: TransportConfig) {
             distance = 0.0
             acceleration = 0.0

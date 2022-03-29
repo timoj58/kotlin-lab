@@ -20,7 +20,7 @@ internal class LineControllerTest {
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl)
+        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf())
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -36,7 +36,7 @@ internal class LineControllerTest {
     @Test
     fun `test regulation that train is held before moving to next stop`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl)
+        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf())
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.regulate(channel) }

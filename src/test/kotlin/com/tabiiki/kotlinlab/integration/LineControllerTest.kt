@@ -47,7 +47,7 @@ class LineControllerTest {
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val stationsService = StationsServiceImpl(stationFactory)
         val lineControllerService =
-            LineControllerImpl(1, listOf(line), LineConductorImpl(stationsService), JourneyRepoImpl())
+            LineControllerImpl(1, listOf(line), LineConductorImpl(stationsService), JourneyRepoImpl(), mapOf())
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()
