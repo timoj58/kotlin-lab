@@ -9,7 +9,7 @@ import com.tabiiki.kotlinlab.model.Station
 class LineBuilder {
     val transportConfig =
         TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
-
+    val lineStations = listOf("A", "B", "C")
     val stations = listOf(
         Station(
             StationConfig(id = "A", latitude = 51.541692575874, longitude = -0.00375164102719075),
@@ -20,8 +20,9 @@ class LineBuilder {
     )
 
 
-    fun getLine(holdDelay: Int = 45) =  Line(
-        LineConfig(
+    fun getLine(holdDelay: Int = 45) = Line(
+        timeStep = 10,
+        config = LineConfig(
             id = "1",
             name = "2",
             transportId = 1,

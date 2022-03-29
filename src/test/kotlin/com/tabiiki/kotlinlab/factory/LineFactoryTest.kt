@@ -36,7 +36,7 @@ internal class LineFactoryTest {
             )
         )
 
-        val factory = LineFactory(transportsConfig, linesConfig)
+        val factory = LineFactory(1, transportsConfig, linesConfig)
         val line = factory.get("1")
 
         assertNotNull(line)
@@ -48,7 +48,7 @@ internal class LineFactoryTest {
     fun `line does not exist`() {
         Mockito.`when`(linesConfig.lines).thenReturn(listOf())
         assertThrows(NoSuchElementException::class.java) {
-            LineFactory(transportsConfig, linesConfig).get("1")
+            LineFactory(1, transportsConfig, linesConfig).get("1")
         }
     }
 }

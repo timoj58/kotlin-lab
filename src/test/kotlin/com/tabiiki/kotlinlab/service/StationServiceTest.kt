@@ -23,12 +23,12 @@ internal class StationServiceTest{
 
     @Test
     fun `train departing station B` () = runBlocking{
-        val stationService = StationServiceImpl(stationsService)
+        val stationService = StationServiceImpl(100, stationsService)
 
         val channel = Channel<Transport>()
 
         val job = async{stationService.monitor("B", channel)}
-        val transport = Transport(TransportConfig(transportId = 1, capacity = 1))
+        val transport = Transport(config = TransportConfig(transportId = 1, capacity = 1), lineId = "1")
         transport.linePosition = Pair("B", "A")
         val job2 = async {  channel.send(transport) }
 
@@ -45,12 +45,12 @@ internal class StationServiceTest{
 
     @Test
     fun `train arriving station B` () = runBlocking{
-        val stationService = StationServiceImpl(stationsService)
+        val stationService = StationServiceImpl(100, stationsService)
 
         val channel = Channel<Transport>()
 
         val job = async{stationService.monitor("B", channel)}
-        val transport = Transport(TransportConfig(transportId = 1, capacity = 1))
+        val transport = Transport(config = TransportConfig(transportId = 1, capacity = 1), lineId = "1")
         transport.linePosition = Pair("A", "B")
         val depart = async {  transport.depart(
             LineBuilder().stations[0],  LineBuilder().stations[1], LineBuilder().stations[2]

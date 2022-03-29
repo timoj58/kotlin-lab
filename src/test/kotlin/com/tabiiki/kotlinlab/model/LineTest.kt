@@ -33,7 +33,7 @@ internal class LineTest {
     @Test
     fun `init line test with more than one train per station average`() {
 
-        val line = Line(lineConfig, listOf(transportConfig))
+        val line = Line(1, lineConfig, listOf(transportConfig))
 
         assertThat(line.transporters.count { t -> t.linePosition == Pair("A", "B") }).isEqualTo(2)
         assertThat(line.transporters.count { t -> t.linePosition == Pair("D", "C") }).isEqualTo(2)
@@ -43,7 +43,7 @@ internal class LineTest {
     @Test
     fun `invalid config test`() {
         Assertions.assertThrows(ConfigurationException::class.java) {
-            Line(badLineConfig, listOf(transportConfig))
+            Line(1, badLineConfig, listOf(transportConfig))
         }
     }
 

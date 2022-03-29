@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.JourneyRepo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import java.util.*
 
 interface LineController {
     suspend fun start(channel: Channel<Transport>)
@@ -52,7 +53,7 @@ class LineControllerImpl(
 
             if (message.isStationary()) {
                 journeyRepo.addJourneyTime(message.getJourneyTime())
-                async { conductor.hold(message, journeyRepo.getDefaultHoldDelay(line, message.id)) }
+                async { conductor.hold(message, journeyRepo.getDefaultHoldDelay(line, message.id), getLineStations(message.id)) }
             }
         } while (true)
     }
@@ -63,7 +64,9 @@ class LineControllerImpl(
 
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch(Dispatchers.Default) { transport.track(channel) }
-        launch(Dispatchers.Default) { conductor.depart(transport) }
+        launch(Dispatchers.Default) { conductor.depart(transport, getLineStations(transport.id)) }
     }
 
+    private fun getLineStations(id: UUID) =
+        line.first { l -> l.transporters.any { it.id == id } }.stations
 }

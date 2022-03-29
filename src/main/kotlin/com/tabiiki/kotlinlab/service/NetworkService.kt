@@ -49,7 +49,6 @@ class NetworkServiceImpl(
         }
 
         launch(Dispatchers.Default){ stationService.monitor(listener)}
-
     }
 
 }

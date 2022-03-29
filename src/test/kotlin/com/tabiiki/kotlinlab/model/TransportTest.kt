@@ -18,7 +18,7 @@ internal class TransportTest {
         val westHam = Pair(51.528525530727, 0.00531739383278791)
         val northGreenwich = Pair(51.628525530727, 0.00531739383278791)
 
-        val train = Transport(TransportConfig(transportId = 1, capacity = 10, power = 1, weight = 20, topSpeed = 75))
+        val train = Transport(config = TransportConfig(transportId = 1, capacity = 10, power = 1, weight = 20, topSpeed = 75), lineId = "1")
         train.linePosition = Pair("1", "2")
 
         val res = async {

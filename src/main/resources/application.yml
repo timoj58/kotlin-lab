@@ -3,6 +3,7 @@ server:
 
 network:
   start-delay: 10000
+  time-step: 1000
   stations-csv: src/main/resources/network/stations.csv
   transporters:
     ferries:
@@ -26,7 +27,7 @@ network:
   lines:
     underground:
       - src/main/resources/network/underground/city.yml
-      - src/main/resources/network/underground/jubilee.yml
+      ##- src/main/resources/network/underground/jubilee.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:

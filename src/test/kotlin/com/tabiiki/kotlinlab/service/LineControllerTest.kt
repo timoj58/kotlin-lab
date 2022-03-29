@@ -27,7 +27,8 @@ internal class LineControllerTest {
         delay(100)
 
         verify(conductor, atLeast(2)).depart(
-            Transport(LineBuilder().transportConfig)
+            Transport(timeStep = 10, config = LineBuilder().transportConfig, lineId = "1"),
+            LineBuilder().lineStations
         )
         res.cancelAndJoin()
     }
@@ -41,11 +42,11 @@ internal class LineControllerTest {
         val channel = Channel<Transport>()
         val res = async { lineControllerService.regulate(channel) }
 
-        val transport = Transport(LineBuilder().transportConfig)
+        val transport = Transport(config = LineBuilder().transportConfig, lineId = "1")
         transport.id = line.transporters.first().id
         channel.send(transport)
         delay(100)
-        verify(conductor).hold(transport, 15)
+        verify(conductor).hold(transport, 15, LineBuilder().lineStations)
         res.cancelAndJoin()
 
     }

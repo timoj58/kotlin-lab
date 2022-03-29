@@ -13,7 +13,10 @@ enum class Status {
     ACTIVE, DEPOT
 }
 
-data class Transport(private val config: TransportConfig) {
+data class Transport(
+    private val config: TransportConfig,
+    val lineId: String,
+    private val timeStep: Long = 1000) {
 
     var id = UUID.randomUUID()
     val transportId = config.transportId
@@ -51,14 +54,14 @@ data class Transport(private val config: TransportConfig) {
     suspend fun track(channel: SendChannel<Transport>) {
         while (true) {
             channel.send(this)
-            delay(1000)
+            delay(timeStep)
         }
     }
 
     suspend fun depart(from: Station, to: Station, next: Station) {
         startJourney(from, to)
         do {
-            delay(1000)
+            delay(timeStep)
             journeyTime++
             physics.distance = calcNewPosition()
 
@@ -104,7 +107,7 @@ data class Transport(private val config: TransportConfig) {
 
     private suspend fun hold() {
         do {
-            delay(1000)
+            delay(timeStep)
             holdCounter++
         } while (isStationary())
 

@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import javax.naming.ConfigurationException
 
 data class Line(
+    private val timeStep: Long,
     private val config: LineConfig,
     private val transportConfig: List<TransportConfig>
 ) {
@@ -13,7 +14,15 @@ data class Line(
     val stations = config.stations
     val holdDelay = config.holdDelay
     val transporters =
-        generateSequence { transportConfig.map { Transport(it) }.first { it.transportId == config.transportId } }.take(
+        generateSequence {
+            transportConfig.map {
+                Transport(
+                    config = it,
+                    lineId = id,
+                    timeStep = timeStep
+                )
+            }.first { it.transportId == config.transportId }
+        }.take(
             config.transportCapacity
         ).toList()
     private val depots = config.depots

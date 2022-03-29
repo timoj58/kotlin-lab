@@ -13,6 +13,7 @@ internal class StationsServiceImplTest {
 
     private val stationFactory = Mockito.mock(StationFactory::class.java)
     private val stations = LineBuilder().stations
+    private val line = listOf("A", "B", "C")
 
     @BeforeEach
     fun `init`() {
@@ -26,27 +27,27 @@ internal class StationsServiceImplTest {
     @Test
     fun `next station is first in line`() {
         val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStation(Pair("B", "A")).id).isEqualTo("B")
+        assertThat(stationsService.getNextStationOnLine(line, Pair("B", "A")).id).isEqualTo("B")
     }
 
     @Test
     fun `next station is last in line`() {
         val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStation(Pair("B", "C")).id).isEqualTo("B")
+        assertThat(stationsService.getNextStationOnLine(line, Pair("B", "C")).id).isEqualTo("B")
 
     }
 
     @Test
     fun `next station is going forwards`() {
         val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStation(Pair("A", "B")).id).isEqualTo("C")
+        assertThat(stationsService.getNextStationOnLine(line, Pair("A", "B")).id).isEqualTo("C")
 
     }
 
     @Test
     fun `next station is going reverse`() {
         val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStation(Pair("C", "B")).id).isEqualTo("A")
+        assertThat(stationsService.getNextStationOnLine(line, Pair("C", "B")).id).isEqualTo("A")
 
     }
 
