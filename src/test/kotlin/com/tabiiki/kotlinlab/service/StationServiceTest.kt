@@ -52,6 +52,9 @@ internal class StationServiceTest{
         val job = async{stationService.monitor("B", channel)}
         val transport = Transport(TransportConfig(transportId = 1, capacity = 1))
         transport.linePosition = Pair("A", "B")
+        val depart = async {  transport.depart(
+            LineBuilder().stations[0],  LineBuilder().stations[1], LineBuilder().stations[2]
+        ) }
         val job2 = async {  channel.send(transport) }
 
         delay(100)
@@ -63,6 +66,7 @@ internal class StationServiceTest{
 
         job.cancelAndJoin()
         job2.cancelAndJoin()
+        depart.cancelAndJoin()
     }
 
 }
