@@ -10,9 +10,8 @@ import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
-
 interface NetworkService {
-    suspend fun start()
+    suspend fun start(listener: Channel<StationMessage>)
 }
 
 @Service
@@ -41,7 +40,7 @@ class NetworkServiceImpl(
         }
     }
 
-    override suspend fun start(): Unit = coroutineScope {
+    override suspend fun start(listener: Channel<StationMessage>): Unit = coroutineScope {
         controllers.forEach { controller ->
             val channel = Channel<Transport>()
 
@@ -49,7 +48,7 @@ class NetworkServiceImpl(
             launch(Dispatchers.Default) { controller.regulate(channel) }
         }
 
-        launch(Dispatchers.Default){ stationService.monitor()}
+        launch(Dispatchers.Default){ stationService.monitor(listener)}
 
     }
 

@@ -36,7 +36,7 @@ internal class StationServiceTest{
 
         val res = stationService.getDepartures("B")
 
-        assertThat(res.any { it == transport.id}).isEqualTo(true)
+        assertThat(res.any { it.transportId == transport.id}).isEqualTo(true)
         assertThat(res.size).isEqualTo(1)
 
         job.cancelAndJoin()
@@ -61,7 +61,7 @@ internal class StationServiceTest{
 
         val res = stationService.getArrivals("B")
 
-        assertThat(res.any { it == transport.id }).isEqualTo(true)
+        assertThat(res.any { it.transportId == transport.id }).isEqualTo(true)
         assertThat(res.size).isEqualTo(1)
 
         job.cancelAndJoin()
