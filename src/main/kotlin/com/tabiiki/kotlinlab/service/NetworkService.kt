@@ -35,7 +35,7 @@ class NetworkServiceImpl(
                     line,
                     lineConductor,
                     journeyRepo,
-                    listOf(line).flatten().flatMap { it.stations }.distinct().associateWith { Channel() }
+                    listOf(line).flatten().flatMap { it.stations }.distinct().associateWith { stationService.getChannel(it) }
                 )
             )
         }
@@ -45,12 +45,11 @@ class NetworkServiceImpl(
         controllers.forEach { controller ->
             val channel = Channel<Transport>()
 
-            controller.getStationChannels().forEach { (k, v) ->
-                launch(Dispatchers.Default) { stationService.monitor(k, v)}
-            }
             launch(Dispatchers.Default) { controller.start(channel) }
             launch(Dispatchers.Default) { controller.regulate(channel) }
         }
+
+        launch(Dispatchers.Default){ stationService.monitor()}
 
     }
 
