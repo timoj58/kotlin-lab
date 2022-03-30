@@ -3,6 +3,10 @@ package com.tabiiki.kotlinlab.repo
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.LineBuilder
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -63,10 +67,14 @@ internal class JourneyRepoTest {
     }
 
     @Test
-    fun `line segment is not clear`() {
+    fun `line segment is not clear`() = runBlocking {
+
+        val line =  LineBuilder().getLine()
+        val job = async { line.transporters.first().depart(LineBuilder().stations[0],LineBuilder().stations[1],LineBuilder().stations[2]) }
+        delay(100)
 
         val res = journeyTimeRepoImpl.isLineSegmentClear(
-            section = LineBuilder().getLine().apply {
+            section = line.apply {
                 this.transporters.first().apply {
                     this.linePosition = Pair("A", "B")
                     this.status = Status.ACTIVE
@@ -83,6 +91,8 @@ internal class JourneyRepoTest {
         )
 
         assertThat(res).isEqualTo(false)
+
+        job.cancelAndJoin()
     }
 
 }
