@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
@@ -76,6 +77,7 @@ internal class LineControllerTest {
 
         val transport = Transport(config = LineBuilder().transportConfig, lineId = "1", timeStep = 1000)
         transport.id = line.transporters.first().id
+        transport.status = Status.PLATFORM
         channel.send(transport)
         delay(100)
         verify(conductor).hold(transport, 15, LineBuilder().lineStations)

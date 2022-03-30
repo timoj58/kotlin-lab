@@ -22,7 +22,7 @@ class JourneyRepoImpl : JourneyRepo {
         else journeyTimes[transport.linePosition]!! - getDefaultHoldDelay(line, transport.id)
 
     override fun isLineSegmentClear(section: Line, transport: Transport) =
-        section.transporters.filter { it.id != transport.id && it.status != Status.DEPOT && !it.isStationary() }
+        section.transporters.filter { it.id != transport.id && it.status == Status.ACTIVE }
             .all { it.linePosition != transport.linePosition }
 
     override fun getDefaultHoldDelay(line: List<Line>, id: UUID): Int =

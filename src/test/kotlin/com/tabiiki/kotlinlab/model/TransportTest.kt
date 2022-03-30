@@ -42,7 +42,7 @@ internal class TransportTest {
 
         do {
             delay(1000)
-        } while (!train.isStationary())
+        } while (!train.atPlatform())
 
         assertThat(train.linePosition.first).isEqualTo("2")
         assertThat(train.linePosition.second).isEqualTo("3")

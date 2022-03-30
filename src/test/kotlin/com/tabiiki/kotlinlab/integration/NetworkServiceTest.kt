@@ -8,6 +8,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -44,7 +45,7 @@ class NetworkServiceTest @Autowired constructor(
     }
 
     private suspend fun status(channel: Channel<StationMessage>, job: Job) {
-        //need to time this out.  at some point.  TODO
+        val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
             if (!trainsByLine.containsKey(msg.lineId))
@@ -54,17 +55,10 @@ class NetworkServiceTest @Autowired constructor(
 
             trainsByLine[msg.lineId]?.add(msg.transportId)
             stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (!testSectionsVisited())
+        } while (!testSectionsVisited()  && startTime + (1000 * 60 * 5 ) > System.currentTimeMillis())
 
         job.cancelAndJoin()
-
-        // Assertions.assertThat(trainsByLine.values.flatten().size).isEqualTo(transportersPerLine)
-
-        stationVisitedPerTrain.forEach { (t, u) ->
-            println("train $t")
-            u.forEach { section -> println("travelled ${section.first} to ${section.second}") }
-        }
-
+        assertThat(testSectionsVisited()).isEqualTo(true)
     }
 
     private fun testSectionsVisited(): Boolean {

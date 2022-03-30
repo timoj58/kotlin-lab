@@ -10,7 +10,7 @@ import java.util.*
 
 
 enum class Status {
-    ACTIVE, DEPOT
+    ACTIVE, DEPOT, PLATFORM
 }
 
 data class Transport(
@@ -50,8 +50,8 @@ data class Transport(
     }
 
     fun getJourneyTime() = Pair(journeyTime, previousLinePosition)
-    fun isStationary() = physics.acceleration == 0.0
-
+    fun isStationary() = status == Status.ACTIVE && physics.acceleration == 0.0
+    fun atPlatform() = status == Status.PLATFORM && physics.acceleration == 0.0
     suspend fun track(channel: SendChannel<Transport>) {
         while (true) {
             channel.send(this)
@@ -102,6 +102,7 @@ data class Transport(
         physics.reset(config)
         previousLinePosition = linePosition
         linePosition = Pair(linePosition.second, next.id)
+        status = Status.PLATFORM
 
         async { hold() }
     }
@@ -110,7 +111,7 @@ data class Transport(
         do {
             delay(timeStep)
             holdCounter++
-        } while (isStationary())
+        } while (status == Status.PLATFORM)
 
         holdCounter = 0
     }

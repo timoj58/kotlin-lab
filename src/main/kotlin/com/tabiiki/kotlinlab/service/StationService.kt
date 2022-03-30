@@ -73,9 +73,9 @@ class StationServiceImpl(
     }
 
     private fun waitingToDepart(id: String, message: Transport) =
-        message.isStationary() && message.linePosition.first == id
+        message.atPlatform() && message.linePosition.first == id
 
     private fun waitingToArrive(id: String, message: Transport) =
-        !message.isStationary() && message.linePosition.second == id
+        !message.atPlatform() && message.linePosition.second == id
 
 }

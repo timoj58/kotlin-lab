@@ -53,7 +53,6 @@ class LineControllerTest {
     suspend fun testChannel(channel: Channel<Transport>, channel2: Channel<Transport>, jobs: List<Job>) {
         val trains = mutableMapOf<UUID, Transport>()
         line.transporters.forEach { trains[it.id] = it }
-        val timeout = 1000 * 15
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
@@ -61,7 +60,7 @@ class LineControllerTest {
             trains[msg.id] = msg
 
         } while (trains.values.map { it.status }
-                .any { it == Status.DEPOT } && startTime + timeout > System.currentTimeMillis())
+                .any { it == Status.DEPOT } && startTime + (1000 * 15) > System.currentTimeMillis())
 
         assertThat(trains.values.map { it.status }
             .any { it == Status.DEPOT }).isEqualTo(false)

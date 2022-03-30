@@ -36,7 +36,7 @@ class LineControllerImpl(
                     .groupBy { it.linePosition }.values.forEach {
                         val transport = it.first()
                         if (journeyRepo.isLineSegmentClear(section, transport)) {
-                            var difference = journeyRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
+                            val difference = journeyRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
                             if (difference > 0) async { delayThenDispatch(transport, channel, difference) }
                             else if (difference < 0) async { dispatch(transport, channel) }
                         }
@@ -53,7 +53,7 @@ class LineControllerImpl(
             listOf(message.linePosition.first, message.linePosition.second)
                 .forEach { stationChannels[it]?.send(message) }
 
-            if (message.isStationary()) {
+            if (message.atPlatform()) {
                 journeyRepo.addJourneyTime(message.getJourneyTime())
                 async {
                     conductor.hold(
@@ -70,13 +70,13 @@ class LineControllerImpl(
         return stationChannels
     }
 
+    private fun getLineStations(id: UUID) =
+        line.first { l -> l.transporters.any { it.id == id } }.stations
+
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch(Dispatchers.Default) { transport.track(channel) }
         launch(Dispatchers.Default) { conductor.depart(transport, getLineStations(transport.id)) }
     }
-
-    private fun getLineStations(id: UUID) =
-        line.first { l -> l.transporters.any { it.id == id } }.stations
 
     private suspend fun delayThenDispatch(transport: Transport, channel: Channel<Transport>, delay: Int) =
         coroutineScope {

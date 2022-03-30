@@ -23,7 +23,73 @@ lines:
       - 544
       - 212
       - 616
+      - 314
+      - 636
+      - 164
+      - 380
+      - 606
+      - 321
+      - 446
+      - 98
+      - 521
+    depots:
+      - 528
+      - 521
+
+  - id: JUB02
+    transport-id: 3
+    transport-capacity: 12
+    hold-delay: 45
+    name: Jubilee
+    stations:
+      - 396
+      - 94
+      - 93
+      - 50
+      - 345
+      - 509
+      - 598
+      - 629
+      - 235
+      - 63
+      - 24
+      - 517
+      - 544
+      - 212
+      - 616
     depots:
       - 396
-      - 528
       - 616
+
+  - id: JUB03
+    transport-id: 3
+    transport-capacity: 12
+    hold-delay: 45
+    name: Jubilee
+    stations:
+      - 528
+      - 615
+      - 95
+      - 396
+      - 94
+      - 93
+      - 50
+      - 345
+      - 509
+      - 598
+      - 629
+      - 235
+      - 63
+      - 24
+      - 517
+      - 544
+      - 212
+      - 616
+      - 314
+      - 636
+      - 164
+      - 380
+      - 606
+    depots:
+      - 528
+      - 606
