@@ -27,9 +27,22 @@ class LineBuilder {
             name = "2",
             transportId = 1,
             holdDelay = holdDelay,
-            transportCapacity = 4,
+            transportCapacity = 6,
             stations = listOf("A", "B", "C"),
             depots = listOf("A", "C")
+        ), listOf(transportConfig)
+    )
+
+    fun getCityLine(holdDelay: Int = 45) = Line(
+        timeStep = 10,
+        config = LineConfig(
+            id = "1",
+            name = "2",
+            transportId = 1,
+            holdDelay = holdDelay,
+            transportCapacity = 4,
+            stations = listOf("A", "B"),
+            depots = listOf("A", "B")
         ), listOf(transportConfig)
     )
 }

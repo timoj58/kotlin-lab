@@ -24,25 +24,27 @@ class NetworkServiceTest @Autowired constructor(
     private val stationVisitedPerTrain = mutableMapOf<UUID, MutableSet<Pair<String, String>>>()
     private val trainsByLine = mutableMapOf<String, MutableSet<UUID>>()
     private val sectionsByLine = mutableMapOf<String, Set<Pair<String, String>>>()
+    private var transportersPerLine = 0
 
-    //TODO hold delay to resolve.
     init {
-        lineFactory.get().forEach { line -> sectionsByLine[line] = getLineStations(lineFactory.get(line).stations) }
+        lineFactory.get().forEach { id ->
+            val line = lineFactory.get(id)
+            sectionsByLine[id] = getLineStations(line.stations)
+            transportersPerLine += line.transporters.size
+        }
     }
 
 
-    //@Disabled
     @Test
     fun `test all trains travel the line route`() = runBlocking()
     {
-
         val channel = Channel<StationMessage>()
         val res = async { networkService.start(channel) }
         val running = async { status(channel, res) }
-
     }
 
     private suspend fun status(channel: Channel<StationMessage>, job: Job) {
+        //need to time this out.  at some point.  TODO
         do {
             val msg = channel.receive()
             if (!trainsByLine.containsKey(msg.lineId))
@@ -55,6 +57,8 @@ class NetworkServiceTest @Autowired constructor(
         } while (!testSectionsVisited())
 
         job.cancelAndJoin()
+
+        // Assertions.assertThat(trainsByLine.values.flatten().size).isEqualTo(transportersPerLine)
 
         stationVisitedPerTrain.forEach { (t, u) ->
             println("train $t")
@@ -73,7 +77,7 @@ class NetworkServiceTest @Autowired constructor(
                 test = false
         }
 
-        return test
+        return test && trainsByLine.values.flatten().size == transportersPerLine
     }
 
     private fun getLineByTrain(id: UUID): String {

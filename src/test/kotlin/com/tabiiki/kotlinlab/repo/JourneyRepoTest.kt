@@ -1,5 +1,7 @@
 package com.tabiiki.kotlinlab.repo
 
+import com.tabiiki.kotlinlab.model.Status
+import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -14,7 +16,7 @@ internal class JourneyRepoTest {
         journeyTimeRepoImpl.addJourneyTime(Pair(100, Pair("A", "B")))
         val train = line.transporters.first()
         train.linePosition = Pair("A", "B")
-        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(true)
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isGreaterThan(0)
     }
 
     @Test
@@ -22,7 +24,7 @@ internal class JourneyRepoTest {
         journeyTimeRepoImpl.addJourneyTime(Pair(10, Pair("B", "C")))
         val train = line.transporters.first()
         train.linePosition = Pair("B", "C")
-        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(false)
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isLessThan(0)
 
     }
 
@@ -30,7 +32,7 @@ internal class JourneyRepoTest {
     fun `journey time does not exist`() {
         val train = line.transporters.first()
         train.linePosition = Pair("X", "Y")
-        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(false)
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(0)
 
     }
 
@@ -39,7 +41,48 @@ internal class JourneyRepoTest {
         journeyTimeRepoImpl.addJourneyTime(Pair(0, Pair("B", "C")))
         val train = line.transporters.first()
         train.linePosition = Pair("B", "C")
-        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(false)
+        assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(0)
+    }
+
+    @Test
+    fun `line segment is clear`() {
+
+        val res = journeyTimeRepoImpl.isLineSegmentClear(
+            section = LineBuilder().getLine(),
+            transport = Transport(
+                config = LineBuilder().transportConfig,
+                lineId = "1",
+                timeStep = 10
+            ).apply {
+                this.linePosition = Pair("A", "B")
+                this.status = Status.DEPOT
+            }
+        )
+
+        assertThat(res).isEqualTo(true)
+    }
+
+    @Test
+    fun `line segment is not clear`() {
+
+        val res = journeyTimeRepoImpl.isLineSegmentClear(
+            section = LineBuilder().getLine().apply {
+                this.transporters.first().apply {
+                    this.linePosition = Pair("A", "B")
+                    this.status = Status.ACTIVE
+                }
+            },
+            transport = Transport(
+                config = LineBuilder().transportConfig,
+                lineId = "1",
+                timeStep = 10
+            ).apply {
+                this.linePosition = Pair("A", "B")
+                this.status = Status.DEPOT
+            }
+        )
+
+        assertThat(res).isEqualTo(false)
     }
 
 }

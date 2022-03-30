@@ -8,6 +8,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 
@@ -16,10 +17,41 @@ internal class LineControllerTest {
     private val journeyRepoImpl = JourneyRepoImpl()
     private val line = LineBuilder().getLine(holdDelay = 15)
 
+    @BeforeEach
+    fun `init`() {
+        journeyRepoImpl.addJourneyTime(
+            Pair(10, Pair("A", "B"))
+        )
+        journeyRepoImpl.addJourneyTime(
+            Pair(10, Pair("B", "A"))
+        )
+        journeyRepoImpl.addJourneyTime(
+            Pair(10, Pair("C", "B"))
+        )
+    }
+
+    @Test
+    fun `start line and expect all trains to arrive at station B`() = runBlocking {
+        val conductor = mock(LineConductor::class.java)
+        val lineControllerService = LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
+
+        val channel = Channel<Transport>()
+        val res = async { lineControllerService.start(channel) }
+        delay(1000)
+
+        verify(conductor, atLeast(line.transporters.size)).depart(
+            Transport(timeStep = 10, config = LineBuilder().transportConfig, lineId = "1"),
+            LineBuilder().lineStations
+        )
+
+        res.cancelAndJoin()
+    }
+
+
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf())
+        val lineControllerService = LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -29,6 +61,7 @@ internal class LineControllerTest {
             Transport(timeStep = 10, config = LineBuilder().transportConfig, lineId = "1"),
             LineBuilder().lineStations
         )
+
         res.cancelAndJoin()
     }
 
@@ -49,5 +82,6 @@ internal class LineControllerTest {
         res.cancelAndJoin()
 
     }
+
 
 }

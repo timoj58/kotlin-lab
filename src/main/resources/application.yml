@@ -24,10 +24,15 @@ network:
         weight: 10000
         top-speed: 60
         power: 150
+      - transport-id: 4
+        capacity: 1000
+        weight: 10000
+        top-speed: 45
+        power: 100
   lines:
     underground:
       - src/main/resources/network/underground/city.yml
-      - src/main/resources/network/underground/jubilee.yml
+      ##- src/main/resources/network/underground/jubilee.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:

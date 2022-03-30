@@ -64,7 +64,7 @@ class LineControllerTest {
                 .any { it == Status.DEPOT } && startTime + timeout > System.currentTimeMillis())
 
         assertThat(trains.values.map { it.status }
-            .any { it == Status.DEPOT } ).isEqualTo(false)
+            .any { it == Status.DEPOT }).isEqualTo(false)
         jobs.forEach { it.cancelAndJoin() }
     }
 

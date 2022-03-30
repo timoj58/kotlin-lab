@@ -20,8 +20,8 @@ class LineConductorImpl(private val stationRepo: StationRepo) : LineConductor {
 
     override suspend fun depart(transport: Transport, lineStations: List<String>) {
         transport.depart(
-            stationRepo.get().first { it.id == transport.linePosition.first },
-            stationRepo.get().first { it.id == transport.linePosition.second },
+            stationRepo.get(transport.linePosition.first),
+            stationRepo.get(transport.linePosition.second),
             stationRepo.getNextStationOnLine(
                 lineStations = lineStations, linePosition = transport.linePosition
             )

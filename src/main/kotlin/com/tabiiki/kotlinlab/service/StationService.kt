@@ -2,9 +2,10 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import org.springframework.beans.factory.annotation.Value
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -23,36 +24,32 @@ data class StationMessage(
 interface StationService {
     fun getChannel(id: String): Channel<Transport>
     suspend fun monitor(listener: Channel<StationMessage>)
-    suspend fun monitor(id: String, channel: Channel<Transport>)
+    suspend fun monitor(id: String, channel: Channel<Transport>, listener: Channel<StationMessage>)
 }
 
 @Service
 class StationServiceImpl(
-    @Value("\${network.time-step}") private val timeStep: Long,
     stationRepo: StationRepo
 ) : StationService {
 
     //private val log = LoggerFactory.getLogger(this.javaClass)
-
     private val channels = stationRepo.get().map { it.id }.associateWith { Channel<Transport>() }
-    private val messageQueue = ArrayDeque<StationMessage>()
 
     override fun getChannel(id: String): Channel<Transport> {
         return channels[id]!!
     }
 
     override suspend fun monitor(listener: Channel<StationMessage>) = coroutineScope {
-        async { status(listener) }
         channels.forEach { (k, v) ->
-            launch(Dispatchers.Default) { monitor(k, v) }
+            launch(Dispatchers.Default) { monitor(k, v, listener) }
         }
     }
 
-    override suspend fun monitor(id: String, channel: Channel<Transport>) {
+    override suspend fun monitor(id: String, channel: Channel<Transport>, listener: Channel<StationMessage>) {
         do {
             val message = channel.receive()
             if (waitingToArrive(id, message)) {
-                messageQueue.push(
+                listener.send(
                     StationMessage(
                         stationId = id,
                         transportId = message.id,
@@ -62,7 +59,7 @@ class StationServiceImpl(
                     )
                 )
             } else if (waitingToDepart(id, message)) {
-                messageQueue.push(
+                listener.send(
                     StationMessage(
                         stationId = id,
                         transportId = message.id,
@@ -80,13 +77,5 @@ class StationServiceImpl(
 
     private fun waitingToArrive(id: String, message: Transport) =
         !message.isStationary() && message.linePosition.second == id
-
-    private suspend fun status(listener: Channel<StationMessage>) = coroutineScope {
-        do {
-            delay(timeStep)
-            while (!messageQueue.isEmpty())
-                listener.send(messageQueue.pop())
-        } while (true)
-    }
 
 }

@@ -35,9 +35,11 @@ class LineControllerImpl(
                 section.transporters.filter { it.status == Status.DEPOT }
                     .groupBy { it.linePosition }.values.forEach {
                         val transport = it.first()
-                        if (journeyRepo.isLineSegmentClear(section, transport)
-                            && journeyRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
-                        ) async { dispatch(transport, channel) }
+                        if (journeyRepo.isLineSegmentClear(section, transport)) {
+                            var difference = journeyRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
+                            if (difference > 0) async { delayThenDispatch(transport, channel, difference) }
+                            else if (difference < 0) async { dispatch(transport, channel) }
+                        }
                     }
             }
 
@@ -75,4 +77,15 @@ class LineControllerImpl(
 
     private fun getLineStations(id: UUID) =
         line.first { l -> l.transporters.any { it.id == id } }.stations
+
+    private suspend fun delayThenDispatch(transport: Transport, channel: Channel<Transport>, delay: Int) =
+        coroutineScope {
+            var difference = delay
+            val timeStep = line.first { l -> l.transporters.any { it.id == transport.id } }.timeStep
+            do {
+                delay(timeStep)
+                difference--
+            } while (difference > 0)
+            async { dispatch(transport, channel) }
+        }
 }

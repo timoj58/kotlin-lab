@@ -5,7 +5,7 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import javax.naming.ConfigurationException
 
 data class Line(
-    private val timeStep: Long,
+    val timeStep: Long,
     private val config: LineConfig,
     private val transportConfig: List<TransportConfig>
 ) {
