@@ -1,15 +1,13 @@
-package com.tabiiki.kotlinlab.service
+package com.tabiiki.kotlinlab.repo
 
-import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 
-internal class StationsServiceImplTest {
+internal class StationRepoTest {
 
     private val stationFactory = Mockito.mock(StationFactory::class.java)
     private val stations = LineBuilder().stations
@@ -26,28 +24,28 @@ internal class StationsServiceImplTest {
 
     @Test
     fun `next station is first in line`() {
-        val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStationOnLine(line, Pair("B", "A")).id).isEqualTo("B")
+        val stationRepo = StationRepoImpl(stationFactory)
+        assertThat(stationRepo.getNextStationOnLine(line, Pair("B", "A")).id).isEqualTo("B")
     }
 
     @Test
     fun `next station is last in line`() {
-        val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStationOnLine(line, Pair("B", "C")).id).isEqualTo("B")
+        val stationRepo = StationRepoImpl(stationFactory)
+        assertThat(stationRepo.getNextStationOnLine(line, Pair("B", "C")).id).isEqualTo("B")
 
     }
 
     @Test
     fun `next station is going forwards`() {
-        val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStationOnLine(line, Pair("A", "B")).id).isEqualTo("C")
+        val stationRepo = StationRepoImpl(stationFactory)
+        assertThat(stationRepo.getNextStationOnLine(line, Pair("A", "B")).id).isEqualTo("C")
 
     }
 
     @Test
     fun `next station is going reverse`() {
-        val stationsService = StationsServiceImpl(stationFactory)
-        assertThat(stationsService.getNextStationOnLine(line, Pair("C", "B")).id).isEqualTo("A")
+        val stationRepo = StationRepoImpl(stationFactory)
+        assertThat(stationRepo.getNextStationOnLine(line, Pair("C", "B")).id).isEqualTo("A")
 
     }
 

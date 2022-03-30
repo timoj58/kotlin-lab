@@ -1,8 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.JourneyRepoImpl
+import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -42,7 +41,7 @@ internal class LineControllerTest {
         val channel = Channel<Transport>()
         val res = async { lineControllerService.regulate(channel) }
 
-        val transport = Transport(config = LineBuilder().transportConfig, lineId = "1")
+        val transport = Transport(config = LineBuilder().transportConfig, lineId = "1", timeStep = 1000)
         transport.id = line.transporters.first().id
         channel.send(transport)
         delay(100)

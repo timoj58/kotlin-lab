@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.LineConfig
-import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions

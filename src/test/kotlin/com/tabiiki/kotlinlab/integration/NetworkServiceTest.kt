@@ -3,13 +3,11 @@ package com.tabiiki.kotlinlab.integration
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.service.NetworkService
 import com.tabiiki.kotlinlab.service.StationMessage
-import com.tabiiki.kotlinlab.service.StationsService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -19,15 +17,18 @@ import java.util.*
 @ActiveProfiles("test")
 @SpringBootTest
 class NetworkServiceTest @Autowired constructor(
-    val networkService: NetworkService
+    val networkService: NetworkService,
+    private val lineFactory: LineFactory
 ) {
 
     private val stationVisitedPerTrain = mutableMapOf<UUID, MutableSet<Pair<String, String>>>()
-    private val stationsPerLine = listOf(
-        Pair("26","598"), Pair("598", "26")
-    )
+    private val trainsByLine = mutableMapOf<String, MutableSet<UUID>>()
+    private val sectionsByLine = mutableMapOf<String, Set<Pair<String, String>>>()
 
-    //TODO need to reduce hold delay.
+    //TODO hold delay to resolve.
+    init {
+        lineFactory.get().forEach { line -> sectionsByLine[line] = getLineStations(lineFactory.get(line).stations) }
+    }
 
 
     //@Disabled
@@ -41,22 +42,23 @@ class NetworkServiceTest @Autowired constructor(
 
     }
 
-    //TODO HOLD delay needs to managed for test as well...
     private suspend fun status(channel: Channel<StationMessage>, job: Job) {
         do {
             val msg = channel.receive()
-            if(msg.lineId == "CITY01")
-               if(!stationVisitedPerTrain.containsKey(msg.transportId))
-                   stationVisitedPerTrain[msg.transportId] = mutableSetOf()
+            if (!trainsByLine.containsKey(msg.lineId))
+                trainsByLine[msg.lineId] = mutableSetOf()
+            if (!stationVisitedPerTrain.containsKey(msg.transportId))
+                stationVisitedPerTrain[msg.transportId] = mutableSetOf()
 
-               stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        }while (!testSectionsVisited())
+            trainsByLine[msg.lineId]?.add(msg.transportId)
+            stationVisitedPerTrain[msg.transportId]?.add(msg.section)
+        } while (!testSectionsVisited())
 
         job.cancelAndJoin()
 
         stationVisitedPerTrain.forEach { (t, u) ->
             println("train $t")
-            u.forEach {section -> println("travelled ${section.first} to ${section.second}") }
+            u.forEach { section -> println("travelled ${section.first} to ${section.second}") }
         }
 
     }
@@ -64,17 +66,33 @@ class NetworkServiceTest @Autowired constructor(
     private fun testSectionsVisited(): Boolean {
         var test = true
 
-        if(stationVisitedPerTrain.isEmpty()) return false
+        if (stationVisitedPerTrain.isEmpty()) return false
 
-        stationVisitedPerTrain.forEach { (_, u) ->
-            if(!u.containsAll(stationsPerLine))
+        stationVisitedPerTrain.forEach { (k, u) ->
+            if (!u.containsAll(sectionsByLine[getLineByTrain(k)]!!.toList()))
                 test = false
         }
 
         return test
     }
 
+    private fun getLineByTrain(id: UUID): String {
+        var line = ""
+        trainsByLine.forEach { (t, u) ->
+            if (u.contains(id)) t.also { line = it }
 
+        }
+        return line
+    }
+
+    private fun getLineStations(stations: List<String>): Set<Pair<String, String>> {
+        var pairs = mutableSetOf<Pair<String, String>>()
+        for (station in 0..stations.size - 2 step 2) {
+            pairs.add(Pair(stations[station], stations[station + 1]))
+            pairs.add(Pair(stations.reversed()[station], stations.reversed()[station + 1]))
+        }
+        return pairs.toSet()
+    }
 
 
 }

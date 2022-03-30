@@ -1,4 +1,4 @@
-package com.tabiiki.kotlinlab.util
+package com.tabiiki.kotlinlab.repo
 
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport

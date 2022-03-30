@@ -1,14 +1,12 @@
 package com.tabiiki.kotlinlab.integration
 
-import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
+import com.tabiiki.kotlinlab.repo.StationRepoImpl
 import com.tabiiki.kotlinlab.service.LineConductorImpl
 import com.tabiiki.kotlinlab.service.LineControllerImpl
-import com.tabiiki.kotlinlab.service.StationsServiceImpl
-import com.tabiiki.kotlinlab.util.JourneyRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -23,17 +21,11 @@ import java.util.*
 
 class LineControllerTest {
 
-    private val stationFactory = Mockito.mock(StationFactory::class.java)
+    private val lineBuilder = LineBuilder()
 
-    private val stations = listOf(
-        Station(
-            StationConfig(id = "A", latitude = 51.541692575874, longitude = -0.00375164102719075),
-            listOf()
-        ),
-        Station(StationConfig(id = "B", latitude = 51.528525530727, longitude = 0.00531739383278791), listOf()),
-        Station(StationConfig(id = "C", latitude = 51.5002551610895, longitude = 0.00358625912595083), listOf())
-    )
-    private val line = LineBuilder().getLine(holdDelay = 15)
+    private val stationFactory = Mockito.mock(StationFactory::class.java)
+    private val stations = lineBuilder.stations
+    private val line = lineBuilder.getLine(holdDelay = 15)
 
     @BeforeEach
     fun init() {
@@ -45,16 +37,15 @@ class LineControllerTest {
 
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
-        val stationsService = StationsServiceImpl(stationFactory)
+        val stationRepo = StationRepoImpl(stationFactory)
         val lineControllerService =
-            LineControllerImpl(1, listOf(line), LineConductorImpl(stationsService), JourneyRepoImpl(), mapOf())
+            LineControllerImpl(1, listOf(line), LineConductorImpl(stationRepo), JourneyRepoImpl(), mapOf())
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()
 
         val res = async { lineControllerService.start(channel) }
         val res2 = async { lineControllerService.regulate(channel2) }
-
         val testRes = async { testChannel(channel, channel2, listOf(res, res2)) }
     }
 
@@ -62,7 +53,7 @@ class LineControllerTest {
     suspend fun testChannel(channel: Channel<Transport>, channel2: Channel<Transport>, jobs: List<Job>) {
         val trains = mutableMapOf<UUID, Transport>()
         line.transporters.forEach { trains[it.id] = it }
-        val timeout = 1000 * 60
+        val timeout = 1000 * 15
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
@@ -72,7 +63,8 @@ class LineControllerTest {
         } while (trains.values.map { it.status }
                 .any { it == Status.DEPOT } && startTime + timeout > System.currentTimeMillis())
 
-        assertThat(startTime + timeout).isLessThan(System.currentTimeMillis())
+        assertThat(trains.values.map { it.status }
+            .any { it == Status.DEPOT } ).isEqualTo(false)
         jobs.forEach { it.cancelAndJoin() }
     }
 

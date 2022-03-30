@@ -3,7 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.util.JourneyRepo
+import com.tabiiki.kotlinlab.repo.JourneyRepo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
@@ -53,7 +53,13 @@ class LineControllerImpl(
 
             if (message.isStationary()) {
                 journeyRepo.addJourneyTime(message.getJourneyTime())
-                async { conductor.hold(message, journeyRepo.getDefaultHoldDelay(line, message.id), getLineStations(message.id)) }
+                async {
+                    conductor.hold(
+                        message,
+                        journeyRepo.getDefaultHoldDelay(line, message.id),
+                        getLineStations(message.id)
+                    )
+                }
             }
         } while (true)
     }

@@ -1,6 +1,5 @@
 package com.tabiiki.kotlinlab.repo
 
-import com.tabiiki.kotlinlab.util.JourneyRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -36,7 +35,7 @@ internal class JourneyRepoTest {
     }
 
     @Test
-    fun `journey time is zero and therefore doesnt exist test`(){
+    fun `journey time is zero and therefore doesnt exist test`() {
         journeyTimeRepoImpl.addJourneyTime(Pair(0, Pair("B", "C")))
         val train = line.transporters.first()
         train.linePosition = Pair("B", "C")

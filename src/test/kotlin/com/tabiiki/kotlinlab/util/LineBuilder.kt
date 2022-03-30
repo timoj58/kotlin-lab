@@ -27,7 +27,7 @@ class LineBuilder {
             name = "2",
             transportId = 1,
             holdDelay = holdDelay,
-            transportCapacity = 8,
+            transportCapacity = 4,
             stations = listOf("A", "B", "C"),
             depots = listOf("A", "C")
         ), listOf(transportConfig)

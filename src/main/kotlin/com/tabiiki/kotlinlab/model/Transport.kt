@@ -16,7 +16,8 @@ enum class Status {
 data class Transport(
     private val config: TransportConfig,
     val lineId: String,
-    private val timeStep: Long = 1000) {
+    private val timeStep: Long
+) {
 
     var id = UUID.randomUUID()
     val transportId = config.transportId
