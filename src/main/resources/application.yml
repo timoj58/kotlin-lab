@@ -32,15 +32,15 @@ network:
   lines:
     underground:
       - src/main/resources/network/underground/city.yml
-      - src/main/resources/network/underground/jubilee.yml
-      - src/main/resources/network/underground/victoria.yml
-      - src/main/resources/network/underground/circle.yml
-      - src/main/resources/network/underground/bakerloo.yml
-      - src/main/resources/network/underground/hammersmith.yml
-      - src/main/resources/network/underground/metropolitan.yml
-      - src/main/resources/network/underground/central.yml
-      - src/main/resources/network/underground/district.yml
-      - src/main/resources/network/underground/northern.yml
+      #- src/main/resources/network/underground/jubilee.yml
+      #- src/main/resources/network/underground/victoria.yml
+      #- src/main/resources/network/underground/circle.yml
+      #- src/main/resources/network/underground/bakerloo.yml
+      #- src/main/resources/network/underground/hammersmith.yml
+      #- src/main/resources/network/underground/metropolitan.yml
+      #- src/main/resources/network/underground/central.yml
+      #- src/main/resources/network/underground/district.yml
+      #- src/main/resources/network/underground/northern.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:

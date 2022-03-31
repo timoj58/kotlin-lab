@@ -34,11 +34,7 @@ class LineControllerImpl(
             delay(startDelay)
 
             conductor.getNextTransportersToDispatch(line).forEach { transport ->
-                if (transporterTrackerRepo.isSectionClear(transport)) {
-                    val difference = journeyRepo.isJourneyTimeGreaterThanHoldingDelay(line, transport)
-                    if (difference > 0) async { delayThenDispatch(transport, channel, difference) }
-                    else if (difference < 0) async { dispatch(transport, channel) }
-                }
+                if (transporterTrackerRepo.isSectionClear(transport)) async { dispatch(transport, channel) }
             }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
@@ -50,7 +46,7 @@ class LineControllerImpl(
             val message = channel.receive()
             async { publish(trackingRepoChannel, message) }
             if (message.atPlatform()) {
-                journeyRepo.addJourneyTime(message.getJourneyTime())
+                async {  journeyRepo.addJourneyTime(message.getJourneyTime()) }
                 launch(Dispatchers.Default) {
                     conductor.hold(
                         message,
@@ -74,7 +70,7 @@ class LineControllerImpl(
         launch(Dispatchers.Default) { conductor.depart(transport, getLineStations(transport.id)) }
     }
 
-    private suspend fun delayThenDispatch(transport: Transport, channel: Channel<Transport>, delay: Int) =
+   /* private suspend fun delayThenDispatch(transport: Transport, channel: Channel<Transport>, delay: Int) =
         coroutineScope {
             var difference = delay
             val timeStep = line.first { l -> l.transporters.any { it.id == transport.id } }.timeStep
@@ -84,7 +80,7 @@ class LineControllerImpl(
             } while (difference > 0)
             async { dispatch(transport, channel) }
         }
-
+    */
     private suspend fun publish(trackingRepoChannel: Channel<Transport>, message: Transport) = coroutineScope{
         async {  trackingRepoChannel.send(message) }
         listOf(message.linePosition.first, message.linePosition.second)

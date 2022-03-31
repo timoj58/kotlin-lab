@@ -1,7 +1,7 @@
 lines:
   - id: BAKER01
-    transport-id: 3
-    transport-capacity: 20
+    transport-id: 4
+    transport-capacity: 12
     name: Bakerloo
     stations:
       - 185

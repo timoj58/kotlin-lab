@@ -1,7 +1,7 @@
 lines:
   - id: HAM01
     transport-id: 3
-    transport-capacity: 20
+    transport-capacity: 14
     name: Hammersmith & City
     stations:
       - 247
