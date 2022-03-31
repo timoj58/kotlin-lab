@@ -21,12 +21,12 @@ network:
     trains:
       - transport-id: 3
         capacity: 1000
-        weight: 10000
-        top-speed: 60
-        power: 150
+        weight: 15000
+        top-speed: 50
+        power: 125
       - transport-id: 4
         capacity: 1000
-        weight: 10000
+        weight: 15000
         top-speed: 45
         power: 100
   lines:
@@ -35,6 +35,9 @@ network:
       - src/main/resources/network/underground/jubilee.yml
       - src/main/resources/network/underground/victoria.yml
       - src/main/resources/network/underground/circle.yml
+      - src/main/resources/network/underground/bakerloo.yml
+      - src/main/resources/network/underground/hammersmith.yml
+      - src/main/resources/network/underground/metropolitan.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:

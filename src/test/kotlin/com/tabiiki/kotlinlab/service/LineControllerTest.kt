@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
+import com.tabiiki.kotlinlab.repo.TransporterTrackerRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -10,6 +11,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 
@@ -17,6 +19,7 @@ internal class LineControllerTest {
 
     private val journeyRepoImpl = JourneyRepoImpl()
     private val line = LineBuilder().getLine(holdDelay = 15)
+    private val transporterTrackerRepo = TransporterTrackerRepoImpl()
 
     @BeforeEach
     fun `init`() {
@@ -29,12 +32,21 @@ internal class LineControllerTest {
         journeyRepoImpl.addJourneyTime(
             Pair(10, Pair("C", "B"))
         )
+
     }
 
     @Test
     fun `start line and expect all trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
+        `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
+            listOf(line.transporters[0], line.transporters[1])
+        )
+
+        `when`(conductor.getNextTransportersToDispatch(listOf(line))).thenReturn(
+            listOf(line.transporters[2], line.transporters[3], line.transporters[4], line.transporters[5])
+        )
+
+        val lineControllerService = LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf(),transporterTrackerRepo)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -52,7 +64,10 @@ internal class LineControllerTest {
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
+        `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
+            listOf(line.transporters[0], line.transporters[1])
+        )
+        val lineControllerService = LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf(),transporterTrackerRepo)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -70,10 +85,15 @@ internal class LineControllerTest {
     @Test
     fun `test regulation that train is held before moving to next stop`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf())
+        `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
+            listOf(line.transporters[0], line.transporters[1])
+        )
+        val lineControllerService = LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf(),transporterTrackerRepo)
 
         val channel = Channel<Transport>()
-        val res = async { lineControllerService.regulate(channel) }
+        val channel2 = Channel<Transport>()
+
+        val res = async { lineControllerService.regulate(channel, channel2) }
 
         val transport = Transport(config = LineBuilder().transportConfig, lineId = "1", timeStep = 1000)
         transport.id = line.transporters.first().id
@@ -84,6 +104,5 @@ internal class LineControllerTest {
         res.cancelAndJoin()
 
     }
-
 
 }

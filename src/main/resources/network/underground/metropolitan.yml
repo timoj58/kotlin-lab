@@ -1,0 +1,130 @@
+lines:
+  - id: MET01
+    transport-id: 3
+    transport-capacity: 8
+    hold-delay: 45
+    name: Metropolitan
+    stations:
+      - 14
+      - 109
+      - 126
+      - 461
+      - 370
+      - 405
+      - 406
+      - 430
+      - 397
+      - 262
+      - 404
+      - 436
+      - 606
+      - 212
+      - 24
+      - 234
+      - 202
+      - 320
+      - 207
+      - 28
+      - 371
+      - 343
+      - 9
+    depots:
+      - 14
+      - 9
+
+  - id: MET02
+    transport-id: 3
+    transport-capacity: 8
+    hold-delay: 45
+    name: Metropolitan
+    stations:
+      - 116
+      - 109
+      - 126
+      - 461
+      - 370
+      - 405
+      - 406
+      - 430
+      - 397
+      - 262
+      - 404
+      - 436
+      - 606
+      - 212
+      - 24
+      - 234
+      - 202
+      - 320
+      - 207
+      - 28
+      - 371
+      - 343
+      - 9
+    depots:
+      - 116
+      - 9
+
+  - id: MET03
+    transport-id: 3
+    transport-capacity: 8
+    hold-delay: 45
+    name: Metropolitan
+    stations:
+      - 600
+      - 149
+      - 370
+      - 405
+      - 406
+      - 430
+      - 397
+      - 262
+      - 404
+      - 436
+      - 606
+      - 212
+      - 24
+      - 234
+      - 202
+      - 320
+      - 207
+      - 28
+      - 371
+      - 343
+      - 9
+    depots:
+      - 600
+      - 9
+
+  - id: MET04
+    transport-id: 3
+    transport-capacity: 8
+    hold-delay: 45
+    name: Metropolitan
+    stations:
+      - 580
+      - 281
+      - 296
+      - 469
+      - 471
+      - 179
+      - 452
+      - 618
+      - 397
+      - 262
+      - 404
+      - 436
+      - 606
+      - 212
+      - 24
+      - 234
+      - 202
+      - 320
+      - 207
+      - 28
+      - 371
+      - 343
+      - 9
+    depots:
+      - 580
+      - 9

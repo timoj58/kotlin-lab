@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
+import com.tabiiki.kotlinlab.repo.TransporterTrackerRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -21,6 +22,7 @@ class NetworkServiceImpl(
     lineFactory: LineFactory,
     lineConductor: LineConductor,
     journeyRepo: JourneyRepo,
+    private val transporterTrackerRepo: TransporterTrackerRepo
 ) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
@@ -35,21 +37,25 @@ class NetworkServiceImpl(
                     lineConductor,
                     journeyRepo,
                     listOf(line).flatten().flatMap { it.stations }.distinct()
-                        .associateWith { stationService.getChannel(it) }
+                        .associateWith { stationService.getChannel(it) },
+                    transporterTrackerRepo
                 )
             )
         }
     }
 
     override suspend fun start(listener: Channel<StationMessage>): Unit = coroutineScope {
+        val trackerRepoChannel = Channel<Transport>()
+
         controllers.forEach { controller ->
             val channel = Channel<Transport>()
 
             launch(Dispatchers.Default) { controller.start(channel) }
-            launch(Dispatchers.Default) { controller.regulate(channel) }
+            launch(Dispatchers.Default) { controller.regulate(channel, trackerRepoChannel) }
         }
 
         launch(Dispatchers.Default) { stationService.monitor(listener) }
+        launch(Dispatchers.Default) { transporterTrackerRepo.track(trackerRepoChannel) }
     }
 
 }

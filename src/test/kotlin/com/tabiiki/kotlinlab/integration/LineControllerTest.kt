@@ -5,6 +5,8 @@ import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.repo.StationRepoImpl
+import com.tabiiki.kotlinlab.repo.TransporterTrackerRepo
+import com.tabiiki.kotlinlab.repo.TransporterTrackerRepoImpl
 import com.tabiiki.kotlinlab.service.LineConductorImpl
 import com.tabiiki.kotlinlab.service.LineControllerImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
@@ -22,6 +24,7 @@ import java.util.*
 class LineControllerTest {
 
     private val lineBuilder = LineBuilder()
+    private val transporterTrackerRepo = TransporterTrackerRepoImpl()
 
     private val stationFactory = Mockito.mock(StationFactory::class.java)
     private val stations = lineBuilder.stations
@@ -39,13 +42,14 @@ class LineControllerTest {
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val stationRepo = StationRepoImpl(stationFactory)
         val lineControllerService =
-            LineControllerImpl(1, listOf(line), LineConductorImpl(stationRepo), JourneyRepoImpl(), mapOf())
+            LineControllerImpl(1, listOf(line), LineConductorImpl(stationRepo), JourneyRepoImpl(), mapOf(), transporterTrackerRepo)
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()
+        val channel3 = Channel<Transport>()
 
         val res = async { lineControllerService.start(channel) }
-        val res2 = async { lineControllerService.regulate(channel2) }
+        val res2 = async { lineControllerService.regulate(channel2, channel3) }
         val testRes = async { testChannel(channel, channel2, listOf(res, res2)) }
     }
 
