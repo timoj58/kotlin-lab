@@ -12,6 +12,7 @@ internal class StationRepoTest {
     private val stationFactory = Mockito.mock(StationFactory::class.java)
     private val stations = LineBuilder().stations
     private val line = listOf("A", "B", "C")
+    private val circleLine = listOf("A", "B", "C", "A")
 
     @BeforeEach
     fun `init`() {
@@ -46,6 +47,23 @@ internal class StationRepoTest {
     fun `next station is going reverse`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("C", "B")).id).isEqualTo("A")
+
+    }
+
+    @Test
+    fun `circle line test where start and end is same`(){
+        val stationRepo = StationRepoImpl(stationFactory)
+        assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("C", "A")).id).isEqualTo("C")
+        assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "C")).id).isEqualTo("B")
+
+    }
+
+    @Test
+    fun `circle line test where start and end is same reversed`(){
+        val stationRepo = StationRepoImpl(stationFactory)
+        assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("B", "A")).id).isEqualTo("B")
+        assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "B")).id).isEqualTo("C")
+
 
     }
 

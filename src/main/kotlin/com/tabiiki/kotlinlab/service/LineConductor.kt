@@ -22,6 +22,7 @@ class LineConductorImpl(private val stationRepo: StationRepo) : LineConductor {
         transport.depart(
             stationRepo.get(transport.linePosition.first),
             stationRepo.get(transport.linePosition.second),
+            //TODO this goes backwards.....TEST IT on circle
             stationRepo.getNextStationOnLine(
                 lineStations = lineStations, linePosition = transport.linePosition
             )

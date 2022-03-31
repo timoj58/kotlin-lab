@@ -35,7 +35,6 @@ class NetworkServiceTest @Autowired constructor(
         }
     }
 
-
     @Test
     fun `test all trains travel the line route`() = runBlocking()
     {
@@ -55,9 +54,12 @@ class NetworkServiceTest @Autowired constructor(
 
             trainsByLine[msg.lineId]?.add(msg.transportId)
             stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (!testSectionsVisited()  && startTime + (1000 * 60 * 5 ) > System.currentTimeMillis())
+        } while (!testSectionsVisited()  && startTime + (1000 * 60 * 10 ) > System.currentTimeMillis())
 
         job.cancelAndJoin()
+        println("running trains $transportersPerLine and stations visited ${stationVisitedPerTrain.values.flatten().size}")
+        stationVisitedPerTrain.values.flatten()
+            .forEach {   assertThat(it.second == it.first).isEqualTo(false) }
         assertThat(testSectionsVisited()).isEqualTo(true)
     }
 
