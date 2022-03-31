@@ -28,7 +28,7 @@ class LineControllerTest {
 
     private val stationFactory = Mockito.mock(StationFactory::class.java)
     private val stations = lineBuilder.stations
-    private val line = lineBuilder.getLine(holdDelay = 15)
+    private val line = lineBuilder.getLine()
 
     @BeforeEach
     fun init() {

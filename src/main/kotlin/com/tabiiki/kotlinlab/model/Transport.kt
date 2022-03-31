@@ -16,7 +16,7 @@ enum class Status {
 data class Transport(
     private val config: TransportConfig,
     val lineId: String,
-    private val timeStep: Long
+    val timeStep: Long
 ) {
 
     var id = UUID.randomUUID()
@@ -24,8 +24,8 @@ data class Transport(
     val capacity = config.capacity
     var linePosition = Pair("", "") //current(from), next(to)
     private var previousLinePosition = Pair("", "")
+    private var previousStatus = Status.DEPOT
     val physics = Physics(config)
-    var holdCounter = 0
     var status = Status.DEPOT
     private var journeyTime = 0
     private val haversineCalculator = HaversineCalculator()
@@ -39,7 +39,6 @@ data class Transport(
         var power = config.power
         val topSpeed = config.topSpeed
 
-        //TODO probably dont need config as a param now
         fun reset(config: TransportConfig) {
             distance = 0.0
             acceleration = 0.0
@@ -54,7 +53,8 @@ data class Transport(
     fun atPlatform() = status == Status.PLATFORM && physics.acceleration == 0.0
     suspend fun track(channel: SendChannel<Transport>) {
         while (true) {
-            channel.send(this)
+            if(previousStatus != Status.PLATFORM) channel.send(this)
+            previousStatus = status
             delay(timeStep)
         }
     }
@@ -104,17 +104,5 @@ data class Transport(
         linePosition = Pair(linePosition.second, next.id)
         status = Status.PLATFORM
 
-        async { hold() }
     }
-
-    private suspend fun hold() {
-        do {
-            delay(timeStep)
-            holdCounter++
-        } while (status == Status.PLATFORM)
-
-        holdCounter = 0
-    }
-
-
 }

@@ -38,6 +38,9 @@ network:
       - src/main/resources/network/underground/bakerloo.yml
       - src/main/resources/network/underground/hammersmith.yml
       - src/main/resources/network/underground/metropolitan.yml
+      - src/main/resources/network/underground/central.yml
+      - src/main/resources/network/underground/district.yml
+      - src/main/resources/network/underground/northern.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:

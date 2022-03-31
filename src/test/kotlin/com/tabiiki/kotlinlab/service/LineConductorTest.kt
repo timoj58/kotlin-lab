@@ -25,7 +25,6 @@ internal class LineConductorTest {
         timeStep = 1
     ).also {
         it.status = Status.PLATFORM
-        it.holdCounter = 100
         it.linePosition = Pair("A", "B")
     }
 
@@ -66,8 +65,7 @@ internal class LineConductorTest {
     fun `train hold when track is not clear but hold time surpassed`() = runBlocking {
         val job = async {
             lineConductor.hold(
-                transport = transport.apply { this.holdCounter = 0 },
-                delay = 1,
+                transport = transport,
                 lineStations = listOf()
             ){t -> false}
         }
@@ -84,7 +82,6 @@ internal class LineConductorTest {
         val job = async {
             lineConductor.hold(
                 transport = transport,
-                delay = 1,
                 lineStations = listOf()
             ){t -> true}
         }

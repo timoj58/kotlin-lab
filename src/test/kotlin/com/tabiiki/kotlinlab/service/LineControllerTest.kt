@@ -18,7 +18,7 @@ import org.mockito.Mockito.*
 internal class LineControllerTest {
 
     private val journeyRepoImpl = JourneyRepoImpl()
-    private val line = LineBuilder().getLine(holdDelay = 15)
+    private val line = LineBuilder().getLine()
     private val transporterTrackerRepo = TransporterTrackerRepoImpl()
 
     @BeforeEach
@@ -100,7 +100,7 @@ internal class LineControllerTest {
         transport.id = line.transporters.first().id
         transport.status = Status.PLATFORM
         channel.send(transport)
-        delay(100)
+        delay(100) //>>>
         //verify(conductor).hold(transport, 15, LineBuilder().lineStations)
         res.cancelAndJoin()
 

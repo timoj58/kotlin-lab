@@ -48,17 +48,12 @@ class LineControllerImpl(
     override suspend fun regulate(channel: Channel<Transport>, trackingRepoChannel: Channel<Transport>) = coroutineScope {
         do {
             val message = channel.receive()
-            async {  trackingRepoChannel.send(message) }
-
-            listOf(message.linePosition.first, message.linePosition.second)
-                .forEach { stationChannels[it]?.send(message) }
-
+            async { publish(trackingRepoChannel, message) }
             if (message.atPlatform()) {
                 journeyRepo.addJourneyTime(message.getJourneyTime())
-                async {
+                launch(Dispatchers.Default) {
                     conductor.hold(
                         message,
-                        journeyRepo.getDefaultHoldDelay(line, message.id),
                         getLineStations(message.id)
                     ){t -> transporterTrackerRepo.isSectionClear(t)}
                 }
@@ -89,4 +84,10 @@ class LineControllerImpl(
             } while (difference > 0)
             async { dispatch(transport, channel) }
         }
+
+    private suspend fun publish(trackingRepoChannel: Channel<Transport>, message: Transport) = coroutineScope{
+        async {  trackingRepoChannel.send(message) }
+        listOf(message.linePosition.first, message.linePosition.second)
+            .forEach { stationChannels[it]?.send(message) }
+    }
 }

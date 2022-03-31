@@ -2,7 +2,6 @@ lines:
   - id: CIRCLE01
     transport-id: 3
     transport-capacity: 20
-    hold-delay: 45
     name: Circle
     stations:
       - 247
@@ -48,7 +47,6 @@ lines:
   - id: CIRCLE02
     transport-id: 3
     transport-capacity: 12
-    hold-delay: 45
     name: Circle
     stations:
       - 418

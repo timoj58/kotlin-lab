@@ -20,39 +20,36 @@ class LineBuilder {
     )
 
 
-    fun getLine(holdDelay: Int = 45) = Line(
+    fun getLine() = Line(
         timeStep = 10,
         config = LineConfig(
             id = "1",
             name = "2",
             transportId = 1,
-            holdDelay = holdDelay,
             transportCapacity = 6,
             stations = listOf("A", "B", "C"),
             depots = listOf("A", "C")
         ), listOf(transportConfig)
     )
 
-    fun getLine2(holdDelay: Int = 45) = Line(
+    fun getLine2() = Line(
         timeStep = 10,
         config = LineConfig(
             id = "2",
             name = "2",
             transportId = 1,
-            holdDelay = holdDelay,
             transportCapacity = 6,
             stations = listOf("A", "B", "C", "D"),
             depots = listOf("A", "D")
         ), listOf(transportConfig)
     )
 
-    fun getCityLine(holdDelay: Int = 45) = Line(
+    fun getCityLine() = Line(
         timeStep = 10,
         config = LineConfig(
             id = "1",
             name = "2",
             transportId = 1,
-            holdDelay = holdDelay,
             transportCapacity = 4,
             stations = listOf("A", "B"),
             depots = listOf("A", "B")

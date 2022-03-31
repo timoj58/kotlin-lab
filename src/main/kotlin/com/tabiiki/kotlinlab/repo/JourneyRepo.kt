@@ -8,7 +8,6 @@ import java.util.*
 
 interface JourneyRepo {
     fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport): Int
-    fun getDefaultHoldDelay(line: List<Line>, id: UUID): Int
     fun addJourneyTime(journeyTime: Pair<Int, Pair<String, String>>)
 }
 
@@ -18,10 +17,7 @@ class JourneyRepoImpl : JourneyRepo {
 
     override fun isJourneyTimeGreaterThanHoldingDelay(line: List<Line>, transport: Transport) =
         if (!journeyTimes.containsKey(transport.linePosition)) 0
-        else journeyTimes[transport.linePosition]!! - getDefaultHoldDelay(line, transport.id)
-
-    override fun getDefaultHoldDelay(line: List<Line>, id: UUID): Int =
-        line.first { l -> l.transporters.any { it.id == id } }.holdDelay
+        else journeyTimes[transport.linePosition]!! - 45 //TODO review
 
     override fun addJourneyTime(journeyTime: Pair<Int, Pair<String, String>>) {
         if (journeyTime.first != 0) journeyTimes[journeyTime.second] = journeyTime.first

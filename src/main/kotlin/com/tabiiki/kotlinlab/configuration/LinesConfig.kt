@@ -15,7 +15,6 @@ data class LineConfig(
     @JsonProperty("name") val name: String,
     @JsonProperty("transport-id") val transportId: Int,
     @JsonProperty("transport-capacity") val transportCapacity: Int,
-    @JsonProperty("hold-delay") val holdDelay: Int = 15,
     @JsonProperty("stations") val stations: List<String>,
     @JsonProperty("depots") val depots: List<String> = listOf()
 

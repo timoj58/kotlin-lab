@@ -1,0 +1,18 @@
+lines:
+  - id: PIC01
+    transport-id: 3
+    transport-capacity: 4
+    name: Piccadilly
+    stations:
+      -
+    depots:
+      -
+
+  - id: PIC02
+    transport-id: 3
+    transport-capacity: 4
+    name: Piccadilly
+    stations:
+      -
+    depots:
+      -

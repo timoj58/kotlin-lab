@@ -2,7 +2,6 @@ lines:
   - id: JUB01
     transport-id: 3
     transport-capacity: 18
-    hold-delay: 45
     name: Jubilee
     stations:
       - 528
@@ -39,7 +38,6 @@ lines:
   - id: JUB02
     transport-id: 3
     transport-capacity: 12
-    hold-delay: 45
     name: Jubilee
     stations:
       - 396
@@ -64,7 +62,6 @@ lines:
   - id: JUB03
     transport-id: 3
     transport-capacity: 12
-    hold-delay: 45
     name: Jubilee
     stations:
       - 528

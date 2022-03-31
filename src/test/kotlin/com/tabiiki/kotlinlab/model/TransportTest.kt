@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -24,6 +25,7 @@ internal class TransportTest {
             timeStep = 10
         )
         train.linePosition = Pair("1", "2")
+
 
         val res = async {
             train.depart(
@@ -49,5 +51,6 @@ internal class TransportTest {
 
         res.cancelAndJoin()
     }
+
 
 }

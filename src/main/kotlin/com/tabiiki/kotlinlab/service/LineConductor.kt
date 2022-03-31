@@ -6,13 +6,14 @@ import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
 interface LineConductor {
     fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport>
     fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
-    suspend fun hold(transport: Transport, delay: Int, lineStations: List<String>, isLineClear: (Transport) -> Boolean)
+    suspend fun hold(transport: Transport, lineStations: List<String>, isLineClear: (Transport) -> Boolean)
     suspend fun depart(transport: Transport, lineStations: List<String>)
 }
 
@@ -26,10 +27,15 @@ class LineConductorImpl(private val stationRepo: StationRepo) : LineConductor {
 
     override suspend fun hold(
         transport: Transport,
-        delay: Int,
         lineStations: List<String>,
         isLineClear: (Transport) -> Boolean): Unit = coroutineScope {
-        if (transport.holdCounter > delay && isLineClear(transport)) launch(Dispatchers.Default) { depart(transport, lineStations) }
+        var counter = 0
+        do {
+            delay(transport.timeStep)
+            counter++
+        }while (counter < 45 || !isLineClear(transport))  //TODO delay
+
+        launch(Dispatchers.Default) { depart(transport, lineStations) }
     }
 
     override suspend fun depart(transport: Transport, lineStations: List<String>) {
