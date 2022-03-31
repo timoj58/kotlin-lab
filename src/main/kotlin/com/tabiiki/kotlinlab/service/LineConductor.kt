@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 interface LineConductor {
     fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport>
     fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
-    suspend fun hold(transport: Transport, delay: Int, lineStations: List<String>)
+    suspend fun hold(transport: Transport, delay: Int, lineStations: List<String>, isLineClear: (Transport) -> Boolean)
     suspend fun depart(transport: Transport, lineStations: List<String>)
 }
 
@@ -27,8 +27,9 @@ class LineConductorImpl(private val stationRepo: StationRepo) : LineConductor {
     override suspend fun hold(
         transport: Transport,
         delay: Int,
-        lineStations: List<String>): Unit = coroutineScope {
-        if (transport.holdCounter > delay) launch(Dispatchers.Default) { depart(transport, lineStations) }
+        lineStations: List<String>,
+        isLineClear: (Transport) -> Boolean): Unit = coroutineScope {
+        if (transport.holdCounter > delay && isLineClear(transport)) launch(Dispatchers.Default) { depart(transport, lineStations) }
     }
 
     override suspend fun depart(transport: Transport, lineStations: List<String>) {

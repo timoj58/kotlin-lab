@@ -53,14 +53,14 @@ class LineControllerImpl(
             listOf(message.linePosition.first, message.linePosition.second)
                 .forEach { stationChannels[it]?.send(message) }
 
-            if (message.atPlatform() && transporterTrackerRepo.isSectionClear(message)) {
+            if (message.atPlatform()) {
                 journeyRepo.addJourneyTime(message.getJourneyTime())
                 async {
                     conductor.hold(
                         message,
                         journeyRepo.getDefaultHoldDelay(line, message.id),
                         getLineStations(message.id)
-                    )
+                    ){t -> transporterTrackerRepo.isSectionClear(t)}
                 }
             }
         } while (true)

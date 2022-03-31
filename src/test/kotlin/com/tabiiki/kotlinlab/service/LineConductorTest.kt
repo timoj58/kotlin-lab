@@ -69,7 +69,7 @@ internal class LineConductorTest {
                 transport = transport.apply { this.holdCounter = 0 },
                 delay = 1,
                 lineStations = listOf()
-            )
+            ){t -> false}
         }
 
         delay(100)
@@ -86,7 +86,7 @@ internal class LineConductorTest {
                 transport = transport,
                 delay = 1,
                 lineStations = listOf()
-            )
+            ){t -> true}
         }
 
         delay(100)
