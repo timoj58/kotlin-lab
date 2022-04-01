@@ -62,7 +62,6 @@ internal class LineTest {
         assertThat(line.transporters.count { t -> t.linePosition == Pair("A", "B") }).isEqualTo(3)
         assertThat(line.transporters.count { t -> t.linePosition == Pair("A", "D") }).isEqualTo(3)
 
-
     }
 
 }

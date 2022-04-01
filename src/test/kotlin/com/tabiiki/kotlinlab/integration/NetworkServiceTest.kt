@@ -55,7 +55,7 @@ class NetworkServiceTest @Autowired constructor(
 
             trainsByLine[msg.lineId]?.add(msg.transportId)
             stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 5) > System.currentTimeMillis())
+        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 6) > System.currentTimeMillis())
 
         job.cancelAndJoin()
         assert()

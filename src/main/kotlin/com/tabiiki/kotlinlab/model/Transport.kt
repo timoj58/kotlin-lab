@@ -35,20 +35,17 @@ data class Transport(
         var velocity: Double = 0.0
         var distance: Double = 0.0
         val weight = config.weight
-        var power = config.power
+        val power = config.power
         val topSpeed = config.topSpeed
 
-        fun reset(config: TransportConfig) {
+        fun reset() {
             distance = 0.0
             acceleration = 0.0
             velocity = 0.0
-            power = config.power
-
         }
     }
 
     fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
-    fun isStationary() = status == Status.ACTIVE && physics.acceleration == 0.0
     fun atPlatform() = status == Status.PLATFORM && physics.acceleration == 0.0
     suspend fun track(channel: SendChannel<Transport>) {
         do {
@@ -98,7 +95,7 @@ data class Transport(
     }
 
     private suspend fun stopJourney(to: Station, next: Station) = coroutineScope {
-        physics.reset(config)
+        physics.reset()
         linePosition = Pair(to.id, next.id)
         status = Status.PLATFORM
     }

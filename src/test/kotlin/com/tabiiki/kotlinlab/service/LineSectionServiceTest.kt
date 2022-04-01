@@ -28,7 +28,11 @@ internal class LineSectionServiceTest {
         assertThat(lineSectionService.getNext(Pair("A", "B"))!!.first.id).isEqualTo(transport2.id)
         assertThat(lineSectionService.getNext(Pair("A", "B"))).isNull()
 
+    }
 
+    @Test
+    fun `get next where no key exists`(){
+        assertThat(lineSectionService.getNext(Pair("A", "B"))).isNull()
     }
 
 }
