@@ -36,6 +36,7 @@ class SignalFactory {
     }
 
     fun get(linePosition: Pair<String, String>): Signal = signals[linePosition]!!
+    fun get(): List<Signal> = signals.values.toList()
 
     private fun getLineSections(stations: List<String>): Set<Pair<String, String>> {
         var pairs = mutableSetOf<Pair<String, String>>()
