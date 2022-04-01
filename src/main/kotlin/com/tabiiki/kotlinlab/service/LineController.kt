@@ -4,14 +4,13 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import com.tabiiki.kotlinlab.repo.TransporterTrackerRepo
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
 
 interface LineController {
     suspend fun start(channel: Channel<Transport>)
-    suspend fun regulate(channel: Channel<Transport>, trackingRepoChannel: Channel<Transport>)
+    suspend fun regulate(channel: Channel<Transport>)
     fun getStationChannels(): Map<String, Channel<Transport>>
 }
 
@@ -20,12 +19,10 @@ class LineControllerImpl(
     private val line: List<Line>,
     private val conductor: PlatformConductor,
     private val journeyRepo: JourneyRepo,
-    private val stationChannels: Map<String, Channel<Transport>>,
-    private val transporterTrackerRepo: TransporterTrackerRepo
+    private val stationChannels: Map<String, Channel<Transport>>
 ) : LineController {
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
-
         conductor.getFirstTransportersToDispatch(line).forEach {
             async { dispatch(it, channel) }
         }
@@ -34,18 +31,18 @@ class LineControllerImpl(
             delay(startDelay)
 
             conductor.getNextTransportersToDispatch(line).forEach { transport ->
-                if (transporterTrackerRepo.isSectionClear(transport)) async { dispatch(transport, channel) }
+                 async { dispatch(transport, channel) }  //TODO.  signal
             }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
 
     }
 
-    override suspend fun regulate(channel: Channel<Transport>, trackingRepoChannel: Channel<Transport>) =
+    override suspend fun regulate(channel: Channel<Transport>) =
         coroutineScope {
             do {
                 val message = channel.receive()
-                async { publish(trackingRepoChannel, message) }
+                async { publish(message) }
                 if (message.atPlatform()) {
                     async { journeyRepo.addJourneyTime(message.getJourneyTime()) }
                     launch(Dispatchers.Default) {
@@ -68,9 +65,8 @@ class LineControllerImpl(
         launch(Dispatchers.Default) { conductor.release(transport, getLineStations(transport.id)) }
     }
 
-    private suspend fun publish(trackingRepoChannel: Channel<Transport>, message: Transport) = coroutineScope {
-        async { trackingRepoChannel.send(message) }
-        listOf(message.linePosition.first, message.linePosition.second)
+    private suspend fun publish(message: Transport) = coroutineScope {
+        listOf(message.section.first, message.section.second)
             .forEach { stationChannels[it]?.send(message) }
     }
 }

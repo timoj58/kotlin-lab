@@ -54,7 +54,7 @@ class StationServiceImpl(
                         stationId = id,
                         transportId = message.id,
                         lineId = message.lineId,
-                        section = message.linePosition,
+                        section = message.section,
                         type = MessageType.ARRIVE
                     )
                 )
@@ -64,7 +64,7 @@ class StationServiceImpl(
                         stationId = id,
                         transportId = message.id,
                         lineId = message.lineId,
-                        section = message.linePosition,
+                        section = message.section,
                         type = MessageType.DEPART
                     )
                 )
@@ -73,9 +73,9 @@ class StationServiceImpl(
     }
 
     private fun waitingToDepart(id: String, message: Transport) =
-        message.atPlatform() && message.linePosition.first == id
+        message.atPlatform() && message.section.first == id
 
     private fun waitingToArrive(id: String, message: Transport) =
-        !message.atPlatform() && message.linePosition.second == id
+        !message.atPlatform() && message.section.second == id
 
 }

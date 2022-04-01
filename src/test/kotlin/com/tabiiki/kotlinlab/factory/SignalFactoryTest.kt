@@ -1,10 +1,5 @@
 package com.tabiiki.kotlinlab.factory
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,16 +13,16 @@ internal class SignalFactoryTest @Autowired constructor(
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 
+    @Test
+    fun `create section signals test`() {
+        assertThat(signalFactory.get().filter { it.type == SignalType.SECTION }.size).isEqualTo(548)
+    }
 
     @Test
-    fun `create signals test`() = runBlocking{
-        val channel = Channel<Signal>()
-        val job = async {  signalFactory.create(lines, channel) }
-
-        delay(100)
-
-        assertThat(signalFactory.get().size).isEqualTo(548)
-        job.cancelAndJoin()
+    fun `create platform signals test`() {
+        assertThat(signalFactory.get().filter { it.type == SignalType.PLATFORM }.size).isEqualTo(
+            lines.map { it.stations.distinct() }.flatten().size
+        )
     }
 
 }

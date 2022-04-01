@@ -1,11 +1,12 @@
 package com.tabiiki.kotlinlab.factory
 
 import com.tabiiki.kotlinlab.model.Line
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import org.springframework.stereotype.Repository
 
+enum class SignalType {
+    PLATFORM, SECTION
+}
 
 enum class SignalValue {
     RED, GREEN, AMBER
@@ -13,11 +14,17 @@ enum class SignalValue {
 
 data class Signal(
     var section: Pair<String, String>,
-    var channel: Channel<Signal>,
-    var status: SignalValue = SignalValue.GREEN
+    private var status: SignalValue = SignalValue.GREEN,
+    val type: SignalType = SignalType.SECTION
 ) {
+    fun getStatus() = status
+    suspend fun receive(channel: Channel<SignalValue>){
+        do{
+            status = channel.receive()
+        }while (true)
+    }
 
-    suspend fun notify() {
+    suspend fun send(channel: Channel<Signal>) {
         do {
             channel.send(this)
         } while (true)
@@ -25,22 +32,35 @@ data class Signal(
 }
 
 @Repository
-class SignalFactory {
-
+class SignalFactory(
+    lineFactory: LineFactory
+) {
     private var signals = mutableMapOf<Pair<String, String>, Signal>()
 
-    suspend fun create(lines: List<Line>, channel: Channel<Signal>) = coroutineScope{
+    init {
+        val lines = lineFactory.get().map { lineFactory.get(it) }
         lines.forEach { line ->
             getLineSections(line.stations).forEach { section ->
-                val signal = Signal(section = section, channel = channel)
+                val signal = Signal(section = section, type = SignalType.SECTION)
                 signals[section] = signal
-                async { signal.notify() }
             }
+        }
+        getPlatforms(lines).forEach { platform ->
+            val signal = Signal(section = platform, type = SignalType.PLATFORM)
+            signals[platform] = signal
         }
     }
 
-    fun get(linePosition: Pair<String, String>): Signal = signals[linePosition]!!
+    fun get(section: Pair<String, String>): Signal = signals[section]!!
     fun get(): List<Signal> = signals.values.toList()
+
+    private fun getPlatforms(lines: List<Line>): Set<Pair<String, String>> {
+        var pairs = mutableSetOf<Pair<String, String>>()
+        lines.forEach { line ->
+            pairs.addAll(line.stations.map { Pair(line.id, it) })
+        }
+        return pairs.toSet()
+    }
 
     private fun getLineSections(stations: List<String>): Set<Pair<String, String>> {
         var pairs = mutableSetOf<Pair<String, String>>()

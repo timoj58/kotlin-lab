@@ -17,7 +17,7 @@ internal class PlatformConductorTest {
 
 
     private val stationRepo = mock(StationRepo::class.java)
-    private val lineConductor = PlatformConductorImpl(stationRepo)
+    private val lineConductor = PlatformConductorImpl(stationRepo, mock(LineSectionService::class.java))
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
@@ -25,7 +25,7 @@ internal class PlatformConductorTest {
         timeStep = 1
     ).also {
         it.status = Status.PLATFORM
-        it.linePosition = Pair("A", "B")
+        it.section = Pair("A", "B")
     }
 
     @BeforeEach
@@ -52,9 +52,9 @@ internal class PlatformConductorTest {
             listOf(LineBuilder().getLine(), LineBuilder().getLine2())
         )
 
-        assertThat(transporters.filter { it.linePosition == Pair("A", "B") }.size).isEqualTo(1)
-        assertThat(transporters.filter { it.linePosition == Pair("C", "B") }.size).isEqualTo(1)
-        assertThat(transporters.filter { it.linePosition == Pair("D", "C") }.size).isEqualTo(1)
+        assertThat(transporters.filter { it.section == Pair("A", "B") }.size).isEqualTo(1)
+        assertThat(transporters.filter { it.section == Pair("C", "B") }.size).isEqualTo(1)
+        assertThat(transporters.filter { it.section == Pair("D", "C") }.size).isEqualTo(1)
 
         assertThat(transporters.size).isEqualTo(3)
 

@@ -1,26 +1,30 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Transport
 import org.springframework.stereotype.Service
-import java.util.concurrent.ConcurrentHashMap
 
 interface LineSectionService {
-    fun enterSection(transport: Transport, lineStations: List<String>)
+    suspend fun enterSection(transport: Transport, lineStations: List<String>)
     fun getNext(section: Pair<String, String>): Pair<Transport, List<String>>?
 }
 
 @Service
-class LineSectionServiceImpl : LineSectionService {
+class LineSectionServiceImpl(
+    private val signalFactory: SignalFactory
+) : LineSectionService {
 
-    private val sectionQueues: ConcurrentHashMap<Pair<String, String>, ArrayDeque<Pair<Transport, List<String>>>> =
-        ConcurrentHashMap()
+   // private val sectionQueues: ConcurrentHashMap<Pair<String, String>, ArrayDeque<Pair<Transport, List<String>>>> = ConcurrentHashMap()
 
-    override fun enterSection(transport: Transport, lineStations: List<String>) {
-        if (!sectionQueues.containsKey(transport.linePosition)) sectionQueues[transport.linePosition] = ArrayDeque()
-        sectionQueues[transport.linePosition]!!.addLast(Pair(transport, lineStations))
+    override suspend fun enterSection(transport: Transport, lineStations: List<String>) {
+    //    signalService.notify(section = transport.section, status = SignalValue.AMBER)
+  //      if (!sectionQueues.containsKey(transport.section)) sectionQueues[transport.section] = ArrayDeque()
+  //      sectionQueues[transport.section]!!.addLast(Pair(transport, lineStations))
     }
 
     override fun getNext(section: Pair<String, String>): Pair<Transport, List<String>>? {
-        return if (!sectionQueues.containsKey(section)) null else sectionQueues[section]!!.removeFirstOrNull()
+        return null
+   //     return if (!sectionQueues.containsKey(section)) null else sectionQueues[section]!!.removeFirstOrNull()
     }
 }

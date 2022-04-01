@@ -3,7 +3,6 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
-import com.tabiiki.kotlinlab.repo.TransporterTrackerRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -18,7 +17,6 @@ internal class LineControllerTest {
 
     private val journeyRepoImpl = JourneyRepoImpl()
     private val line = LineBuilder().getLine()
-    private val transporterTrackerRepo = TransporterTrackerRepoImpl()
 
     @BeforeEach
     fun `init`() {
@@ -46,7 +44,7 @@ internal class LineControllerTest {
         )
 
         val lineControllerService =
-            LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf(), transporterTrackerRepo)
+            LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -68,7 +66,7 @@ internal class LineControllerTest {
             listOf(line.transporters[0], line.transporters[1])
         )
         val lineControllerService =
-            LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf(), transporterTrackerRepo)
+            LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
@@ -90,12 +88,12 @@ internal class LineControllerTest {
             listOf(line.transporters[0], line.transporters[1])
         )
         val lineControllerService =
-            LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf(), transporterTrackerRepo)
+            LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf())
 
         val channel = Channel<Transport>()
         val channel2 = Channel<Transport>()
 
-        val res = async { lineControllerService.regulate(channel, channel2) }
+        val res = async { lineControllerService.regulate(channel) }
 
         val transport = Transport(config = LineBuilder().transportConfig, lineId = "1", timeStep = 1000)
         transport.id = line.transporters.first().id

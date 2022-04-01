@@ -5,8 +5,8 @@ import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.repo.StationRepoImpl
-import com.tabiiki.kotlinlab.repo.TransporterTrackerRepoImpl
 import com.tabiiki.kotlinlab.service.LineControllerImpl
+import com.tabiiki.kotlinlab.service.LineSectionService
 import com.tabiiki.kotlinlab.service.PlatformConductorImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.Job
@@ -18,12 +18,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import java.util.*
 
 class LineControllerTest {
 
     private val lineBuilder = LineBuilder()
-    private val transporterTrackerRepo = TransporterTrackerRepoImpl()
 
     private val stationFactory = Mockito.mock(StationFactory::class.java)
     private val stations = lineBuilder.stations
@@ -44,10 +44,9 @@ class LineControllerTest {
             LineControllerImpl(
                 1,
                 listOf(line),
-                PlatformConductorImpl(stationRepo),
+                PlatformConductorImpl(stationRepo, mock(LineSectionService::class.java)),
                 JourneyRepoImpl(),
-                mapOf(),
-                transporterTrackerRepo
+                mapOf()
             )
 
         val channel = Channel<Transport>()
@@ -55,7 +54,7 @@ class LineControllerTest {
         val channel3 = Channel<Transport>()
 
         val res = async { lineControllerService.start(channel) }
-        val res2 = async { lineControllerService.regulate(channel2, channel3) }
+        val res2 = async { lineControllerService.regulate(channel2) }
         val testRes = async { testChannel(channel, channel2, listOf(res, res2)) }
     }
 

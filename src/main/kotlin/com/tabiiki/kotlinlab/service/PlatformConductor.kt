@@ -19,17 +19,17 @@ interface PlatformConductor {
 
 @Service
 class PlatformConductorImpl(
-    private val stationRepo: StationRepo
+    private val stationRepo: StationRepo,
+    private val lineSectionService: LineSectionService
 ) : PlatformConductor {
 
-
     override fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport> =
-        lines.map { it.transporters }.flatten().groupBy { it.linePosition }.values.flatten()
-            .distinctBy { it.linePosition }
+        lines.map { it.transporters }.flatten().groupBy { it.section }.values.flatten()
+            .distinctBy { it.section }
 
     override fun getNextTransportersToDispatch(lines: List<Line>): List<Transport> =
         lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }
-            .groupBy { it.linePosition }.values.flatten().distinctBy { it.linePosition }
+            .groupBy { it.section }.values.flatten().distinctBy { it.section }
 
     override suspend fun hold(
         transport: Transport,
@@ -49,10 +49,10 @@ class PlatformConductorImpl(
         lineStations: List<String>
     ) {
         transport.depart(
-            stationRepo.get(transport.linePosition.first),
-            stationRepo.get(transport.linePosition.second),
+            stationRepo.get(transport.section.first),
+            stationRepo.get(transport.section.second),
             stationRepo.getNextStationOnLine(
-                lineStations = lineStations, linePosition = transport.linePosition
+                lineStations = lineStations, section = transport.section
             )
         )
     }

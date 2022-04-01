@@ -36,7 +36,7 @@ internal class StationServiceTest {
         val job = async { stationService.monitor("B", channel, channel2) }
         val transport =
             Transport(config = TransportConfig(transportId = 1, capacity = 1), lineId = "1", timeStep = 1000)
-        transport.linePosition = Pair("B", "A")
+        transport.section = Pair("B", "A")
         val job2 = async { channel.send(transport) }
 
         delay(100)
@@ -56,7 +56,7 @@ internal class StationServiceTest {
         val job = async { stationService.monitor("B", channel, channel2) }
         val transport =
             Transport(config = TransportConfig(transportId = 1, capacity = 1), lineId = "1", timeStep = 1000)
-        transport.linePosition = Pair("A", "B")
+        transport.section = Pair("A", "B")
         val depart = async {
             transport.depart(
                 LineBuilder().stations[0], LineBuilder().stations[1], LineBuilder().stations[2]

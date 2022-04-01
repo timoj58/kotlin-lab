@@ -3,11 +3,8 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import com.tabiiki.kotlinlab.repo.TransporterTrackerRepo
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import javax.naming.ConfigurationException
@@ -22,8 +19,7 @@ class NetworkServiceImpl(
     private val stationService: StationService,
     lineFactory: LineFactory,
     platformConductor: PlatformConductor,
-    journeyRepo: JourneyRepo,
-    private val transporterTrackerRepo: TransporterTrackerRepo
+    journeyRepo: JourneyRepo
 ) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
@@ -40,25 +36,21 @@ class NetworkServiceImpl(
                     platformConductor,
                     journeyRepo,
                     listOf(line).flatten().flatMap { it.stations }.distinct()
-                        .associateWith { stationService.getChannel(it) },
-                    transporterTrackerRepo
+                        .associateWith { stationService.getChannel(it) }
                 )
             )
         }
     }
 
     override suspend fun start(listener: Channel<StationMessage>): Unit = coroutineScope {
-        val trackerRepoChannel = Channel<Transport>()
-
         controllers.forEach { controller ->
             val channel = Channel<Transport>()
 
             launch(Dispatchers.Default) { controller.start(channel) }
-            launch(Dispatchers.Default) { controller.regulate(channel, trackerRepoChannel) }
+            launch(Dispatchers.Default) { controller.regulate(channel) }
         }
 
         launch(Dispatchers.Default) { stationService.monitor(listener) }
-        launch(Dispatchers.Default) { transporterTrackerRepo.track(trackerRepoChannel) }
     }
 
 }

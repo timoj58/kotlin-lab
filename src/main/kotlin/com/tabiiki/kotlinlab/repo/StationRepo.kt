@@ -7,7 +7,7 @@ import kotlin.math.abs
 
 
 interface StationRepo {
-    fun getNextStationOnLine(lineStations: List<String>, linePosition: Pair<String, String>): Station
+    fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station
     fun get(): List<Station>
     fun get(id: String): Station
 }
@@ -18,13 +18,13 @@ class StationRepoImpl(
 ) : StationRepo {
     private val stations = stationFactory.get().map { stationFactory.get(it) }
 
-    override fun getNextStationOnLine(lineStations: List<String>, linePosition: Pair<String, String>): Station {
-        var fromStationIdx = lineStations.indexOf(linePosition.first)
-        var toStationIdx = lineStations.indexOf(linePosition.second)
+    override fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
+        var fromStationIdx = lineStations.indexOf(section.first)
+        var toStationIdx = lineStations.indexOf(section.second)
         if (abs(fromStationIdx - toStationIdx) > 1)
             if (fromStationIdx > toStationIdx)
-                toStationIdx = lineStations.lastIndexOf(linePosition.second)
-            else fromStationIdx = lineStations.lastIndexOf(linePosition.second)
+                toStationIdx = lineStations.lastIndexOf(section.second)
+            else fromStationIdx = lineStations.lastIndexOf(section.second)
 
         val direction = fromStationIdx - toStationIdx
 

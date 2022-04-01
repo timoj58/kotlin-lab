@@ -28,7 +28,7 @@ data class Transport(
     var id = UUID.randomUUID()
     val transportId = config.transportId
     val capacity = config.capacity
-    var linePosition = Pair("", "") //current(from), next(to)
+    var section = Pair("", "") //current(from), next(to)
     private var previousStatus = Status.DEPOT
     val physics = Physics(config)
     var status = Status.DEPOT
@@ -102,7 +102,7 @@ data class Transport(
 
     private suspend fun stopJourney(to: Station, next: Station) = coroutineScope {
         physics.reset()
-        linePosition = Pair(to.id, next.id)
+        section = Pair(to.id, next.id)
         status = Status.PLATFORM
     }
 }

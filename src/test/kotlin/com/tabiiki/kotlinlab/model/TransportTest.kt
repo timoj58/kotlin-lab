@@ -23,7 +23,7 @@ internal class TransportTest {
             lineId = "1",
             timeStep = 10
         )
-        train.linePosition = Pair("1", "2")
+        train.section = Pair("1", "2")
 
 
         val res = async {
@@ -45,8 +45,8 @@ internal class TransportTest {
             delay(1000)
         } while (!train.atPlatform())
 
-        assertThat(train.linePosition.first).isEqualTo("2")
-        assertThat(train.linePosition.second).isEqualTo("3")
+        assertThat(train.section.first).isEqualTo("2")
+        assertThat(train.section.second).isEqualTo("3")
 
         res.cancelAndJoin()
     }
