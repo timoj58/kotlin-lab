@@ -1,7 +1,7 @@
 lines:
   - id: CITY01
     transport-id: 4
-    transport-capacity: 4
+    transport-capacity: 2 #need to increase this once we have signals.  for now keep it simple.
     name: Waterloo & City
     stations:
       - 26

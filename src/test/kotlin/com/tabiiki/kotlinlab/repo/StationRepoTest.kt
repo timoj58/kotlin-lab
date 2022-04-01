@@ -51,7 +51,7 @@ internal class StationRepoTest {
     }
 
     @Test
-    fun `circle line test where start and end is same`(){
+    fun `circle line test where start and end is same`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("C", "A")).id).isEqualTo("C")
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "C")).id).isEqualTo("B")
@@ -59,7 +59,7 @@ internal class StationRepoTest {
     }
 
     @Test
-    fun `circle line test where start and end is same reversed`(){
+    fun `circle line test where start and end is same reversed`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("B", "A")).id).isEqualTo("B")
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "B")).id).isEqualTo("C")

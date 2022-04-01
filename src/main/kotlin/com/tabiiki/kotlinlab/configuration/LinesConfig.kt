@@ -23,7 +23,7 @@ data class LineConfig(
 }
 
 enum class LineType {
-    UNDERGROUND, OVERGROUND, RIVER, CABLE
+    UNDERGROUND, OVERGROUND, RIVER, CABLE, DOCKLAND
 }
 
 @Configuration

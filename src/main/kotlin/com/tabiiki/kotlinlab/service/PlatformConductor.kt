@@ -10,35 +10,44 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
-interface LineConductor {
+interface PlatformConductor {
     fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport>
     fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
-    suspend fun hold(transport: Transport, lineStations: List<String>, isLineClear: (Transport) -> Boolean)
-    suspend fun depart(transport: Transport, lineStations: List<String>)
+    suspend fun hold(transport: Transport, lineStations: List<String>)
+    suspend fun release(transport: Transport, lineStations: List<String>)
 }
 
 @Service
-class LineConductorImpl(private val stationRepo: StationRepo) : LineConductor {
+class PlatformConductorImpl(
+    private val stationRepo: StationRepo
+) : PlatformConductor {
+
+
     override fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport> =
-        lines.map { it.transporters }.flatten().groupBy { it.linePosition }.values.flatten().distinctBy { it.linePosition }
+        lines.map { it.transporters }.flatten().groupBy { it.linePosition }.values.flatten()
+            .distinctBy { it.linePosition }
 
     override fun getNextTransportersToDispatch(lines: List<Line>): List<Transport> =
-        lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }.groupBy { it.linePosition }.values.flatten().distinctBy { it.linePosition }
+        lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }
+            .groupBy { it.linePosition }.values.flatten().distinctBy { it.linePosition }
 
     override suspend fun hold(
         transport: Transport,
-        lineStations: List<String>,
-        isLineClear: (Transport) -> Boolean): Unit = coroutineScope {
+        lineStations: List<String>
+    ): Unit = coroutineScope {
         var counter = 0
         do {
             delay(transport.timeStep)
             counter++
-        }while (counter < 45 || !isLineClear(transport))  //TODO delay
+        } while (counter < 45)
 
-        launch(Dispatchers.Default) { depart(transport, lineStations) }
+        launch(Dispatchers.Default) { release(transport, lineStations) }
     }
 
-    override suspend fun depart(transport: Transport, lineStations: List<String>) {
+    override suspend fun release(
+        transport: Transport,
+        lineStations: List<String>
+    ) {
         transport.depart(
             stationRepo.get(transport.linePosition.first),
             stationRepo.get(transport.linePosition.second),

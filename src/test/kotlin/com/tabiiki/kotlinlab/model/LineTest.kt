@@ -56,7 +56,7 @@ internal class LineTest {
     }
 
     @Test
-    fun `circle line test where paddington is start and end`(){
+    fun `circle line test where paddington is start and end`() {
         val line = Line(1, circleLineConfig, listOf(transportConfig))
 
         assertThat(line.transporters.count { t -> t.linePosition == Pair("A", "B") }).isEqualTo(3)

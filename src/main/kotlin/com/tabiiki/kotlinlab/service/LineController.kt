@@ -18,14 +18,14 @@ interface LineController {
 class LineControllerImpl(
     private val startDelay: Long,
     private val line: List<Line>,
-    private val conductor: LineConductor,
+    private val conductor: PlatformConductor,
     private val journeyRepo: JourneyRepo,
     private val stationChannels: Map<String, Channel<Transport>>,
     private val transporterTrackerRepo: TransporterTrackerRepo
 ) : LineController {
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
-       
+
         conductor.getFirstTransportersToDispatch(line).forEach {
             async { dispatch(it, channel) }
         }
@@ -41,21 +41,19 @@ class LineControllerImpl(
 
     }
 
-    override suspend fun regulate(channel: Channel<Transport>, trackingRepoChannel: Channel<Transport>) = coroutineScope {
-        do {
-            val message = channel.receive()
-            async { publish(trackingRepoChannel, message) }
-            if (message.atPlatform()) {
-                async {  journeyRepo.addJourneyTime(message.getJourneyTime()) }
-                launch(Dispatchers.Default) {
-                    conductor.hold(
-                        message,
-                        getLineStations(message.id)
-                    ){t -> transporterTrackerRepo.isSectionClear(t)}
+    override suspend fun regulate(channel: Channel<Transport>, trackingRepoChannel: Channel<Transport>) =
+        coroutineScope {
+            do {
+                val message = channel.receive()
+                async { publish(trackingRepoChannel, message) }
+                if (message.atPlatform()) {
+                    async { journeyRepo.addJourneyTime(message.getJourneyTime()) }
+                    launch(Dispatchers.Default) {
+                        conductor.hold(message, getLineStations(message.id))
+                    }
                 }
-            }
-        } while (true)
-    }
+            } while (true)
+        }
 
     override fun getStationChannels(): Map<String, Channel<Transport>> {
         return stationChannels
@@ -67,22 +65,11 @@ class LineControllerImpl(
 
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch(Dispatchers.Default) { transport.track(channel) }
-        launch(Dispatchers.Default) { conductor.depart(transport, getLineStations(transport.id)) }
+        launch(Dispatchers.Default) { conductor.release(transport, getLineStations(transport.id)) }
     }
 
-   /* private suspend fun delayThenDispatch(transport: Transport, channel: Channel<Transport>, delay: Int) =
-        coroutineScope {
-            var difference = delay
-            val timeStep = line.first { l -> l.transporters.any { it.id == transport.id } }.timeStep
-            do {
-                delay(timeStep)
-                difference--
-            } while (difference > 0)
-            async { dispatch(transport, channel) }
-        }
-    */
-    private suspend fun publish(trackingRepoChannel: Channel<Transport>, message: Transport) = coroutineScope{
-        async {  trackingRepoChannel.send(message) }
+    private suspend fun publish(trackingRepoChannel: Channel<Transport>, message: Transport) = coroutineScope {
+        async { trackingRepoChannel.send(message) }
         listOf(message.linePosition.first, message.linePosition.second)
             .forEach { stationChannels[it]?.send(message) }
     }

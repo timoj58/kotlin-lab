@@ -55,21 +55,21 @@ class NetworkServiceTest @Autowired constructor(
 
             trainsByLine[msg.lineId]?.add(msg.transportId)
             stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 4) > System.currentTimeMillis())
+        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 5) > System.currentTimeMillis())
 
         job.cancelAndJoin()
         assert()
-      }
+    }
 
-    private fun assert(){
+    private fun assert() {
         println("total trains: $transportersPerLine, trains running: ${stationVisitedPerTrain.keys.size}  and stations visited ${stationVisitedPerTrain.values.flatten().size}")
         val count = testSectionsVisited()
         println("completed journeys count: $count")
         assertThat(count).isEqualTo(transportersPerLine)
         stationVisitedPerTrain.values.flatten()
             .forEach {
-                if(it.second == it.first) println("incorrect route $it")
-               //TODO one route has issue (126,126) assertThat(it.second == it.first).isEqualTo(false)
+                if (it.second == it.first) println("incorrect route $it")
+                assertThat(it.second == it.first).isEqualTo(false)
             }
     }
 
@@ -81,7 +81,6 @@ class NetworkServiceTest @Autowired constructor(
         stationVisitedPerTrain.forEach { (k, u) ->
             if (u.containsAll(sectionsByLine[getLineByTrain(k)]!!.toList()))
                 completedRouteCount++
-
         }
 
         return completedRouteCount +
@@ -99,7 +98,7 @@ class NetworkServiceTest @Autowired constructor(
 
     private fun getLineStations(stations: List<String>): Set<Pair<String, String>> {
         var pairs = mutableSetOf<Pair<String, String>>()
-        for (station in 0..stations.size - 2 step 2) {
+        for (station in 0..stations.size - 2 step 1) {
             pairs.add(Pair(stations[station], stations[station + 1]))
             pairs.add(Pair(stations.reversed()[station], stations.reversed()[station + 1]))
         }

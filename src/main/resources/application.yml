@@ -9,41 +9,44 @@ network:
     ferries:
       - transport-id: 1
         capacity: 1000
-        weight: 10000
-        top-speed: 60
-        power: 150
+        weight: 100
+        top-speed: 20
+        power: 10
     cable-cars:
       - transport-id: 2
         capacity: 1000
-        weight: 10000
-        top-speed: 60
-        power: 150
+        weight: 100
+        top-speed: 5
+        power: 5
     trains:
       - transport-id: 3
         capacity: 1000
-        weight: 15000
+        weight: 1000000
         top-speed: 50
-        power: 125
+        power: 100
       - transport-id: 4
         capacity: 1000
-        weight: 15000
-        top-speed: 45
+        weight: 1500000
+        top-speed: 50
         power: 100
   lines:
     underground:
       - src/main/resources/network/underground/city.yml
-      #- src/main/resources/network/underground/jubilee.yml
-      #- src/main/resources/network/underground/victoria.yml
-      #- src/main/resources/network/underground/circle.yml
-      #- src/main/resources/network/underground/bakerloo.yml
-      #- src/main/resources/network/underground/hammersmith.yml
-      #- src/main/resources/network/underground/metropolitan.yml
-      #- src/main/resources/network/underground/central.yml
-      #- src/main/resources/network/underground/district.yml
-      #- src/main/resources/network/underground/northern.yml
+      - src/main/resources/network/underground/jubilee.yml
+      - src/main/resources/network/underground/victoria.yml
+      - src/main/resources/network/underground/circle.yml
+      - src/main/resources/network/underground/bakerloo.yml
+      - src/main/resources/network/underground/hammersmith.yml
+      - src/main/resources/network/underground/metropolitan.yml
+      - src/main/resources/network/underground/central.yml
+      - src/main/resources/network/underground/district.yml
+      - src/main/resources/network/underground/northern.yml
+      #- src/main/resources/network/underground/piccadilly.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:
       - src/main/resources/network/cable/cable.yml
     river:
       - src/main/resources/network/river/river.yml
+    dockland:
+      - src/main/resources/network/dockland/dlr.yml

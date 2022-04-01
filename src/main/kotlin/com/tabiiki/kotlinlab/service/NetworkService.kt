@@ -10,6 +10,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import javax.naming.ConfigurationException
 
 interface NetworkService {
     suspend fun start(listener: Channel<StationMessage>)
@@ -20,7 +21,7 @@ class NetworkServiceImpl(
     @Value("\${network.start-delay}") startDelay: Long,
     private val stationService: StationService,
     lineFactory: LineFactory,
-    lineConductor: LineConductor,
+    platformConductor: PlatformConductor,
     journeyRepo: JourneyRepo,
     private val transporterTrackerRepo: TransporterTrackerRepo
 ) : NetworkService {
@@ -29,12 +30,14 @@ class NetworkServiceImpl(
     private val controllers = mutableListOf<LineController>()
 
     init {
+        if (startDelay < 100) throw ConfigurationException("start delay is to small, minimum 100 ms")
+
         lines.groupBy { it.name }.values.forEach { line ->
             controllers.add(
                 LineControllerImpl(
                     startDelay,
                     line,
-                    lineConductor,
+                    platformConductor,
                     journeyRepo,
                     listOf(line).flatten().flatMap { it.stations }.distinct()
                         .associateWith { stationService.getChannel(it) },

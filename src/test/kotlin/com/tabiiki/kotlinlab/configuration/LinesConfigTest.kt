@@ -24,6 +24,9 @@ internal class LinesConfigTest {
         linesAdapter.setOverground(
             mutableListOf("src/main/resources/network/overground/highbury.yml")
         )
+        linesAdapter.setDockland(
+            mutableListOf("src/main/resources/network/dockland/dlr.yml")
+        )
 
     }
 

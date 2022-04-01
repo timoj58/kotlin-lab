@@ -14,6 +14,8 @@ public class LinesAdapter {
     private List<String> overground;
     private List<String> cable;
     private List<String> river;
+    private List<String> dockland;
+
 
     public void setUnderground(List<String> underground) {
         this.underground = underground;
@@ -31,12 +33,17 @@ public class LinesAdapter {
         this.river = river;
     }
 
+    public void setDockland(List<String> dockland) {
+        this.dockland = dockland;
+    }
+
     public Map<LineType, List<String>> getLines() {
         return Map.of(
                 LineType.UNDERGROUND, underground,
                 LineType.OVERGROUND, overground,
                 LineType.CABLE, cable,
-                LineType.RIVER, river
+                LineType.RIVER, river,
+                LineType.DOCKLAND, dockland
         );
     }
 

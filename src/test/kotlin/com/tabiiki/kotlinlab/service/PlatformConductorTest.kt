@@ -13,11 +13,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 
-internal class LineConductorTest {
+internal class PlatformConductorTest {
 
 
     private val stationRepo = mock(StationRepo::class.java)
-    private val lineConductor = LineConductorImpl(stationRepo)
+    private val lineConductor = PlatformConductorImpl(stationRepo)
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
@@ -62,15 +62,14 @@ internal class LineConductorTest {
 
 
     @Test
-    fun `train hold when track is not clear but hold time surpassed`() = runBlocking {
+    fun `train hold and dont release`() = runBlocking {
         val job = async {
             lineConductor.hold(
                 transport = transport,
                 lineStations = listOf()
-            ){t -> false}
+            )
         }
-
-        delay(100)
+        delay(5)
 
         verify(stationRepo, never()).getNextStationOnLine(listOf(), Pair("A", "B"))
         job.cancelAndJoin()
@@ -78,12 +77,12 @@ internal class LineConductorTest {
     }
 
     @Test
-    fun `train hold when track is clear`() = runBlocking {
+    fun `train hold and release`() = runBlocking {
         val job = async {
             lineConductor.hold(
                 transport = transport,
                 lineStations = listOf()
-            ){t -> true}
+            )
         }
 
         delay(100)
@@ -91,4 +90,5 @@ internal class LineConductorTest {
 
         job.cancelAndJoin()
     }
+
 }

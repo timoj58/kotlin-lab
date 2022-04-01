@@ -12,19 +12,20 @@ private data class TransporterTracker(
     val id: UUID,
     val position: Pair<String, String>,
     val status: Status,
-    val journeyTime: Int)
+    val journeyTime: Int
+)
 
-interface TransporterTrackerRepo{
+interface TransporterTrackerRepo {
     fun isSectionClear(transport: Transport): Boolean
     suspend fun track(channel: Channel<Transport>)
 }
 
 @Repository
-class TransporterTrackerRepoImpl: TransporterTrackerRepo {
+class TransporterTrackerRepoImpl : TransporterTrackerRepo {
 
     private var repo: ConcurrentHashMap<UUID, TransporterTracker> = ConcurrentHashMap()
     override fun isSectionClear(transport: Transport): Boolean =
-        if (repo.isEmpty()) true else repo.values.none { it.id != transport.id && it.status != Status.PLATFORM && it.position == transport.linePosition}
+        if (repo.isEmpty()) true else repo.values.none { it.id != transport.id /*&& it.status != Status.PLATFORM*/ && it.position == transport.linePosition }
 
     override suspend fun track(channel: Channel<Transport>) {
         do {
@@ -33,9 +34,9 @@ class TransporterTrackerRepoImpl: TransporterTrackerRepo {
                 id = msg.id,
                 position = msg.linePosition,
                 status = msg.status,
-                journeyTime = msg.getJourneyTime().first
+                journeyTime = msg.getJourneyTime().second
             )
-        }while (true)
+        } while (true)
     }
 
 }

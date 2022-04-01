@@ -18,13 +18,13 @@ class StationRepoImpl(
 ) : StationRepo {
     private val stations = stationFactory.get().map { stationFactory.get(it) }
 
-   override fun getNextStationOnLine(lineStations: List<String>, linePosition: Pair<String, String>): Station {
+    override fun getNextStationOnLine(lineStations: List<String>, linePosition: Pair<String, String>): Station {
         var fromStationIdx = lineStations.indexOf(linePosition.first)
         var toStationIdx = lineStations.indexOf(linePosition.second)
-        if(abs(fromStationIdx - toStationIdx) > 1)
-           if(fromStationIdx > toStationIdx)
-               toStationIdx = lineStations.lastIndexOf(linePosition.second)
-           else fromStationIdx = lineStations.lastIndexOf(linePosition.second)
+        if (abs(fromStationIdx - toStationIdx) > 1)
+            if (fromStationIdx > toStationIdx)
+                toStationIdx = lineStations.lastIndexOf(linePosition.second)
+            else fromStationIdx = lineStations.lastIndexOf(linePosition.second)
 
         val direction = fromStationIdx - toStationIdx
 

@@ -1,7 +1,7 @@
 lines:
   - id: PIC01
     transport-id: 3
-    transport-capacity: 4
+    transport-capacity: 2
     name: Piccadilly
     stations:
       -
@@ -10,7 +10,7 @@ lines:
 
   - id: PIC02
     transport-id: 3
-    transport-capacity: 4
+    transport-capacity: 2
     name: Piccadilly
     stations:
       -
