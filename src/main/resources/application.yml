@@ -50,3 +50,5 @@ network:
       - src/main/resources/network/river/river.yml
     dockland:
       - src/main/resources/network/dockland/dlr.yml
+    tram:
+      - src/main/resources/network/tram/tram.yml

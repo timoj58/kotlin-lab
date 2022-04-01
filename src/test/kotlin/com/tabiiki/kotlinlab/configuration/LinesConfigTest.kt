@@ -27,6 +27,9 @@ internal class LinesConfigTest {
         linesAdapter.setDockland(
             mutableListOf("src/main/resources/network/dockland/dlr.yml")
         )
+        linesAdapter.setTram(
+            mutableListOf("src/main/resources/network/tram/tram.yml")
+        )
 
     }
 

@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.util.HaversineCalculator
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -13,11 +14,16 @@ enum class Status {
     ACTIVE, DEPOT, PLATFORM
 }
 
+interface TransportInstructions {
+    suspend fun track(channel: SendChannel<Transport>)
+    suspend fun depart(from: Station, to: Station, next: Station)
+}
+
 data class Transport(
     private val config: TransportConfig,
     val lineId: String,
     val timeStep: Long
-) {
+): TransportInstructions {
 
     var id = UUID.randomUUID()
     val transportId = config.transportId
@@ -47,7 +53,7 @@ data class Transport(
 
     fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
     fun atPlatform() = status == Status.PLATFORM && physics.acceleration == 0.0
-    suspend fun track(channel: SendChannel<Transport>) {
+    override suspend fun track(channel: SendChannel<Transport>) {
         do {
             if (previousStatus != Status.PLATFORM) channel.send(this)
             previousStatus = status
@@ -55,7 +61,7 @@ data class Transport(
         } while (true)
     }
 
-    suspend fun depart(from: Station, to: Station, next: Station) {
+    override suspend fun depart(from: Station, to: Station, next: Station) {
         startJourney(from, to)
         do {
             delay(timeStep)
