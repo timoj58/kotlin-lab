@@ -1,7 +1,9 @@
 package com.tabiiki.kotlinlab.factory
 
 import com.tabiiki.kotlinlab.model.Line
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import org.springframework.stereotype.Repository
 
 
@@ -27,10 +29,12 @@ class SignalFactory {
 
     private var signals = mutableMapOf<Pair<String, String>, Signal>()
 
-    fun create(lines: List<Line>, channel: Channel<Signal>) {
+    suspend fun create(lines: List<Line>, channel: Channel<Signal>) = coroutineScope{
         lines.forEach { line ->
             getLineSections(line.stations).forEach { section ->
-                signals[section] = Signal(section = section, channel = channel)
+                val signal = Signal(section = section, channel = channel)
+                signals[section] = signal
+                async { signal.notify() }
             }
         }
     }
