@@ -1,7 +1,12 @@
 package com.tabiiki.kotlinlab.factory
 
 import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.service.LineDirection
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.springframework.stereotype.Repository
 
 enum class SignalType {
@@ -9,24 +14,30 @@ enum class SignalType {
 }
 
 enum class SignalValue {
-    RED, GREEN, AMBER
+    RED, GREEN, AMBER_10, AMBER_20, AMBER_30
 }
 
 data class Signal(
     var section: Pair<String, String>,
-    private var status: SignalValue = SignalValue.GREEN,
-    val type: SignalType = SignalType.SECTION
+    var status: SignalValue = SignalValue.GREEN,
+    val type: SignalType = SignalType.SECTION,
+    val timeStep: Long = 100
 ) {
-    fun getStatus() = status
-    suspend fun receive(channel: Channel<SignalValue>){
+    suspend fun start(channelIn: Channel<SignalValue>, channelOut: Channel<SignalValue>) = coroutineScope {
+        launch(Dispatchers.Default){receive(channelIn)}
+        launch(Dispatchers.Default){send(channelOut)}
+    }
+    private suspend fun receive(channel: Channel<SignalValue>){
         do{
-            status = channel.receive()
+            val msg = channel.receive()
+            if(msg != status) status = msg
         }while (true)
     }
 
-    suspend fun send(channel: Channel<Signal>) {
+    private suspend fun send(channel: Channel<SignalValue>) {
         do {
-            channel.send(this)
+            delay(timeStep * 2)
+            channel.send(this.status)
         } while (true)
     }
 }
@@ -41,12 +52,12 @@ class SignalFactory(
         val lines = lineFactory.get().map { lineFactory.get(it) }
         lines.forEach { line ->
             getLineSections(line.stations).forEach { section ->
-                val signal = Signal(section = section, type = SignalType.SECTION)
+                val signal = Signal(section = section, type = SignalType.SECTION, timeStep = lineFactory.timeStep)
                 signals[section] = signal
             }
         }
         getPlatforms(lines).forEach { platform ->
-            val signal = Signal(section = platform, type = SignalType.PLATFORM)
+            val signal = Signal(section = platform, type = SignalType.PLATFORM, timeStep = lineFactory.timeStep)
             signals[platform] = signal
         }
     }
@@ -57,7 +68,9 @@ class SignalFactory(
     private fun getPlatforms(lines: List<Line>): Set<Pair<String, String>> {
         var pairs = mutableSetOf<Pair<String, String>>()
         lines.forEach { line ->
-            pairs.addAll(line.stations.map { Pair(line.id, it) })
+            val id = line.id
+            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.POSITIVE}", it) })
+            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.NEGATIVE}", it) })
         }
         return pairs.toSet()
     }

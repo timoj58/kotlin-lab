@@ -21,14 +21,14 @@ network:
     trains:
       - transport-id: 3
         capacity: 1000
-        weight: 1000000
-        top-speed: 50
-        power: 100
+        weight: 1000
+        top-speed: 12
+        power: 200
       - transport-id: 4
         capacity: 1000
-        weight: 1500000
-        top-speed: 50
-        power: 100
+        weight: 1200
+        top-speed: 10
+        power: 1800
   lines:
     underground:
       - src/main/resources/network/underground/city.yml

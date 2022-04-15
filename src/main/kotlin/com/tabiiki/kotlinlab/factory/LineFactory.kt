@@ -9,7 +9,7 @@ import javax.naming.ConfigurationException
 
 @Repository
 class LineFactory(
-    @Value("\${network.time-step}") timeStep: Long,
+    @Value("\${network.time-step}") val timeStep: Long,
     transportConfig: TransportersConfig,
     linesConfig: LinesConfig
 ) {

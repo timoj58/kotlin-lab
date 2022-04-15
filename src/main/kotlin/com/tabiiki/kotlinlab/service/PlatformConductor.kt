@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
@@ -47,13 +48,21 @@ class PlatformConductorImpl(
     override suspend fun release(
         transport: Transport,
         lineStations: List<String>
-    ) {
-        transport.depart(
-            stationRepo.get(transport.section.first),
-            stationRepo.get(transport.section.second),
-            stationRepo.getNextStationOnLine(
-                lineStations = lineStations, section = transport.section
-            )
-        )
+    ): Unit = coroutineScope {
+
+        launch(Dispatchers.Default) {
+            lineSectionService.release(transport,lineInstructions(transport, lineStations))
+        }
     }
+
+    private fun lineInstructions(transport: Transport, lineStations: List<String>): LineInstructions =
+        LineInstructions(
+            from = stationRepo.get(transport.section.first),
+            to = stationRepo.get(transport.section.second),
+            next =   stationRepo.getNextStationOnLine(
+                lineStations = lineStations, section = transport.section
+            ),
+            direction = LineDirection.POSITIVE
+        )
+
 }

@@ -91,7 +91,6 @@ internal class LineControllerTest {
             LineControllerImpl(10000, listOf(line), conductor, journeyRepoImpl, mapOf())
 
         val channel = Channel<Transport>()
-        val channel2 = Channel<Transport>()
 
         val res = async { lineControllerService.regulate(channel) }
 

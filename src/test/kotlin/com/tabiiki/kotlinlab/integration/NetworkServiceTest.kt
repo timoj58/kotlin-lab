@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import java.util.*
 
+@Disabled
 @ActiveProfiles("test")
 @SpringBootTest
 class NetworkServiceTest @Autowired constructor(

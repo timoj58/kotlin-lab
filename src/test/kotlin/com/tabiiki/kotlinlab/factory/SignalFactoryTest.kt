@@ -21,7 +21,7 @@ internal class SignalFactoryTest @Autowired constructor(
     @Test
     fun `create platform signals test`() {
         assertThat(signalFactory.get().filter { it.type == SignalType.PLATFORM }.size).isEqualTo(
-            lines.map { it.stations.distinct() }.flatten().size
+            lines.map { it.stations.distinct() }.flatten().size * 2
         )
     }
 
