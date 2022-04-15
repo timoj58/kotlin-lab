@@ -11,7 +11,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class TransportTest {
@@ -25,15 +24,15 @@ internal class TransportTest {
 
     @Test
     fun `train moving between Stratford and West Ham stations`() = runBlocking {
-        async {  launch() }
+        async { launch() }
         val channel = Channel<SignalValue>()
-        val res = async { train.signal(channel)}
+        val res = async { train.signal(channel) }
         delay(50)
 
         channel.send(SignalValue.GREEN)
         do {
             delay(1000)
-        }while (!train.atPlatform())
+        } while (!train.atPlatform())
 
         assertThat(train.section.first).isEqualTo("2")
         assertThat(train.section.second).isEqualTo("3")
@@ -42,10 +41,10 @@ internal class TransportTest {
     }
 
     @Test
-    fun `emergency stop test` () = runBlocking{
-        async {  launch() }
+    fun `emergency stop test`() = runBlocking {
+        async { launch() }
         val channel = Channel<SignalValue>()
-        val res = async { train.signal(channel)}
+        val res = async { train.signal(channel) }
         delay(50)
 
         channel.send(SignalValue.GREEN)
@@ -59,7 +58,7 @@ internal class TransportTest {
 
         do {
             delay(1000)
-        }while (!train.atPlatform())
+        } while (!train.atPlatform())
 
         assertThat(train.section.first).isEqualTo("2")
         assertThat(train.section.second).isEqualTo("3")
@@ -74,18 +73,20 @@ internal class TransportTest {
 
         async {
             train.release(
-                LineInstructions( from = Station(
-                    StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second), listOf()
-                ),
-                to = Station(
-                    StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second), listOf()
-                ),
-                next = Station(
-                    StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second),
-                    listOf()
-                ),
+                LineInstructions(
+                    from = Station(
+                        StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second), listOf()
+                    ),
+                    to = Station(
+                        StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second), listOf()
+                    ),
+                    next = Station(
+                        StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second),
+                        listOf()
+                    ),
                     direction = LineDirection.POSITIVE
-            ))
+                )
+            )
         }
     }
 

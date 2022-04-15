@@ -4,9 +4,10 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.service.LineInstructions
 import com.tabiiki.kotlinlab.util.HaversineCalculator
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
@@ -19,7 +20,7 @@ enum class Status {
     ACTIVE, DEPOT, PLATFORM
 }
 
-enum class Instruction{
+enum class Instruction {
     STATIONARY, EMERGENCY_STOP, SCHEDULED_STOP, LIMIT_10, LIMIT_20, LIMIT_30, THROTTLE_ON
 }
 
@@ -63,33 +64,34 @@ data class Transport(
             velocity = 0.0
         }
 
-        fun init(from: Station, to: Station,){
+        fun init(from: Station, to: Station) {
             distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
         }
 
-        private fun calculateForce(instruction: Instruction, percentage: Double = 100.0) : Double {
-           return when(instruction){
-               Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
-               Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 100.0) * -1
-               Instruction.EMERGENCY_STOP -> power.toDouble() * -1
-               else -> 0.0
-           }
+        private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {
+            return when (instruction) {
+                Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
+                Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 100.0) * -1
+                Instruction.EMERGENCY_STOP -> power.toDouble() * -1
+                else -> 0.0
+            }
         }
+
         private fun calculateAcceleration(force: Double): Double = force / weight.toDouble()
 
-        fun calcTimeStep(instruction: Instruction)  {
+        fun calcTimeStep(instruction: Instruction) {
             var force = calculateForce(instruction)
             var acceleration = calculateAcceleration(force)
             var percentage = 100.0
 
-            while (velocity + acceleration > topSpeed && percentage >= 0.0){
+            while (velocity + acceleration > topSpeed && percentage >= 0.0) {
                 percentage--
                 force = calculateForce(instruction = instruction, percentage = percentage)
                 acceleration = calculateAcceleration(force = force)
             }
 
-            if(velocity + acceleration >= 0.0) velocity += acceleration else velocity = sqrt(velocity)
-            if(floor(velocity) == 0.0 && instruction == Instruction.EMERGENCY_STOP) velocity = 0.0
+            if (velocity + acceleration >= 0.0) velocity += acceleration else velocity = sqrt(velocity)
+            if (floor(velocity) == 0.0 && instruction == Instruction.EMERGENCY_STOP) velocity = 0.0
 
             velocity *= drag
             displacement += velocity
@@ -98,12 +100,12 @@ data class Transport(
 
         fun shouldApplyBrakes(): Boolean {
             val stoppingDistance = distance - displacement
-            val brakingForce =  -power.toDouble()
+            val brakingForce = -power.toDouble()
             val brakingVelocity = velocity + (brakingForce / weight)
             val iterationsToPlatform = stoppingDistance / velocity
             val iterationsToBrakeToPlatform = stoppingDistance / abs(brakingVelocity)
 
-            return ceil(iterationsToPlatform)+2 == floor(iterationsToBrakeToPlatform)-1
+            return ceil(iterationsToPlatform) + 2 == floor(iterationsToBrakeToPlatform) - 1
         }
     }
 
@@ -142,7 +144,8 @@ data class Transport(
             delay(timeStep)
             journeyTime.second.incrementAndGet()
             physics.calcTimeStep(this.instruction)
-            if(this.instruction == Instruction.THROTTLE_ON && physics.shouldApplyBrakes()) this.instruction = Instruction.SCHEDULED_STOP
+            if (this.instruction == Instruction.THROTTLE_ON && physics.shouldApplyBrakes()) this.instruction =
+                Instruction.SCHEDULED_STOP
         } while (physics.displacement <= physics.distance)
         stopJourney(Pair(journey!!.to.id, journey!!.next.id))
     }

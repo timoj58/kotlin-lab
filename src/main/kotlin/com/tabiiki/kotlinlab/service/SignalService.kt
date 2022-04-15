@@ -1,6 +1,5 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.factory.Signal
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.SignalValue
 import kotlinx.coroutines.Dispatchers
@@ -18,23 +17,22 @@ interface SignalService {
 @Service
 class SignalServiceImpl(
     private val signalFactory: SignalFactory
-): SignalService {
+) : SignalService {
     override suspend fun start(
         key: Pair<String, String>,
         channelIn: Channel<SignalValue>,
-        channelOut: Channel<SignalValue>): Unit = coroutineScope {
-        launch(Dispatchers.Default){signalFactory.get(key).start(channelIn, channelOut)}
+        channelOut: Channel<SignalValue>
+    ): Unit = coroutineScope {
+        launch(Dispatchers.Default) { signalFactory.get(key).start(channelIn, channelOut) }
     }
 
     override fun getPlatformSignals(): List<Pair<String, String>> =
-        signalFactory.get().filter { it.section.first.contains(LineDirection.POSITIVE.name)
-                || it.section.first.contains(LineDirection.NEGATIVE.name)
-        }.map{it.section}
+        signalFactory.get().filter {
+            LineDirection.values().toList().map { it.name }.toList().contains(it.section.first)
+        }.map { it.section }
 
     override fun getSectionSignals(): List<Pair<String, String>> =
-        signalFactory.get().filter { !it.section.first.contains(LineDirection.POSITIVE.name)
-                && !it.section.first.contains(LineDirection.NEGATIVE.name)
-        }.map{it.section}
-
-
+        signalFactory.get().filter {
+            !LineDirection.values().toList().map { it.name }.toList().contains(it.section.first)
+        }.map { it.section }
 }

@@ -61,11 +61,16 @@ internal class StationServiceTest {
             Transport(config = TransportConfig(transportId = 1, capacity = 1), lineId = "1", timeStep = 1000)
         transport.section = Pair("A", "B")
 
-            transport.release(
-                LineInstructions(LineBuilder().stations[0], LineBuilder().stations[1], LineBuilder().stations[2], LineDirection.POSITIVE)
+        transport.release(
+            LineInstructions(
+                LineBuilder().stations[0],
+                LineBuilder().stations[1],
+                LineBuilder().stations[2],
+                LineDirection.POSITIVE
             )
+        )
         val channel3 = Channel<SignalValue>()
-        val depart = async { transport.signal(channel3)}
+        val depart = async { transport.signal(channel3) }
         channel3.send(SignalValue.GREEN)
         val job2 = async { channel.send(transport) }
 

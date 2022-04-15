@@ -22,7 +22,12 @@ internal class LineSectionServiceTest {
     private var signalService: SignalServiceImpl? = null
 
     private val instructions =
-        LineInstructions(LineBuilder().stations[0], LineBuilder().stations[1], LineBuilder().stations[2], LineDirection.POSITIVE);
+        LineInstructions(
+            LineBuilder().stations[0],
+            LineBuilder().stations[1],
+            LineBuilder().stations[2],
+            LineDirection.POSITIVE
+        )
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
@@ -41,7 +46,7 @@ internal class LineSectionServiceTest {
     }
 
     @BeforeEach
-    fun init(){
+    fun init() {
         `when`(lineFactory.get()).thenReturn(listOf("1"))
         `when`(lineFactory.get("1")).thenReturn(LineBuilder().getLine())
         `when`(lineFactory.timeStep).thenReturn(10L)
@@ -57,17 +62,17 @@ internal class LineSectionServiceTest {
         val job2 = launch { lineSectionService.start() }
         delay(100)
 
-        val job = async {  lineSectionService.release(transport, instructions)}
+        val job = async { lineSectionService.release(transport, instructions) }
         delay(1000)
 
         assertThat(transport.isStationary()).isEqualTo(false)
 
         job2.cancelAndJoin()
         job.cancelAndJoin()
-      }
+    }
 
     @Test
-    fun `train is second train added to section, so will be given a red light`() = runBlocking{
+    fun `train is second train added to section, so will be given a red light`() = runBlocking {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
 
         val job3 = async { lineSectionService.start() }
@@ -86,22 +91,23 @@ internal class LineSectionServiceTest {
     }
 
     @Test
-    fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() = runBlocking{
-        val lineSectionService = LineSectionServiceImpl(signalService!!)
+    fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
+        runBlocking {
+            val lineSectionService = LineSectionServiceImpl(signalService!!)
 
-        val job3 = async { lineSectionService.start() }
+            val job3 = async { lineSectionService.start() }
 
-        val job = async { lineSectionService.release(transport, instructions) }
-        val job2 = async { lineSectionService.release(transport2, instructions) }
+            val job = async { lineSectionService.release(transport, instructions) }
+            val job2 = async { lineSectionService.release(transport2, instructions) }
 
-        delay(11000)
+            delay(11000)
 
-        assertThat(transport.atPlatform()).isEqualTo(true)
-        assertThat(transport2.isStationary()).isEqualTo(false)
+            assertThat(transport.atPlatform()).isEqualTo(true)
+            assertThat(transport2.isStationary()).isEqualTo(false)
 
-        job.cancelAndJoin()
-        job2.cancelAndJoin()
-        job3.cancelAndJoin()
-    }
+            job.cancelAndJoin()
+            job2.cancelAndJoin()
+            job3.cancelAndJoin()
+        }
 
 }

@@ -3,7 +3,6 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.Signal
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.SignalValue
-import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -15,20 +14,20 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
-internal class SignalServiceImplTest{
+internal class SignalServiceImplTest {
 
     private val signalFactory = mock(SignalFactory::class.java)
     private val signalService = SignalServiceImpl(signalFactory)
 
     @BeforeEach
-    fun init(){
+    fun init() {
         `when`(signalFactory.get(Pair("A", "B"))).thenReturn(
             Signal(Pair("A", "B"))
         )
     }
 
     @Test
-    fun `test signal`() = runBlocking{
+    fun `test signal`() = runBlocking {
         val channelIn = Channel<SignalValue>()
         val channelOut = Channel<SignalValue>()
 
@@ -41,12 +40,12 @@ internal class SignalServiceImplTest{
         job2.cancelAndJoin()
     }
 
-    suspend fun testChannel(channel: Channel<SignalValue>, job: Job){
+    suspend fun testChannel(channel: Channel<SignalValue>, job: Job) {
         var signal: SignalValue?
         do {
             signal = channel.receive()
             println(signal)
-        }while (signal != SignalValue.AMBER_30)
+        } while (signal != SignalValue.AMBER_30)
 
         job.cancelAndJoin()
     }

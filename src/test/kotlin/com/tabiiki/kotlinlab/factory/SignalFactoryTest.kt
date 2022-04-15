@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest
 internal class SignalFactoryTest @Autowired constructor(
     private val signalFactory: SignalFactory,
     private val lineFactory: LineFactory
-){
+) {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 

@@ -24,14 +24,15 @@ data class Signal(
     val timeStep: Long = 100
 ) {
     suspend fun start(channelIn: Channel<SignalValue>, channelOut: Channel<SignalValue>) = coroutineScope {
-        launch(Dispatchers.Default){receive(channelIn)}
-        launch(Dispatchers.Default){send(channelOut)}
+        launch(Dispatchers.Default) { receive(channelIn) }
+        launch(Dispatchers.Default) { send(channelOut) }
     }
-    private suspend fun receive(channel: Channel<SignalValue>){
-        do{
+
+    private suspend fun receive(channel: Channel<SignalValue>) {
+        do {
             val msg = channel.receive()
-            if(msg != status) status = msg
-        }while (true)
+            if (msg != status) status = msg
+        } while (true)
     }
 
     private suspend fun send(channel: Channel<SignalValue>) {

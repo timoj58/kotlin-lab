@@ -38,7 +38,9 @@ public class LinesAdapter {
         this.dockland = dockland;
     }
 
-    public void setTram(List<String> tram) { this.tram = tram; }
+    public void setTram(List<String> tram) {
+        this.tram = tram;
+    }
 
     public Map<LineType, List<String>> getLines() {
         return Map.of(

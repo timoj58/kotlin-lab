@@ -7,17 +7,19 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import javax.naming.ConfigurationException
 
-internal class NetworkServiceTest{
+internal class NetworkServiceTest {
 
 
     @Test
-    fun `invalid start delay test`(){
+    fun `invalid start delay test`() {
         Assertions.assertThrows(ConfigurationException::class.java) {
-            NetworkServiceImpl(80,
+            NetworkServiceImpl(
+                80,
                 mock(StationService::class.java),
                 mock(LineFactory::class.java),
                 mock(PlatformConductor::class.java),
-                mock(JourneyRepo::class.java))
+                mock(JourneyRepo::class.java)
+            )
         }
     }
 }

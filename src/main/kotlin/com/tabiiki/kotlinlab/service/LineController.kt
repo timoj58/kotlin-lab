@@ -4,8 +4,12 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 
 interface LineController {
@@ -35,7 +39,7 @@ class LineControllerImpl(
             delay(startDelay)
 
             conductor.getNextTransportersToDispatch(line).forEach { transport ->
-                 async { dispatch(transport, channel) }  //TODO.  signal
+                async { dispatch(transport, channel) }  //TODO.  signal
             }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
