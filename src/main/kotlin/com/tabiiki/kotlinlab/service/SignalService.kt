@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.SignalType
 import com.tabiiki.kotlinlab.factory.SignalValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -28,11 +29,11 @@ class SignalServiceImpl(
 
     override fun getPlatformSignals(): List<Pair<String, String>> =
         signalFactory.get().filter {
-            LineDirection.values().toList().map { it.name }.toList().contains(it.section.first)
+            it.type == SignalType.PLATFORM
         }.map { it.section }
 
     override fun getSectionSignals(): List<Pair<String, String>> =
         signalFactory.get().filter {
-            !LineDirection.values().toList().map { it.name }.toList().contains(it.section.first)
+            it.type == SignalType.SECTION
         }.map { it.section }
 }
