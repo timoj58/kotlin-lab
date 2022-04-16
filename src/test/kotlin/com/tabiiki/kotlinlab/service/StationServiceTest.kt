@@ -74,7 +74,7 @@ internal class StationServiceTest {
         channel3.send(SignalValue.GREEN)
         val job2 = async { channel.send(transport) }
 
-        delay(100)
+        delay(200)
 
         depart.cancelAndJoin()
         job.cancelAndJoin()
