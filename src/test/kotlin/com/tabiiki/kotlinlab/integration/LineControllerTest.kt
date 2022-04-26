@@ -89,11 +89,10 @@ class LineControllerTest {
             channel2.send(msg)
             trains[msg.id] = msg
 
+            println(msg)
+
         } while (trains.values.map { it.status }
                 .any { it == Status.DEPOT } && startTime + (1000 * 15) > System.currentTimeMillis())
-
-
-        println("finished?")
 
         assertThat(trains.values.map { it.status }
             .any { it == Status.DEPOT }).isEqualTo(false)
