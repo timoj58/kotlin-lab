@@ -61,18 +61,11 @@ internal class LineSectionServiceTest {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
 
         val job2 = launch { lineSectionService.start(LineBuilder().getLine().name) }
-        delay(100)
-
-        val job = async { lineSectionService.release(transport, instructions) }
-
-        println("running test")
+        val job = launch { lineSectionService.release(transport, instructions) }
 
         do {
             delay(100)
-            println("here")
         }while (transport.isStationary())
-
-        println("exit")
 
         assertThat(transport.isStationary()).isEqualTo(false)
 
@@ -85,12 +78,12 @@ internal class LineSectionServiceTest {
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
 
-        val job3 = async { lineSectionService.start(LineBuilder().getLine().name) }
+        val job3 = launch { lineSectionService.start(LineBuilder().getLine().name) }
         delay(200)
 
-        val job = async { lineSectionService.release(transport, instructions) }
+        val job = launch { lineSectionService.release(transport, instructions) }
         delay(100)
-        val job2 = async { lineSectionService.release(transport2, instructions) }
+        val job2 = launch { lineSectionService.release(transport2, instructions) }
         println("running test 2")
 
         do{
@@ -110,10 +103,10 @@ internal class LineSectionServiceTest {
         runBlocking {
             val lineSectionService = LineSectionServiceImpl(signalService!!)
 
-            val job3 = async { lineSectionService.start(LineBuilder().getLine().name) }
-            val job = async { lineSectionService.release(transport, instructions) }
+            val job3 = launch { lineSectionService.start(LineBuilder().getLine().name) }
+            val job = launch { lineSectionService.release(transport, instructions) }
             delay(100)
-            val job2 = async { lineSectionService.release(transport2, instructions) }
+            val job2 = launch { lineSectionService.release(transport2, instructions) }
             println("running test 3")
 
             do {

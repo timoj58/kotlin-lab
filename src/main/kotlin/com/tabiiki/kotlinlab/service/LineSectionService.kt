@@ -80,6 +80,7 @@ class LineSectionServiceImpl(
             when (channel.receive()) {
                 SignalValue.GREEN ->
                     platformQueues[key]!!.second.firstOrNull()?.let {
+                        println("green check for ${it.id}")
                         channelsOut[it.section()]?.let { channel ->
                             platformQueues[key]!!.second.removeFirstOrNull()?.let { transport ->
                                 println("released $key ${transport.id}")
@@ -130,16 +131,5 @@ class LineSectionServiceImpl(
         channelsOut[key] = Channel()
         launch { signalService.start(key, channelsIn[key]!!, channelsOut[key]!!) }
     }
-
-    //TODO.  improving.  next, need to add in section signals...next issue.
-
-    /*
-       currently.
-
-       platform?  green or red.  once train arrives, its green.  but...
-
-       can not have two trains at one platform, issue.  causes lock.
-
-     */
 
 }
