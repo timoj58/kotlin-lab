@@ -65,7 +65,7 @@ internal class LineSectionServiceTest {
         delay(100)
 
         val job = async { lineSectionService.release(transport, instructions) }
-        delay(1000)
+       // delay(1000)
 
         assertThat(transport.isStationary()).isEqualTo(false)
 
@@ -83,7 +83,7 @@ internal class LineSectionServiceTest {
         val job = async { lineSectionService.release(transport, instructions) }
         val job2 = async { lineSectionService.release(transport2, instructions) }
 
-        delay(1000)
+        //delay(1000)
 
         assertThat(transport.isStationary() != transport2.isStationary()).isEqualTo(true)
 
