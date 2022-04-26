@@ -49,8 +49,6 @@ class LineSectionServiceImpl(
         val dir = instructions.direction
         val key = Pair("$line $dir", transport.section().first)
         platformQueues[key]!!.second.addLast(transport)
-
-        println("release ${transport.id}")
     }
 
     override suspend fun start(line: String) = coroutineScope {
@@ -67,7 +65,6 @@ class LineSectionServiceImpl(
         launch { initSignals(key) }
         launch { monitorPlatformChannel(key) }
         launch { monitorPlatformSignal(key) }
-        println("init plaform $key")
     }
 
     suspend fun monitorPlatformSignal(key: Pair<String, String>) = coroutineScope {
@@ -109,7 +106,6 @@ class LineSectionServiceImpl(
     private suspend fun initSection(key: Pair<String, String>) = coroutineScope {
         launch(Dispatchers.Default) { initSignals(key) }
         launch(Dispatchers.Default) { monitorSectionChannel(key, sectionQueues[key]!!.first) }
-        println("init section $key")
     }
 
     private suspend fun monitorSectionChannel(key: Pair<String, String>, channel: Channel<Transport>) = coroutineScope {

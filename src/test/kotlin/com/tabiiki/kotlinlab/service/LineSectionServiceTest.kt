@@ -4,14 +4,12 @@ import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.LineBuilder
-import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -73,7 +71,6 @@ internal class LineSectionServiceTest {
         job.cancelAndJoin()
     }
 
-    @Disabled
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
@@ -84,7 +81,6 @@ internal class LineSectionServiceTest {
         val job = launch { lineSectionService.release(transport, instructions) }
         delay(100)
         val job2 = launch { lineSectionService.release(transport2, instructions) }
-        println("running test 2")
 
         do{
             delay(100)
@@ -97,7 +93,6 @@ internal class LineSectionServiceTest {
         job3.cancelAndJoin()
     }
 
-    @Disabled
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
@@ -107,7 +102,6 @@ internal class LineSectionServiceTest {
             val job = launch { lineSectionService.release(transport, instructions) }
             delay(100)
             val job2 = launch { lineSectionService.release(transport2, instructions) }
-            println("running test 3")
 
             do {
                 delay(100)
