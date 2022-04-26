@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
-@Disabled //issue with git actions remove for now (runs locally)
+//@Disabled //issue with git actions remove for now (runs locally)
 internal class LineSectionServiceTest {
 
     private val lineFactory = mock(LineFactory::class.java)
@@ -92,6 +92,7 @@ internal class LineSectionServiceTest {
         job3.cancelAndJoin()
     }
 
+    @Disabled
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {

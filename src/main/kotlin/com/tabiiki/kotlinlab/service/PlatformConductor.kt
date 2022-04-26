@@ -5,7 +5,6 @@ import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,7 +55,7 @@ class PlatformConductorImpl(
     }
 
     override suspend fun start(line: String): Unit = coroutineScope {
-         launch { lineSectionService.start(line) }
+        launch { lineSectionService.start(line) }
     }
 
     private fun lineInstructions(transport: Transport, lineStations: List<String>): LineInstructions =

@@ -38,7 +38,11 @@ internal class StationServiceTest {
 
         val job = async { stationService.monitor("B", channel, channel2) }
         val transport =
-            Transport(config = TransportConfig(transportId = 1, capacity = 1), line = LineBuilder().getLine(), timeStep = 1000)
+            Transport(
+                config = TransportConfig(transportId = 1, capacity = 1),
+                line = LineBuilder().getLine(),
+                timeStep = 1000
+            )
         transport.addSection(Pair("B", "A"))
         val job2 = async { channel.send(transport) }
 
@@ -58,7 +62,11 @@ internal class StationServiceTest {
 
         val job = async { stationService.monitor("B", channel, channel2) }
         val transport =
-            Transport(config = TransportConfig(transportId = 1, capacity = 1), line = LineBuilder().getLine(), timeStep = 1000)
+            Transport(
+                config = TransportConfig(transportId = 1, capacity = 1),
+                line = LineBuilder().getLine(),
+                timeStep = 1000
+            )
         transport.addSection(Pair("A", "B"))
         transport.release(
             LineInstructions(

@@ -8,7 +8,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
@@ -57,7 +56,7 @@ class NetworkServiceTest @Autowired constructor(
                 stationVisitedPerTrain[msg.transportId] = mutableSetOf()
 
             trainsByLine[msg.line]?.add(msg.transportId)
-            if(msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
+            if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
         } while (/*testSectionsVisited() != transportersPerLine &&*/ startTime + (1000 * 60 * 1) > System.currentTimeMillis())
 
         job.cancelAndJoin()

@@ -10,8 +10,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -124,18 +122,18 @@ data class Transport(
     fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
 
     override suspend fun track(key: Pair<String, String>, channel: SendChannel<Transport>) {
-        if(trackers.isEmpty()) {
+        if (trackers.isEmpty()) {
             trackers[key] = channel
             do {
                 if (previousStatus != Status.PLATFORM) trackers.values.forEach { it.send(this) }
                 previousStatus = status
                 delay(timeStep)
             } while (true)
-        }else trackers[key] = channel
+        } else trackers[key] = channel
 
     }
 
-    override fun removeTracker(key: Pair<String, String>){
+    override fun removeTracker(key: Pair<String, String>) {
         trackers.remove(key)
     }
 
@@ -161,7 +159,7 @@ data class Transport(
         val line = line.name
         val dir = journey!!.direction
 
-        return  Pair("$line $dir", journey!!.from.id)
+        return Pair("$line $dir", journey!!.from.id)
     }
 
     override fun platformToKey(): Pair<String, String> {

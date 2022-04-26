@@ -1,6 +1,5 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
@@ -10,12 +9,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 
-//These tests are wrong TODO
-@Disabled
 internal class LineControllerTest {
 
     private val journeyRepoImpl = JourneyRepoImpl()
@@ -82,29 +78,4 @@ internal class LineControllerTest {
 
         res.cancelAndJoin()
     }
-
-
-    @Test
-    fun `test regulation that train is held before moving to next stop`() = runBlocking {
-        val conductor = mock(PlatformConductor::class.java)
-        `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
-            listOf(line.transporters[0], line.transporters[1])
-        )
-        val lineControllerService =
-            LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
-
-        val channel = Channel<Transport>()
-
-        val res = async { lineControllerService.regulate(channel) }
-
-        val transport = Transport(config = LineBuilder().transportConfig, line = LineBuilder().getLine(), timeStep = 1000)
-        transport.id = line.transporters.first().id
-        transport.status = Status.PLATFORM
-        channel.send(transport)
-        delay(100)
-        verify(conductor).hold(transport, LineBuilder().lineStations)
-        res.cancelAndJoin()
-
-    }
-
 }

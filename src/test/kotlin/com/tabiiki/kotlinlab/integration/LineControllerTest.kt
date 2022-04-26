@@ -1,7 +1,5 @@
 package com.tabiiki.kotlinlab.integration
 
-import com.tabiiki.kotlinlab.factory.Signal
-import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
@@ -22,7 +20,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.util.*
@@ -46,12 +43,14 @@ class LineControllerTest {
         `when`(stationFactory.get("C")).thenReturn(stations[2])
 
         `when`(signalService.getSectionSignals()).thenReturn(
-            listOf(Pair("A","B"), Pair("B","C"), Pair("C","B"), Pair("B","A"))
+            listOf(Pair("A", "B"), Pair("B", "C"), Pair("C", "B"), Pair("B", "A"))
         )
 
         `when`(signalService.getPlatformSignals()).thenReturn(
-            listOf(Pair("1 POSITIVE","A"), Pair("1 NEGATIVE","A"), Pair("1 POSITIVE","B"), Pair("1 NEGATIVE","B"),
-                Pair("1 POSITIVE","C"), Pair("1 NEGATIVE","C"))
+            listOf(
+                Pair("1 POSITIVE", "A"), Pair("1 NEGATIVE", "A"), Pair("1 POSITIVE", "B"), Pair("1 NEGATIVE", "B"),
+                Pair("1 POSITIVE", "C"), Pair("1 NEGATIVE", "C")
+            )
         )
 
 
@@ -88,8 +87,6 @@ class LineControllerTest {
             val msg = channel.receive()
             channel2.send(msg)
             trains[msg.id] = msg
-
-            println(msg)
 
         } while (trains.values.map { it.status }
                 .any { it == Status.DEPOT } && startTime + (1000 * 15) > System.currentTimeMillis())
