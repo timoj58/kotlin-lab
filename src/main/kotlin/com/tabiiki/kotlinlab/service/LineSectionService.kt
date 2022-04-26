@@ -19,7 +19,7 @@ data class LineInstructions(val from: Station, val to: Station, val next: Statio
 
 interface LineSectionService {
     suspend fun release(transport: Transport, instructions: LineInstructions)
-    suspend fun start()
+    suspend fun start(line: String)
 }
 
 @Service
@@ -45,13 +45,13 @@ class LineSectionServiceImpl(
     ) = coroutineScope {
         async { transport.release(instructions) }
 
-        val id = transport.lineId
+        val line = transport.line.name
         val dir = instructions.direction
-        val key = Pair("$id $dir", transport.section.first)
+        val key = Pair("$line $dir", transport.section().first)
         platformQueues[key]!!.second.addLast(transport)
     }
 
-    override suspend fun start() = coroutineScope {
+    override suspend fun start(line: String) = coroutineScope {
         platformQueues.keys().asIterator().forEach {
             launch(Dispatchers.Default) { initPlatform(it) }
         }
@@ -69,9 +69,7 @@ class LineSectionServiceImpl(
 
     suspend fun monitorPlatformSignal(key: Pair<String, String>) = coroutineScope {
         do {
-            val msg = channelsOut[key]?.receive()?.let {
-                platformQueues[key]!!.first.send(it)
-            }
+            channelsOut[key]?.receive()?.let { platformQueues[key]!!.first.send(it) }
         } while (true)
     }
 
@@ -80,12 +78,18 @@ class LineSectionServiceImpl(
 
         do {
             when (channel.receive()) {
-                SignalValue.GREEN -> platformQueues[key]!!.second.removeFirstOrNull()?.let {
-                    println("released $key")
-                    channelsIn[key]!!.send(SignalValue.RED)
-                    async { it.signal(channelsOut[it.section]!!) }
-                    async { addToLineSection(it) }
-                }
+                SignalValue.GREEN ->
+                    platformQueues[key]!!.second.firstOrNull()?.let {
+                        channelsOut[it.section()]?.let { channel ->
+                            platformQueues[key]!!.second.removeFirstOrNull()?.let { transport ->
+                                println("released $key ${transport.id}")
+                                channelsIn[key]!!.send(SignalValue.RED)
+
+                                async { transport.signal(channel) }
+                                async { addToLineSection(transport) }
+                            }
+                        }
+                    }
                 else -> {}
             }
 
@@ -93,9 +97,9 @@ class LineSectionServiceImpl(
     }
 
     private suspend fun addToLineSection(transport: Transport) = coroutineScope {
-        sectionQueues[transport.section]!!.second.addLast(transport)
-        launch(Dispatchers.Default) { transport.signal(channelsOut[transport.section]!!) }
-        launch(Dispatchers.Default) { transport.track(sectionQueues[transport.section]!!.first) }
+        sectionQueues[transport.section()]!!.second.addLast(transport)
+        launch(Dispatchers.Default) { transport.signal(channelsOut[transport.section()]!!) }
+        launch(Dispatchers.Default) { transport.track(transport.section(), sectionQueues[transport.section()]!!.first) }
     }
 
     private suspend fun initSection(key: Pair<String, String>) = coroutineScope {
@@ -108,12 +112,13 @@ class LineSectionServiceImpl(
             val msg = channel.receive()
             when (msg.atPlatform()) {
                 true -> sectionQueues[key]!!.second.removeLastOrNull()?.let {
-                    val lineId = msg.lineId
-                    val dir = msg.journey!!.direction
+                    it.removeTracker(key)
 
-                    val platformKey = Pair("$lineId $dir", msg.journey!!.from.id)
-                    println("arrived $platformKey")
-                    channelsIn[platformKey]!!.send(SignalValue.GREEN)
+                    val platformFromKey = msg.platformFromKey()
+                    val platformToKey = msg.platformToKey()
+
+                    println("arrived ${msg.id} $platformToKey ${msg.previousSection()} ${msg.getJourneyTime().second}")
+                    channelsIn[platformFromKey]!!.send(SignalValue.GREEN)
                 }
                 else -> {}
             }
@@ -123,7 +128,18 @@ class LineSectionServiceImpl(
     private suspend fun initSignals(key: Pair<String, String>) = coroutineScope {
         channelsIn[key] = Channel()
         channelsOut[key] = Channel()
-        signalService.start(key, channelsIn[key]!!, channelsOut[key]!!)
+        launch { signalService.start(key, channelsIn[key]!!, channelsOut[key]!!) }
     }
+
+    //TODO.  improving.  next, need to add in section signals...next issue.
+
+    /*
+       currently.
+
+       platform?  green or red.  once train arrives, its green.  but...
+
+       can not have two trains at one platform, issue.  causes lock.
+
+     */
 
 }

@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -15,6 +16,7 @@ interface PlatformConductor {
     fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
     suspend fun hold(transport: Transport, lineStations: List<String>)
     suspend fun release(transport: Transport, lineStations: List<String>)
+    suspend fun start(line: String)
 }
 
 @Service
@@ -24,12 +26,12 @@ class PlatformConductorImpl(
 ) : PlatformConductor {
 
     override fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport> =
-        lines.map { it.transporters }.flatten().groupBy { it.section }.values.flatten()
-            .distinctBy { it.section }
+        lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten()
+            .distinctBy { it.section() }
 
     override fun getNextTransportersToDispatch(lines: List<Line>): List<Transport> =
         lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }
-            .groupBy { it.section }.values.flatten().distinctBy { it.section }
+            .groupBy { it.section() }.values.flatten().distinctBy { it.section() }
 
     override suspend fun hold(
         transport: Transport,
@@ -48,20 +50,30 @@ class PlatformConductorImpl(
         transport: Transport,
         lineStations: List<String>
     ): Unit = coroutineScope {
-
         launch(Dispatchers.Default) {
             lineSectionService.release(transport, lineInstructions(transport, lineStations))
         }
     }
 
+    override suspend fun start(line: String): Unit = coroutineScope {
+         launch { lineSectionService.start(line) }
+    }
+
     private fun lineInstructions(transport: Transport, lineStations: List<String>): LineInstructions =
         LineInstructions(
-            from = stationRepo.get(transport.section.first),
-            to = stationRepo.get(transport.section.second),
+            from = stationRepo.get(transport.section().first),
+            to = stationRepo.get(transport.section().second),
             next = stationRepo.getNextStationOnLine(
-                lineStations = lineStations, section = transport.section
+                lineStations = lineStations, section = transport.section()
             ),
-            direction = LineDirection.POSITIVE
+            direction = lineDirection(transport)
         )
+
+    private fun lineDirection(transport: Transport): LineDirection {
+        val fromIdx = transport.line.stations.indexOf(transport.section().first)
+        val toIdx = transport.line.stations.indexOf(transport.section().second)
+
+        return if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
+    }
 
 }

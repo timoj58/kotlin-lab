@@ -17,7 +17,7 @@ data class Line(
             transportConfig.map {
                 Transport(
                     config = it,
-                    lineId = id,
+                    line = this,
                     timeStep = timeStep
                 )
             }.first { it.transportId == config.transportId }
@@ -55,7 +55,7 @@ data class Line(
 
     private fun transporterSlice(startIndex: Int, perDepot: Int, depot: String, nextStation: (String) -> String) =
         transporters.slice(startIndex until startIndex + perDepot)
-            .forEach { transport -> transport.section = Pair(depot, nextStation(depot)) }
+            .forEach { transport -> transport.addSection(Pair(depot, nextStation(depot))) }
 
 
     private fun nextStationFromDepot(currentStation: String): String =

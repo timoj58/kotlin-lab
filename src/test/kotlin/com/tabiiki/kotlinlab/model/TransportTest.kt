@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.service.LineDirection
 import com.tabiiki.kotlinlab.service.LineInstructions
+import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -17,9 +18,9 @@ internal class TransportTest {
 
     private val train = Transport(
         config = TransportConfig(transportId = 1, capacity = 10, power = 200, weight = 1000, topSpeed = 12),
-        lineId = "1",
+        line = LineBuilder().getLine(),
         timeStep = 10
-    ).also { it.section = Pair("1", "2") }
+    ).also { it.addSection(Pair("1", "2")) }
 
 
     @Test
@@ -34,8 +35,8 @@ internal class TransportTest {
             delay(1000)
         } while (!train.atPlatform())
 
-        assertThat(train.section.first).isEqualTo("2")
-        assertThat(train.section.second).isEqualTo("3")
+        assertThat(train.section().first).isEqualTo("2")
+        assertThat(train.section().second).isEqualTo("3")
 
         res.cancelAndJoin()
     }
@@ -60,8 +61,8 @@ internal class TransportTest {
             delay(1000)
         } while (!train.atPlatform())
 
-        assertThat(train.section.first).isEqualTo("2")
-        assertThat(train.section.second).isEqualTo("3")
+        assertThat(train.section().first).isEqualTo("2")
+        assertThat(train.section().second).isEqualTo("3")
 
         res.cancelAndJoin()
     }

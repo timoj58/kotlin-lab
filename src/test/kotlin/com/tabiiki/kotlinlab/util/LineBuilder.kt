@@ -24,7 +24,7 @@ class LineBuilder {
         timeStep = 10,
         config = LineConfig(
             id = "1",
-            name = "2",
+            name = "1",
             transportId = 1,
             transportCapacity = 6,
             stations = listOf("A", "B", "C"),

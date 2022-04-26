@@ -37,7 +37,7 @@ data class Signal(
 
     private suspend fun send(channel: Channel<SignalValue>) {
         do {
-            delay(timeStep * 2)
+            delay(timeStep)
             channel.send(this.status)
         } while (true)
     }
@@ -69,7 +69,7 @@ class SignalFactory(
     private fun getPlatforms(lines: List<Line>): Set<Pair<String, String>> {
         var pairs = mutableSetOf<Pair<String, String>>()
         lines.forEach { line ->
-            val id = line.id
+            val id = line.name
             pairs.addAll(line.stations.map { Pair("$id ${LineDirection.POSITIVE}", it) })
             pairs.addAll(line.stations.map { Pair("$id ${LineDirection.NEGATIVE}", it) })
         }

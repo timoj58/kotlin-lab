@@ -9,6 +9,9 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -25,21 +28,28 @@ enum class Instruction {
 }
 
 interface TransportInstructions {
-    suspend fun track(channel: SendChannel<Transport>)
+    suspend fun track(key: Pair<String, String>, channel: SendChannel<Transport>)
+    fun removeTracker(key: Pair<String, String>)
     suspend fun release(instruction: LineInstructions)
     suspend fun signal(channel: Channel<SignalValue>)
+    fun section(): Pair<String, String>
+    fun platformFromKey(): Pair<String, String>
+    fun platformToKey(): Pair<String, String>
+    fun addSection(section: Pair<String, String>)
+    fun previousSection(): Pair<String, String>
 }
 
 data class Transport(
     private val config: TransportConfig,
-    val lineId: String,
+    val line: Line,
     val timeStep: Long
 ) : TransportInstructions {
 
-    var id = UUID.randomUUID()
+    var id: UUID = UUID.randomUUID()
     val transportId = config.transportId
     val capacity = config.capacity
-    var section = Pair("", "") //current(from), next(to)
+    private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
+    private val trackers: ConcurrentHashMap<Pair<String, String>, SendChannel<Transport>> = ConcurrentHashMap()
     var status = Status.DEPOT
     private var previousStatus = Status.DEPOT
     private var instruction = Instruction.STATIONARY
@@ -55,9 +65,9 @@ data class Transport(
         var distance: Double = 0.0
         var velocity: Double = 0.0
         var displacement: Double = 0.0
-        val weight = config.weight
-        val topSpeed = config.topSpeed
-        val power = config.power
+        private val weight = config.weight
+        private val topSpeed = config.topSpeed
+        private val power = config.power
 
         fun reset() {
             displacement = 0.0
@@ -113,12 +123,20 @@ data class Transport(
     fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
 
-    override suspend fun track(channel: SendChannel<Transport>) {
-        do {
-            if (previousStatus != Status.PLATFORM) channel.send(this)
-            previousStatus = status
-            delay(timeStep)
-        } while (true)
+    override suspend fun track(key: Pair<String, String>, channel: SendChannel<Transport>) {
+        if(trackers.isEmpty()) {
+            trackers[key] = channel
+            do {
+                if (previousStatus != Status.PLATFORM) trackers.values.forEach { it.send(this) }
+                previousStatus = status
+                delay(timeStep)
+            } while (true)
+        }else trackers[key] = channel
+
+    }
+
+    override fun removeTracker(key: Pair<String, String>){
+        trackers.remove(key)
     }
 
     override suspend fun release(instruction: LineInstructions) {
@@ -137,6 +155,27 @@ data class Transport(
             }.also { instruction = it }
         } while (status == Status.ACTIVE)
     }
+
+    override fun section(): Pair<String, String> = sectionData.second ?: sectionData.first!!
+    override fun platformFromKey(): Pair<String, String> {
+        val line = line.name
+        val dir = journey!!.direction
+
+        return  Pair("$line $dir", journey!!.from.id)
+    }
+
+    override fun platformToKey(): Pair<String, String> {
+        val line = line.name
+        val dir = journey!!.direction
+
+        return Pair("$line $dir", journey!!.to.id)
+    }
+
+    override fun addSection(section: Pair<String, String>) {
+        sectionData = Pair(section, null)
+    }
+
+    override fun previousSection(): Pair<String, String> = sectionData.first!!
 
     private suspend fun motionLoop(instruction: Instruction) {
         this.instruction = instruction
@@ -159,7 +198,8 @@ data class Transport(
 
     private suspend fun stopJourney(newSection: Pair<String, String>) = coroutineScope {
         physics.reset()
-        section = newSection
+        val previousSection = sectionData.first
+        sectionData = Pair(previousSection, newSection)
         status = Status.PLATFORM
     }
 }

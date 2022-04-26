@@ -1,12 +1,14 @@
 package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.factory.LineFactory
+import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.NetworkService
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
@@ -32,7 +34,7 @@ class NetworkServiceTest @Autowired constructor(
     init {
         lineFactory.get().forEach { id ->
             val line = lineFactory.get(id)
-            sectionsByLine[id] = getLineStations(line.stations)
+            sectionsByLine[line.name] = getLineStations(line.stations)
             transportersPerLine += line.transporters.size
         }
     }
@@ -49,14 +51,14 @@ class NetworkServiceTest @Autowired constructor(
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
-            if (!trainsByLine.containsKey(msg.lineId))
-                trainsByLine[msg.lineId] = mutableSetOf()
+            if (!trainsByLine.containsKey(msg.line))
+                trainsByLine[msg.line] = mutableSetOf()
             if (!stationVisitedPerTrain.containsKey(msg.transportId))
                 stationVisitedPerTrain[msg.transportId] = mutableSetOf()
 
-            trainsByLine[msg.lineId]?.add(msg.transportId)
-            stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 5) > System.currentTimeMillis())
+            trainsByLine[msg.line]?.add(msg.transportId)
+            if(msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
+        } while (/*testSectionsVisited() != transportersPerLine &&*/ startTime + (1000 * 60 * 1) > System.currentTimeMillis())
 
         job.cancelAndJoin()
         assert()

@@ -32,17 +32,17 @@ internal class LineSectionServiceTest {
     private val transport = Transport(
         config = LineBuilder().transportConfig,
         timeStep = 10,
-        lineId = "1"
+        line = LineBuilder().getLine()
     ).also {
-        it.section = Pair("A", "B")
+        it.addSection(Pair("A", "B"))
     }
 
     private val transport2 = Transport(
         config = LineBuilder().transportConfig,
         timeStep = 10,
-        lineId = "1"
+        line = LineBuilder().getLine()
     ).also {
-        it.section = Pair("A", "B")
+        it.addSection(Pair("A", "B"))
     }
 
     @BeforeEach
@@ -59,7 +59,7 @@ internal class LineSectionServiceTest {
     fun `train is first train added to section, so will be given a green light`() = runBlocking {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
 
-        val job2 = launch { lineSectionService.start() }
+        val job2 = launch { lineSectionService.start(LineBuilder().getLine().name) }
         delay(100)
 
         val job = async { lineSectionService.release(transport, instructions) }
@@ -75,7 +75,7 @@ internal class LineSectionServiceTest {
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
 
-        val job3 = async { lineSectionService.start() }
+        val job3 = async { lineSectionService.start(LineBuilder().getLine().name) }
         delay(100)
 
         val job = async { lineSectionService.release(transport, instructions) }
@@ -95,8 +95,7 @@ internal class LineSectionServiceTest {
         runBlocking {
             val lineSectionService = LineSectionServiceImpl(signalService!!)
 
-            val job3 = async { lineSectionService.start() }
-
+            val job3 = async { lineSectionService.start(LineBuilder().getLine().name) }
             val job = async { lineSectionService.release(transport, instructions) }
             val job2 = async { lineSectionService.release(transport2, instructions) }
 

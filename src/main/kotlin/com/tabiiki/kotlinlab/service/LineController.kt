@@ -27,19 +27,14 @@ class LineControllerImpl(
 ) : LineController {
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
-
-        //NOTES:
-        //1:  do not dispatch.  simply set the first trains to the platform, then set the platform signal...
-
+        launch { conductor.start(line.map { it.name }.distinct().first()) }
         conductor.getFirstTransportersToDispatch(line).forEach {
             async { dispatch(it, channel) }
         }
-        //2:  as platform has a train, wait for it to leave.....then add to platform light, trigger platform signal
         do {
             delay(startDelay)
-
             conductor.getNextTransportersToDispatch(line).forEach { transport ->
-                async { dispatch(transport, channel) }  //TODO.  signal
+                async { dispatch(transport, channel) }
             }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
@@ -69,12 +64,12 @@ class LineControllerImpl(
 
 
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
-        launch(Dispatchers.Default) { transport.track(channel) }
+        launch(Dispatchers.Default) { transport.track(Pair("GLOBAL", "GLOBAL"), channel) }
         launch(Dispatchers.Default) { conductor.release(transport, getLineStations(transport.id)) }
     }
 
     private suspend fun publish(message: Transport) = coroutineScope {
-        listOf(message.section.first, message.section.second)
+        listOf(message.section().first, message.section().second)
             .forEach { stationChannels[it]?.send(message) }
     }
 }

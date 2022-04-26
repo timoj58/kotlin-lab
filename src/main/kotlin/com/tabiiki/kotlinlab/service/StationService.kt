@@ -16,7 +16,7 @@ enum class MessageType {
 data class StationMessage(
     val stationId: String,
     val transportId: UUID,
-    val lineId: String,
+    val line: String,
     val section: Pair<String, String>,
     val type: MessageType
 )
@@ -53,8 +53,8 @@ class StationServiceImpl(
                     StationMessage(
                         stationId = id,
                         transportId = message.id,
-                        lineId = message.lineId,
-                        section = message.section,
+                        line = message.line.name,
+                        section = message.section(),
                         type = MessageType.ARRIVE
                     )
                 )
@@ -63,8 +63,8 @@ class StationServiceImpl(
                     StationMessage(
                         stationId = id,
                         transportId = message.id,
-                        lineId = message.lineId,
-                        section = message.section,
+                        line = message.line.name,
+                        section = message.section(),
                         type = MessageType.DEPART
                     )
                 )
@@ -73,9 +73,9 @@ class StationServiceImpl(
     }
 
     private fun waitingToDepart(id: String, message: Transport) =
-        message.atPlatform() && message.section.first == id
+        message.atPlatform() && message.section().first == id
 
     private fun waitingToArrive(id: String, message: Transport) =
-        !message.atPlatform() && message.section.second == id
+        !message.atPlatform() && message.section().second == id
 
 }

@@ -21,11 +21,11 @@ internal class PlatformConductorTest {
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
-        lineId = "1",
+        line = LineBuilder().getLine(),
         timeStep = 1
     ).also {
         it.status = Status.PLATFORM
-        it.section = Pair("A", "B")
+        it.addSection(Pair("A", "B"))
     }
 
     @BeforeEach
@@ -52,9 +52,9 @@ internal class PlatformConductorTest {
             listOf(LineBuilder().getLine(), LineBuilder().getLine2())
         )
 
-        assertThat(transporters.filter { it.section == Pair("A", "B") }.size).isEqualTo(1)
-        assertThat(transporters.filter { it.section == Pair("C", "B") }.size).isEqualTo(1)
-        assertThat(transporters.filter { it.section == Pair("D", "C") }.size).isEqualTo(1)
+        assertThat(transporters.filter { it.section() == Pair("A", "B") }.size).isEqualTo(1)
+        assertThat(transporters.filter { it.section() == Pair("C", "B") }.size).isEqualTo(1)
+        assertThat(transporters.filter { it.section() == Pair("D", "C") }.size).isEqualTo(1)
 
         assertThat(transporters.size).isEqualTo(3)
 

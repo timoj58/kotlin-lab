@@ -43,8 +43,8 @@ internal class LineTest {
 
         val line = Line(1, lineConfig, listOf(transportConfig))
 
-        assertThat(line.transporters.count { t -> t.section == Pair("A", "B") }).isEqualTo(2)
-        assertThat(line.transporters.count { t -> t.section == Pair("D", "C") }).isEqualTo(2)
+        assertThat(line.transporters.count { t -> t.section() == Pair("A", "B") }).isEqualTo(2)
+        assertThat(line.transporters.count { t -> t.section() == Pair("D", "C") }).isEqualTo(2)
 
     }
 
@@ -59,8 +59,8 @@ internal class LineTest {
     fun `circle line test where paddington is start and end`() {
         val line = Line(1, circleLineConfig, listOf(transportConfig))
 
-        assertThat(line.transporters.count { t -> t.section == Pair("A", "B") }).isEqualTo(3)
-        assertThat(line.transporters.count { t -> t.section == Pair("A", "D") }).isEqualTo(3)
+        assertThat(line.transporters.count { t -> t.section() == Pair("A", "B") }).isEqualTo(3)
+        assertThat(line.transporters.count { t -> t.section() == Pair("A", "D") }).isEqualTo(3)
 
     }
 
