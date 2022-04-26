@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -68,7 +69,10 @@ internal class LineSectionServiceTest {
 
         do {
             delay(100)
+            println("here")
         }while (transport.isStationary())
+
+        println("exit")
 
         assertThat(transport.isStationary()).isEqualTo(false)
 
@@ -76,6 +80,7 @@ internal class LineSectionServiceTest {
         job.cancelAndJoin()
     }
 
+    @Disabled
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
