@@ -84,6 +84,7 @@ internal class LineSectionServiceTest {
         delay(200)
 
         val job = async { lineSectionService.release(transport, instructions) }
+        delay(100)
         val job2 = async { lineSectionService.release(transport2, instructions) }
         println("running test 2")
 
@@ -105,6 +106,7 @@ internal class LineSectionServiceTest {
 
             val job3 = async { lineSectionService.start(LineBuilder().getLine().name) }
             val job = async { lineSectionService.release(transport, instructions) }
+            delay(100)
             val job2 = async { lineSectionService.release(transport2, instructions) }
             println("running test 3")
 
