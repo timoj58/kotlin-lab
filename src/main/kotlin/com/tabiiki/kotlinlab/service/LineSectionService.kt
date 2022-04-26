@@ -55,18 +55,18 @@ class LineSectionServiceImpl(
 
     override suspend fun start(line: String) = coroutineScope {
         platformQueues.keys().asIterator().forEach {
-            launch(Dispatchers.Default) { initPlatform(it) }
+            launch { initPlatform(it) }
         }
         sectionQueues.keys().asIterator().forEach {
-            launch(Dispatchers.Default) { initSection(it) }
+            launch { initSection(it) }
         }
     }
 
 
     private suspend fun initPlatform(key: Pair<String, String>) = coroutineScope {
-        launch(Dispatchers.Default) { initSignals(key) }
-        launch(Dispatchers.Default) { monitorPlatformChannel(key) }
-        launch(Dispatchers.Default) { monitorPlatformSignal(key) }
+        launch { initSignals(key) }
+        launch { monitorPlatformChannel(key) }
+        launch { monitorPlatformSignal(key) }
         println("init plaform $key")
     }
 
