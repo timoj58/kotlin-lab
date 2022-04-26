@@ -11,12 +11,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
-//@Disabled //issue with git actions remove for now (runs locally)
 internal class LineSectionServiceTest {
 
     private val lineFactory = mock(LineFactory::class.java)
@@ -65,7 +63,12 @@ internal class LineSectionServiceTest {
         delay(100)
 
         val job = async { lineSectionService.release(transport, instructions) }
-       // delay(1000)
+
+        println("running test")
+
+        do {
+            delay(100)
+        }while (transport.isStationary())
 
         assertThat(transport.isStationary()).isEqualTo(false)
 
@@ -78,12 +81,15 @@ internal class LineSectionServiceTest {
         val lineSectionService = LineSectionServiceImpl(signalService!!)
 
         val job3 = async { lineSectionService.start(LineBuilder().getLine().name) }
-        delay(100)
+        delay(200)
 
         val job = async { lineSectionService.release(transport, instructions) }
         val job2 = async { lineSectionService.release(transport2, instructions) }
+        println("running test 2")
 
-        //delay(1000)
+        do{
+            delay(100)
+        }while (transport.isStationary() == transport2.isStationary())
 
         assertThat(transport.isStationary() != transport2.isStationary()).isEqualTo(true)
 
@@ -92,7 +98,6 @@ internal class LineSectionServiceTest {
         job3.cancelAndJoin()
     }
 
-    @Disabled
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
@@ -101,10 +106,18 @@ internal class LineSectionServiceTest {
             val job3 = async { lineSectionService.start(LineBuilder().getLine().name) }
             val job = async { lineSectionService.release(transport, instructions) }
             val job2 = async { lineSectionService.release(transport2, instructions) }
+            println("running test 3")
 
-            delay(11000)
+            do {
+                delay(100)
+            }while (!transport.atPlatform())
 
             assertThat(transport.atPlatform()).isEqualTo(true)
+
+            do {
+                delay(100)
+            }while (transport2.isStationary())
+
             assertThat(transport2.isStationary()).isEqualTo(false)
 
             job.cancelAndJoin()
