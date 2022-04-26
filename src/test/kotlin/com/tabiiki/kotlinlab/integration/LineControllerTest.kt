@@ -58,6 +58,8 @@ class LineControllerTest {
 
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
+
+        println("started")
         val stationRepo = StationRepoImpl(stationFactory)
         lineSectionService = LineSectionServiceImpl(signalService)
         val lineControllerService =
@@ -74,7 +76,7 @@ class LineControllerTest {
 
         val res = async { lineControllerService.start(channel) }
         val res2 = async { lineControllerService.regulate(channel2) }
-        val testRes = async { testChannel(channel, channel2, listOf(res, res2)) }
+        val res3 = async { testChannel(channel, channel2, listOf(res, res2)) }
     }
 
 
@@ -89,6 +91,9 @@ class LineControllerTest {
 
         } while (trains.values.map { it.status }
                 .any { it == Status.DEPOT } && startTime + (1000 * 15) > System.currentTimeMillis())
+
+
+        println("finished?")
 
         assertThat(trains.values.map { it.status }
             .any { it == Status.DEPOT }).isEqualTo(false)
