@@ -104,6 +104,7 @@ internal class LineSectionServiceTest {
         job3.cancelAndJoin()
     }
 
+    @Disabled
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
