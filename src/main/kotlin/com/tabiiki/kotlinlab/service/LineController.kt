@@ -4,8 +4,6 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -28,13 +26,14 @@ class LineControllerImpl(
 
     override suspend fun start(channel: Channel<Transport>) = coroutineScope {
         launch { conductor.start(line.map { it.name }.distinct().first()) }
+
         conductor.getFirstTransportersToDispatch(line).forEach {
-            async { dispatch(it, channel) }
+            launch { dispatch(it, channel) }
         }
         do {
             delay(startDelay)
             conductor.getNextTransportersToDispatch(line).forEach { transport ->
-                async { dispatch(transport, channel) }
+               launch { dispatch(transport, channel) }
             }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
@@ -45,12 +44,10 @@ class LineControllerImpl(
         coroutineScope {
             do {
                 val message = channel.receive()
-                async { publish(message) }
+                launch { publish(message) }
                 if (message.atPlatform()) {
-                    async { journeyRepo.addJourneyTime(message.getJourneyTime()) }
-                    launch(Dispatchers.Default) {
-                        conductor.hold(message, getLineStations(message.id))
-                    }
+                    launch { journeyRepo.addJourneyTime(message.getJourneyTime()) }
+                    launch { conductor.hold(message, getLineStations(message.id)) }
                 }
             } while (true)
         }
@@ -62,10 +59,9 @@ class LineControllerImpl(
     private fun getLineStations(id: UUID) =
         line.first { l -> l.transporters.any { it.id == id } }.stations
 
-
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
-        launch(Dispatchers.Default) { transport.track(Pair("GLOBAL", "GLOBAL"), channel) }
-        launch(Dispatchers.Default) { conductor.release(transport, getLineStations(transport.id)) }
+        launch { transport.track(Pair("GLOBAL", "GLOBAL"), channel) }
+        launch { conductor.release(transport, getLineStations(transport.id)) }
     }
 
     private suspend fun publish(message: Transport) = coroutineScope {

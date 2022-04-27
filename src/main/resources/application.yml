@@ -22,25 +22,25 @@ network:
       - transport-id: 3
         capacity: 1000
         weight: 1000
-        top-speed: 12
-        power: 200
+        top-speed: 28
+        power: 3800
       - transport-id: 4
         capacity: 1000
-        weight: 1200
-        top-speed: 10
-        power: 1800
+        weight: 1500
+        top-speed: 20
+        power: 2300
   lines:
     underground:
-      - src/main/resources/network/underground/city.yml
+      #- src/main/resources/network/underground/city.yml
       - src/main/resources/network/underground/jubilee.yml
-      - src/main/resources/network/underground/victoria.yml
-      - src/main/resources/network/underground/circle.yml
-      - src/main/resources/network/underground/bakerloo.yml
-      - src/main/resources/network/underground/hammersmith.yml
-      - src/main/resources/network/underground/metropolitan.yml
-      - src/main/resources/network/underground/central.yml
-      - src/main/resources/network/underground/district.yml
-      - src/main/resources/network/underground/northern.yml
+      #- src/main/resources/network/underground/victoria.yml
+      #- src/main/resources/network/underground/circle.yml
+      #- src/main/resources/network/underground/bakerloo.yml
+      #- src/main/resources/network/underground/hammersmith.yml
+      #- src/main/resources/network/underground/metropolitan.yml
+      #- src/main/resources/network/underground/central.yml
+      #- src/main/resources/network/underground/district.yml
+      #- src/main/resources/network/underground/northern.yml
       #- src/main/resources/network/underground/piccadilly.yml
     overground:
       - src/main/resources/network/overground/highbury.yml

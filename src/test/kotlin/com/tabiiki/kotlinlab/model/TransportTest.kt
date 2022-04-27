@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 internal class TransportTest {
 
     private val train = Transport(
-        config = TransportConfig(transportId = 1, capacity = 10, power = 200, weight = 1000, topSpeed = 12),
+        config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
         line = LineBuilder().getLine(),
         timeStep = 10
     ).also { it.addSection(Pair("1", "2")) }

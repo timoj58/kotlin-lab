@@ -2,7 +2,6 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -32,7 +31,6 @@ class StationServiceImpl(
     stationRepo: StationRepo
 ) : StationService {
 
-    //private val log = LoggerFactory.getLogger(this.javaClass)
     private val channels = stationRepo.get().map { it.id }.associateWith { Channel<Transport>() }
 
     override fun getChannel(id: String): Channel<Transport> {
@@ -41,7 +39,7 @@ class StationServiceImpl(
 
     override suspend fun monitor(listener: Channel<StationMessage>) = coroutineScope {
         channels.forEach { (k, v) ->
-            launch(Dispatchers.Default) { monitor(k, v, listener) }
+            launch { monitor(k, v, listener) }
         }
     }
 

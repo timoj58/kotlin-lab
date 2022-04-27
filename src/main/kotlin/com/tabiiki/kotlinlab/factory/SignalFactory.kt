@@ -2,10 +2,8 @@ package com.tabiiki.kotlinlab.factory
 
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.service.LineDirection
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Repository
 
@@ -24,8 +22,8 @@ data class Signal(
     val timeStep: Long = 100
 ) {
     suspend fun start(channelIn: Channel<SignalValue>, channelOut: Channel<SignalValue>) = coroutineScope {
-        launch(Dispatchers.Default) { receive(channelIn) }
-        launch(Dispatchers.Default) { send(channelOut) }
+        launch { receive(channelIn) }
+        launch { send(channelOut) }
     }
 
     private suspend fun receive(channel: Channel<SignalValue>) {
@@ -37,7 +35,6 @@ data class Signal(
 
     private suspend fun send(channel: Channel<SignalValue>) {
         do {
-            delay(timeStep)
             channel.send(this.status)
         } while (true)
     }
@@ -67,7 +64,7 @@ class SignalFactory(
     fun get(): List<Signal> = signals.values.toList()
 
     private fun getPlatforms(lines: List<Line>): Set<Pair<String, String>> {
-        var pairs = mutableSetOf<Pair<String, String>>()
+        val pairs = mutableSetOf<Pair<String, String>>()
         lines.forEach { line ->
             val id = line.name
             pairs.addAll(line.stations.map { Pair("$id ${LineDirection.POSITIVE}", it) })
@@ -77,7 +74,7 @@ class SignalFactory(
     }
 
     private fun getLineSections(stations: List<String>): Set<Pair<String, String>> {
-        var pairs = mutableSetOf<Pair<String, String>>()
+        val pairs = mutableSetOf<Pair<String, String>>()
         for (station in 0..stations.size - 2 step 1) {
             pairs.add(Pair(stations[station], stations[station + 1]))
             pairs.add(Pair(stations.reversed()[station], stations.reversed()[station + 1]))

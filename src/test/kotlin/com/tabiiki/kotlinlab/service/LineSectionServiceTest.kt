@@ -63,7 +63,7 @@ internal class LineSectionServiceTest {
 
         do {
             delay(100)
-        }while (transport.isStationary())
+        } while (transport.isStationary())
 
         assertThat(transport.isStationary()).isEqualTo(false)
 
@@ -82,9 +82,9 @@ internal class LineSectionServiceTest {
         delay(100)
         val job2 = launch { lineSectionService.release(transport2, instructions) }
 
-        do{
+        do {
             delay(100)
-        }while (transport.isStationary() == transport2.isStationary())
+        } while (transport.isStationary() == transport2.isStationary())
 
         assertThat(transport.isStationary() != transport2.isStationary()).isEqualTo(true)
 
@@ -105,13 +105,13 @@ internal class LineSectionServiceTest {
 
             do {
                 delay(100)
-            }while (!transport.atPlatform())
+            } while (!transport.atPlatform())
 
             assertThat(transport.atPlatform()).isEqualTo(true)
 
             do {
                 delay(100)
-            }while (transport2.isStationary())
+            } while (transport2.isStationary())
 
             assertThat(transport2.isStationary()).isEqualTo(false)
 

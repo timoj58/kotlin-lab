@@ -1,9 +1,11 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.LineFactory
+import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -28,7 +30,7 @@ class NetworkServiceImpl(
     private val controllers = mutableListOf<LineController>()
 
     init {
-        if (startDelay < 100) throw ConfigurationException("start delay is to small, minimum 100 ms")
+        if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
 
         lines.groupBy { it.name }.values.forEach { line ->
             controllers.add(
@@ -47,12 +49,10 @@ class NetworkServiceImpl(
     override suspend fun start(listener: Channel<StationMessage>): Unit = coroutineScope {
         controllers.forEach { controller ->
             val channel = Channel<Transport>()
-
-            launch(Dispatchers.Default) { controller.start(channel) }
-            launch(Dispatchers.Default) { controller.regulate(channel) }
+            launch { controller.start(channel) }
+            launch { controller.regulate(channel) }
         }
-
-        launch(Dispatchers.Default) { stationService.monitor(listener) }
+        launch { stationService.monitor(listener) }
     }
 
 }

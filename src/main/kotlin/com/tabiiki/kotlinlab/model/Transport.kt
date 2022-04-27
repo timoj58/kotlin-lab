@@ -45,89 +45,31 @@ data class Transport(
 
     var id: UUID = UUID.randomUUID()
     val transportId = config.transportId
-    val capacity = config.capacity
-    private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
-    private val trackers: ConcurrentHashMap<Pair<String, String>, SendChannel<Transport>> = ConcurrentHashMap()
-    var status = Status.DEPOT
-    private var previousStatus = Status.DEPOT
-    private var instruction = Instruction.STATIONARY
-    var journey: LineInstructions? = null
-    private var journeyTime = Pair(Pair("", ""), AtomicInteger(0))
+    private val capacity = config.capacity
+
     private val physics = Physics(config)
 
-    companion object
-    class Physics(config: TransportConfig) {
-        private val haversineCalculator = HaversineCalculator()
-        private val drag = 0.95
+    var status = Status.DEPOT
+    private var instruction = Instruction.STATIONARY
 
-        var distance: Double = 0.0
-        var velocity: Double = 0.0
-        var displacement: Double = 0.0
-        private val weight = config.weight
-        private val topSpeed = config.topSpeed
-        private val power = config.power
-
-        fun reset() {
-            displacement = 0.0
-            velocity = 0.0
-        }
-
-        fun init(from: Station, to: Station) {
-            distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
-        }
-
-        private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {
-            return when (instruction) {
-                Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
-                Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 100.0) * -1
-                Instruction.EMERGENCY_STOP -> power.toDouble() * -1
-                else -> 0.0
-            }
-        }
-
-        private fun calculateAcceleration(force: Double): Double = force / weight.toDouble()
-
-        fun calcTimeStep(instruction: Instruction) {
-            var force = calculateForce(instruction)
-            var acceleration = calculateAcceleration(force)
-            var percentage = 100.0
-
-            while (velocity + acceleration > topSpeed && percentage >= 0.0) {
-                percentage--
-                force = calculateForce(instruction = instruction, percentage = percentage)
-                acceleration = calculateAcceleration(force = force)
-            }
-
-            if (velocity + acceleration >= 0.0) velocity += acceleration else velocity = sqrt(velocity)
-            if (floor(velocity) == 0.0 && instruction == Instruction.EMERGENCY_STOP) velocity = 0.0
-
-            velocity *= drag
-            displacement += velocity
-        }
-
-
-        fun shouldApplyBrakes(): Boolean {
-            val stoppingDistance = distance - displacement
-            val brakingForce = -power.toDouble()
-            val brakingVelocity = velocity + (brakingForce / weight)
-            val iterationsToPlatform = stoppingDistance / velocity
-            val iterationsToBrakeToPlatform = stoppingDistance / abs(brakingVelocity)
-
-            return ceil(iterationsToPlatform) + 2 == floor(iterationsToBrakeToPlatform) - 1
-        }
-    }
+    private var journey: LineInstructions? = null
+    private var journeyTime = Pair(Pair("", ""), AtomicInteger(0))
+    private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
+    private val trackers: ConcurrentHashMap<Pair<String, String>, SendChannel<Transport>> = ConcurrentHashMap()
 
     fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
     fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
 
     override suspend fun track(key: Pair<String, String>, channel: SendChannel<Transport>) {
+        var previousStatus = Status.DEPOT
+
         if (trackers.isEmpty()) {
             trackers[key] = channel
             do {
                 if (previousStatus != Status.PLATFORM) trackers.values.forEach { it.send(this) }
                 previousStatus = status
-                delay(timeStep)
+                delay(timeStep * 2)
             } while (true)
         } else trackers[key] = channel
 
@@ -143,18 +85,26 @@ data class Transport(
     }
 
     override suspend fun signal(channel: Channel<SignalValue>) {
+
+        var previousMsg: SignalValue? = null
         do {
-            when (channel.receive()) {
-                SignalValue.GREEN -> Instruction.THROTTLE_ON
-                SignalValue.AMBER_10 -> Instruction.LIMIT_10
-                SignalValue.AMBER_20 -> Instruction.LIMIT_20
-                SignalValue.AMBER_30 -> Instruction.LIMIT_30
-                SignalValue.RED -> Instruction.EMERGENCY_STOP
-            }.also { instruction = it }
+            val msg = channel.receive()
+            if(previousMsg == null || msg != previousMsg) {
+                when (msg) {
+                    SignalValue.GREEN -> Instruction.THROTTLE_ON
+                    SignalValue.AMBER_10 -> Instruction.LIMIT_10
+                    SignalValue.AMBER_20 -> Instruction.LIMIT_20
+                    SignalValue.AMBER_30 -> Instruction.LIMIT_30
+                    SignalValue.RED -> Instruction.EMERGENCY_STOP
+                }.also { instruction = it }
+            }
+            previousMsg = msg
         } while (status == Status.ACTIVE)
     }
 
-    override fun section(): Pair<String, String> = sectionData.second ?: sectionData.first!!
+    override fun section(): Pair<String, String> =
+        sectionData.second ?: sectionData.first!!
+
     override fun platformFromKey(): Pair<String, String> {
         val line = line.name
         val dir = journey!!.direction
@@ -184,20 +134,94 @@ data class Transport(
             if (this.instruction == Instruction.THROTTLE_ON && physics.shouldApplyBrakes()) this.instruction =
                 Instruction.SCHEDULED_STOP
         } while (physics.displacement <= physics.distance)
-        stopJourney(Pair(journey!!.to.id, journey!!.next.id))
+
+        stopJourney()
     }
 
     private fun startJourney(instruction: LineInstructions) {
         journey = instruction
         status = Status.ACTIVE
-        journeyTime = Pair(Pair(journey!!.from.id, journey!!.to.id), AtomicInteger(0))
-        physics.init(journey!!.from, journey!!.to)
+
+        journey?.let {
+            physics.init(it.from, it.to)
+            journeyTime = Pair(Pair(it.from.id, it.to.id), AtomicInteger(0))
+        }
     }
 
-    private suspend fun stopJourney(newSection: Pair<String, String>) = coroutineScope {
+    private suspend fun stopJourney() = coroutineScope {
         physics.reset()
-        val previousSection = sectionData.first
-        sectionData = Pair(previousSection, newSection)
+        journey?.let {
+            sectionData = Pair(
+                Pair(it.from.id, it.to.id),
+                Pair(it.to.id, it.next.id)
+            )
+        }
         status = Status.PLATFORM
+    }
+
+    companion object
+    class Physics(config: TransportConfig) {
+        private val haversineCalculator = HaversineCalculator()
+        private val drag = 0.88
+
+        var distance: Double = 0.0
+        var velocity: Double = 0.0
+        var displacement: Double = 0.0
+        private val weight = config.weight
+        private val topSpeed = config.topSpeed
+        private val power = config.power
+
+        fun reset() {
+            displacement = 0.0
+            velocity = 0.0
+        }
+
+        fun init(from: Station, to: Station) {
+            distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
+        }
+
+        private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {
+            return when (instruction) {
+                Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
+                Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 1000.0) * -1
+                Instruction.EMERGENCY_STOP -> power.toDouble() * -1
+                else -> 0.0
+            }
+        }
+
+        private fun calculateAcceleration(force: Double): Double = force / weight.toDouble()
+
+        fun calcTimeStep(instruction: Instruction) {
+            var force = calculateForce(instruction)
+            var acceleration = calculateAcceleration(force)
+            var percentage = 100.0
+
+           // if(velocity + acceleration > topSpeed) println("above top speed"+(velocity + acceleration))
+
+            while (velocity + acceleration > topSpeed && percentage >= 0.0) {
+                percentage--
+                force = calculateForce(instruction = instruction, percentage = percentage)
+                acceleration = calculateAcceleration(force = force)
+            }
+
+            if (velocity + acceleration >= 0.0) velocity += acceleration else velocity = sqrt(velocity)
+            if (floor(velocity) == 0.0 && instruction == Instruction.EMERGENCY_STOP) velocity = 0.0
+
+            velocity *= drag
+            displacement += velocity
+
+  //          println("$instruction : $distance vs $displacement")
+        }
+
+        fun shouldApplyBrakes(): Boolean {
+            val stoppingDistance = distance - displacement
+            val brakingForce = -power.toDouble()
+            val brakingVelocity = velocity + (brakingForce / weight)
+            val iterationsToPlatform = stoppingDistance / velocity
+            val iterationsToBrakeToPlatform = stoppingDistance / abs(brakingVelocity)
+
+    //        println("$iterationsToPlatform $iterationsToBrakeToPlatform")
+            return ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
+        }
     }
 }

@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,14 +41,14 @@ class PlatformConductorImpl(
             counter++
         } while (counter < 45)
 
-        launch(Dispatchers.Default) { release(transport, lineStations) }
+        launch { release(transport, lineStations) }
     }
 
     override suspend fun release(
         transport: Transport,
         lineStations: List<String>
     ): Unit = coroutineScope {
-        launch(Dispatchers.Default) {
+        launch {
             lineSectionService.release(transport, lineInstructions(transport, lineStations))
         }
     }
