@@ -89,7 +89,7 @@ data class Transport(
         var previousMsg: SignalValue? = null
         do {
             val msg = channel.receive()
-            if(previousMsg == null || msg != previousMsg) {
+            if (previousMsg == null || msg != previousMsg) {
                 when (msg) {
                     SignalValue.GREEN -> Instruction.THROTTLE_ON
                     SignalValue.AMBER_10 -> Instruction.LIMIT_10
@@ -196,7 +196,7 @@ data class Transport(
             var acceleration = calculateAcceleration(force)
             var percentage = 100.0
 
-           // if(velocity + acceleration > topSpeed) println("above top speed"+(velocity + acceleration))
+            // if(velocity + acceleration > topSpeed) println("above top speed"+(velocity + acceleration))
 
             while (velocity + acceleration > topSpeed && percentage >= 0.0) {
                 percentage--
@@ -210,7 +210,7 @@ data class Transport(
             velocity *= drag
             displacement += velocity
 
-  //          println("$instruction : $distance vs $displacement")
+            //          println("$instruction : $distance vs $displacement")
         }
 
         fun shouldApplyBrakes(): Boolean {
@@ -220,7 +220,7 @@ data class Transport(
             val iterationsToPlatform = stoppingDistance / velocity
             val iterationsToBrakeToPlatform = stoppingDistance / abs(brakingVelocity)
 
-    //        println("$iterationsToPlatform $iterationsToBrakeToPlatform")
+            //        println("$iterationsToPlatform $iterationsToBrakeToPlatform")
             return ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
         }
     }

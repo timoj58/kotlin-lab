@@ -33,7 +33,7 @@ class LineControllerImpl(
         do {
             delay(startDelay)
             conductor.getNextTransportersToDispatch(line).forEach { transport ->
-               launch { dispatch(transport, channel) }
+                launch { dispatch(transport, channel) }
             }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
