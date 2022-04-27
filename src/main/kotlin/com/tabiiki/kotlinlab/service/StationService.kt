@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.channels.Channel
@@ -15,7 +16,7 @@ enum class MessageType {
 data class StationMessage(
     val stationId: String,
     val transportId: UUID,
-    val line: String,
+    val line: Line,
     val section: Pair<String, String>,
     val type: MessageType
 )
@@ -51,7 +52,7 @@ class StationServiceImpl(
                     StationMessage(
                         stationId = id,
                         transportId = message.id,
-                        line = message.line.name,
+                        line = message.line,
                         section = message.section(),
                         type = MessageType.ARRIVE
                     )
@@ -61,7 +62,7 @@ class StationServiceImpl(
                     StationMessage(
                         stationId = id,
                         transportId = message.id,
-                        line = message.line.name,
+                        line = message.line,
                         section = message.section(),
                         type = MessageType.DEPART
                     )

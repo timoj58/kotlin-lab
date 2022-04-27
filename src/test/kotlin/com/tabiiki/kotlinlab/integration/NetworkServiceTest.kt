@@ -17,7 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import java.util.*
 
-@Disabled
+//@Disabled
 @ActiveProfiles("test")
 @SpringBootTest
 class NetworkServiceTest @Autowired constructor(
@@ -33,7 +33,7 @@ class NetworkServiceTest @Autowired constructor(
     init {
         lineFactory.get().forEach { id ->
             val line = lineFactory.get(id)
-            sectionsByLine[line.name] = getLineStations(line.stations)
+            sectionsByLine[line.id] = getLineStations(line.stations)
             transportersPerLine += line.transporters.size
         }
     }
@@ -50,12 +50,12 @@ class NetworkServiceTest @Autowired constructor(
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
-            if (!trainsByLine.containsKey(msg.line))
-                trainsByLine[msg.line] = mutableSetOf()
+            if (!trainsByLine.containsKey(msg.line.id))
+                trainsByLine[msg.line.id] = mutableSetOf()
             if (!stationVisitedPerTrain.containsKey(msg.transportId))
                 stationVisitedPerTrain[msg.transportId] = mutableSetOf()
 
-            trainsByLine[msg.line]?.add(msg.transportId)
+            trainsByLine[msg.line.id]?.add(msg.transportId)
             if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 7) > System.currentTimeMillis())
 
@@ -67,6 +67,13 @@ class NetworkServiceTest @Autowired constructor(
         println("total trains: $transportersPerLine, trains running: ${stationVisitedPerTrain.keys.size}  and stations visited ${stationVisitedPerTrain.values.flatten().size}")
         val count = testSectionsVisited()
         println("completed journeys count: $count")
+
+        stationVisitedPerTrain.forEach { (k, u) ->
+            val line = getLineByTrain(k)
+            val total = sectionsByLine[line]!!.toList()
+            println("$line - $k visited ${u.size} vs ${total.size}")
+        }
+
         assertThat(count).isEqualTo(transportersPerLine)
         stationVisitedPerTrain.values.flatten()
             .forEach {

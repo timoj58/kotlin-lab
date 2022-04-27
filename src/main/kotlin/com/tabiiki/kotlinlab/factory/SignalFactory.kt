@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.service.LineDirection
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Repository
 
@@ -36,6 +37,7 @@ data class Signal(
     private suspend fun send(channel: Channel<SignalValue>) {
         do {
             channel.send(this.status)
+            delay(timeStep)
         } while (true)
     }
 }
