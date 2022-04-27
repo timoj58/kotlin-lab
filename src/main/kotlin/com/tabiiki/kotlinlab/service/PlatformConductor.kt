@@ -68,6 +68,7 @@ class PlatformConductorImpl(
         )
 
     private fun lineDirection(transport: Transport): LineDirection {
+        //special case for circle.  to review. TODO
         val fromIdx = transport.line.stations.indexOf(transport.section().first)
         val toIdx = transport.line.stations.indexOf(transport.section().second)
 

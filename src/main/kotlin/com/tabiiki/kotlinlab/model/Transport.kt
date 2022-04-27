@@ -210,7 +210,7 @@ data class Transport(
             velocity *= drag
             displacement += velocity
 
-            //          println("$instruction : $distance vs $displacement")
+            println("$instruction : $distance vs $displacement")
         }
 
         fun shouldApplyBrakes(): Boolean {
