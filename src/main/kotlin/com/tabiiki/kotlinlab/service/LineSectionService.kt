@@ -70,7 +70,7 @@ class LineSectionServiceImpl(
         queues.platformRelease(key, transport)
     }
 
-   //TODO move at some point.
+    //TODO move at some point.
     private suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {

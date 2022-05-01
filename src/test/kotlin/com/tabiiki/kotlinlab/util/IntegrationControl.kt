@@ -7,7 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import org.assertj.core.api.Assertions
-import java.util.*
+import java.util.UUID
 
 class IntegrationControl {
     private val stationVisitedPerTrain = mutableMapOf<UUID, MutableSet<Pair<String, String>>>()
@@ -15,7 +15,7 @@ class IntegrationControl {
     private val sectionsByLine = mutableMapOf<String, Set<Pair<String, String>>>()
     private var transportersPerLine = 0
 
-    fun initControl(line: Line){
+    fun initControl(line: Line) {
         sectionsByLine[line.id] = getLineStations(line.stations)
         transportersPerLine += line.transporters.size
     }
@@ -33,7 +33,7 @@ class IntegrationControl {
             if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 5) > System.currentTimeMillis())
 
-        jobs.forEach { it.cancelAndJoin()}
+        jobs.forEach { it.cancelAndJoin() }
         assert()
     }
 

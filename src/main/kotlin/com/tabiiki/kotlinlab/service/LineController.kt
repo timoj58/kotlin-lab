@@ -7,7 +7,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.*
 
 interface LineController {
     suspend fun start(channel: Channel<Transport>)
@@ -36,7 +35,8 @@ class LineControllerImpl(
                 .filter { conductor.clear(it) }
                 .forEach { transport ->
                     delay(transport.timeStep)
-                    launch { dispatch(transport, channel) } }
+                    launch { dispatch(transport, channel) }
+                }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
 
@@ -55,11 +55,11 @@ class LineControllerImpl(
     private suspend fun publish(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { transport.track(channel) }
 
-        do{
+        do {
             val message = channel.receive()
             listOf(message.section().first, message.section().second)
                 .forEach { stationChannels[it]?.send(message) }
 
-        }while (true)
+        } while (true)
     }
 }

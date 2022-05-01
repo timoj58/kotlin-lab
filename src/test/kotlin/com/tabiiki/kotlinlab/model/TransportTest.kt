@@ -12,7 +12,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class TransportTest {
@@ -24,18 +23,18 @@ internal class TransportTest {
     ).also { it.addSection(Pair("1", "2")) }
 
     @Test
-    fun `at platform test`(){
+    fun `at platform test`() {
         train.status = Status.PLATFORM
         assertThat(train.atPlatform()).isEqualTo(true)
     }
 
     @Test
-    fun `is stationary test`(){
+    fun `is stationary test`() {
         assertThat(train.isStationary()).isEqualTo(true)
     }
 
     @Test
-    fun `not at platform test`(){
+    fun `not at platform test`() {
         assertThat(train.atPlatform()).isEqualTo(false)
     }
 
@@ -71,7 +70,7 @@ internal class TransportTest {
         do {
             delay(10)
         } while (!train.isStationary())
-       assertThat(train.isStationary()).isEqualTo(true)
+        assertThat(train.isStationary()).isEqualTo(true)
 
         channel.send(SignalValue.GREEN)
 

@@ -2,11 +2,12 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -21,14 +22,7 @@ internal class LineSectionServiceTest {
     private val lineFactory = mock(LineFactory::class.java)
     private var signalFactory: SignalFactory? = null
     private var signalService: SignalServiceImpl? = null
-
-    private val instructions =
-        LineInstructions(
-            LineBuilder().stations[0],
-            LineBuilder().stations[1],
-            LineBuilder().stations[2],
-            LineDirection.POSITIVE
-        )
+    private val stationRepo = mock(StationRepo::class.java)
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
@@ -46,6 +40,11 @@ internal class LineSectionServiceTest {
         it.addSection(Pair("A", "B"))
     }
 
+    private val lines = listOf(LineBuilder().getLine().also {
+        it.transporters[0].id = transport.id
+        it.transporters[1].id = transport2.id
+    })
+
     @BeforeEach
     fun init() {
         `when`(lineFactory.get()).thenReturn(listOf("1"))
@@ -54,13 +53,23 @@ internal class LineSectionServiceTest {
 
         signalFactory = SignalFactory(lineFactory)
         signalService = SignalServiceImpl(signalFactory!!)
+
+        `when`(stationRepo.get("A")).thenReturn(LineBuilder().stations[0])
+        `when`(stationRepo.get("B")).thenReturn(LineBuilder().stations[1])
+        `when`(stationRepo.get("C")).thenReturn(LineBuilder().stations[2])
+
+        `when`(stationRepo.getNextStationOnLine(listOf("A", "B", "C"), Pair("A", "B"))).thenReturn(LineBuilder().stations[0])
+        `when`(stationRepo.getNextStationOnLine(listOf("A", "B", "C"), Pair("B", "C"))).thenReturn(LineBuilder().stations[0])
+        `when`(stationRepo.getNextStationOnLine(listOf("A", "B", "C"), Pair("C", "B"))).thenReturn(LineBuilder().stations[0])
+        `when`(stationRepo.getNextStationOnLine(listOf("A", "B", "C"), Pair("B", "A"))).thenReturn(LineBuilder().stations[0])
+
     }
 
     @Test
     fun `train is first train added to section, so will be given a green light`() = runBlocking {
-        val lineSectionService = LineSectionServiceImpl(signalService!!, mock(StationRepo::class.java))
+        val lineSectionService = LineSectionServiceImpl(signalService!!, stationRepo)
 
-        val job2 = launch { lineSectionService.start(LineBuilder().getLine().name, listOf()) }
+        val job2 = launch { lineSectionService.start(LineBuilder().getLine().name, lines) }
         val job = launch { lineSectionService.release(transport) }
 
         do {
@@ -75,9 +84,9 @@ internal class LineSectionServiceTest {
 
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
-        val lineSectionService = LineSectionServiceImpl(signalService!!, mock(StationRepo::class.java))
+        val lineSectionService = LineSectionServiceImpl(signalService!!, stationRepo)
 
-        val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, listOf()) }
+        val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, lines) }
         delay(200)
 
         val job = launch { lineSectionService.release(transport) }
@@ -98,9 +107,9 @@ internal class LineSectionServiceTest {
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
-            val lineSectionService = LineSectionServiceImpl(signalService!!, mock(StationRepo::class.java))
+            val lineSectionService = LineSectionServiceImpl(signalService!!, stationRepo)
 
-            val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, listOf()) }
+            val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, lines) }
             val job = launch { lineSectionService.release(transport) }
             delay(100)
             val job2 = launch { lineSectionService.release(transport2) }

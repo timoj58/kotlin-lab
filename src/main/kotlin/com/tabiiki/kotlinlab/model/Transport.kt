@@ -11,9 +11,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -89,8 +89,9 @@ data class Transport(
         do {
             val msg = channel.receive()
             if (previousMsg == null || msg != previousMsg) {
-                if(msg == SignalValue.GREEN) journal.add(
-                    JournalRecord(action = JournalActions.DEPART, key = this.section()))
+                if (msg == SignalValue.GREEN) journal.add(
+                    JournalRecord(action = JournalActions.DEPART, key = this.section())
+                )
                 when (msg) {
                     SignalValue.GREEN -> Instruction.THROTTLE_ON
                     SignalValue.AMBER_10 -> Instruction.LIMIT_10
@@ -120,7 +121,7 @@ data class Transport(
         return Pair("$line $dir", journey!!.to.id)
     }
 
-    override fun platformKey(): Pair<String, String>  =
+    override fun platformKey(): Pair<String, String> =
         Pair("${line.name} ${this.lineDirection()}", section().first)
 
     override fun lineDirection(): LineDirection {
@@ -167,27 +168,32 @@ data class Transport(
                 Pair(it.from.id, it.to.id),
                 Pair(it.to.id, it.next.id)
             )
-            journal.add(JournalRecord(
-                action = JournalActions.ARRIVE,
-                key = Pair(it.from.id, it.to.id)
-            ))
+            journal.add(
+                JournalRecord(
+                    action = JournalActions.ARRIVE,
+                    key = Pair(it.from.id, it.to.id)
+                )
+            )
         }
         status = Status.PLATFORM
     }
 
     companion object {
         private val log = LoggerFactory.getLogger(this.javaClass)
+
         enum class JournalActions { RELEASE, PLATFORM, DEPART, ARRIVE, ARRIVE_SECTION }
-        data class JournalRecord(var id: UUID? = null, val action: JournalActions, val key: Pair<String, String>){
+        data class JournalRecord(var id: UUID? = null, val action: JournalActions, val key: Pair<String, String>) {
             val milliseconds: Long = System.currentTimeMillis()
             fun print() = "$id: $action - $key"
         }
-        class Journal(val id: UUID){
+
+        class Journal(val id: UUID) {
             private val journal = mutableListOf<JournalRecord>()
-            fun add(journalRecord: JournalRecord){
+            fun add(journalRecord: JournalRecord) {
                 journal.add(journalRecord.also { it.id = this.id })
-         //       log.info(journalRecord.print())
+                //       log.info(journalRecord.print())
             }
+
             fun getLog() = journal
         }
 

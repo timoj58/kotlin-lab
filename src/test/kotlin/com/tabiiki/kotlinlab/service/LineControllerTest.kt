@@ -1,16 +1,17 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.atLeast
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 
 internal class LineControllerTest {
 
@@ -27,6 +28,9 @@ internal class LineControllerTest {
         `when`(conductor.getNextTransportersToDispatch(listOf(line))).thenReturn(
             listOf(line.transporters[2], line.transporters[3], line.transporters[4], line.transporters[5])
         )
+
+        listOf(line.transporters[0], line.transporters[1])
+            .forEach { `when`(conductor.clear(it)).thenReturn(true) }
 
         val lineControllerService =
             LineControllerImpl(100, listOf(line), conductor, mapOf())

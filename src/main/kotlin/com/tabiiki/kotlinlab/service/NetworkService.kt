@@ -2,7 +2,6 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.JourneyRepo
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
