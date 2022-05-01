@@ -17,8 +17,7 @@ internal class NetworkServiceTest {
                 80,
                 mock(StationService::class.java),
                 mock(LineFactory::class.java),
-                mock(PlatformConductor::class.java),
-                mock(JourneyRepo::class.java)
+                mock(LineConductor::class.java)
             )
         }
     }

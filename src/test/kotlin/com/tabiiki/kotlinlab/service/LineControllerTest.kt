@@ -14,26 +14,12 @@ import org.mockito.Mockito.*
 
 internal class LineControllerTest {
 
-    private val journeyRepoImpl = JourneyRepoImpl()
     private val line = LineBuilder().getLine()
 
-    @BeforeEach
-    fun `init`() {
-        journeyRepoImpl.addJourneyTime(
-            Pair(Pair("A", "B"), 10)
-        )
-        journeyRepoImpl.addJourneyTime(
-            Pair(Pair("B", "A"), 10)
-        )
-        journeyRepoImpl.addJourneyTime(
-            Pair(Pair("C", "B"), 10)
-        )
-
-    }
 
     @Test
     fun `start line and expect all trains to arrive at station B`() = runBlocking {
-        val conductor = mock(PlatformConductor::class.java)
+        val conductor = mock(LineConductor::class.java)
         `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
             listOf(line.transporters[0], line.transporters[1])
         )
@@ -43,15 +29,14 @@ internal class LineControllerTest {
         )
 
         val lineControllerService =
-            LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
+            LineControllerImpl(100, listOf(line), conductor, mapOf())
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
         delay(1000)
 
         verify(conductor, atLeast(line.transporters.size)).release(
-            Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine()),
-            LineBuilder().lineStations
+            Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
         res.cancelAndJoin()
@@ -60,20 +45,19 @@ internal class LineControllerTest {
 
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
-        val conductor = mock(PlatformConductor::class.java)
+        val conductor = mock(LineConductor::class.java)
         `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
             listOf(line.transporters[0], line.transporters[1])
         )
         val lineControllerService =
-            LineControllerImpl(100, listOf(line), conductor, journeyRepoImpl, mapOf())
+            LineControllerImpl(100, listOf(line), conductor, mapOf())
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(channel) }
         delay(100)
 
         verify(conductor, atLeast(2)).release(
-            Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine()),
-            LineBuilder().lineStations
+            Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
         res.cancelAndJoin()

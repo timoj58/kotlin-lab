@@ -3,8 +3,10 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -56,10 +58,10 @@ internal class LineSectionServiceTest {
 
     @Test
     fun `train is first train added to section, so will be given a green light`() = runBlocking {
-        val lineSectionService = LineSectionServiceImpl(signalService!!)
+        val lineSectionService = LineSectionServiceImpl(signalService!!, mock(StationRepo::class.java))
 
-        val job2 = launch { lineSectionService.start(LineBuilder().getLine().name) }
-        val job = launch { lineSectionService.release(transport, instructions) }
+        val job2 = launch { lineSectionService.start(LineBuilder().getLine().name, listOf()) }
+        val job = launch { lineSectionService.release(transport) }
 
         do {
             delay(100)
@@ -73,14 +75,14 @@ internal class LineSectionServiceTest {
 
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
-        val lineSectionService = LineSectionServiceImpl(signalService!!)
+        val lineSectionService = LineSectionServiceImpl(signalService!!, mock(StationRepo::class.java))
 
-        val job3 = launch { lineSectionService.start(LineBuilder().getLine().name) }
+        val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, listOf()) }
         delay(200)
 
-        val job = launch { lineSectionService.release(transport, instructions) }
+        val job = launch { lineSectionService.release(transport) }
         delay(100)
-        val job2 = launch { lineSectionService.release(transport2, instructions) }
+        val job2 = launch { lineSectionService.release(transport2) }
 
         do {
             delay(100)
@@ -96,12 +98,12 @@ internal class LineSectionServiceTest {
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
-            val lineSectionService = LineSectionServiceImpl(signalService!!)
+            val lineSectionService = LineSectionServiceImpl(signalService!!, mock(StationRepo::class.java))
 
-            val job3 = launch { lineSectionService.start(LineBuilder().getLine().name) }
-            val job = launch { lineSectionService.release(transport, instructions) }
+            val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, listOf()) }
+            val job = launch { lineSectionService.release(transport) }
             delay(100)
-            val job2 = launch { lineSectionService.release(transport2, instructions) }
+            val job2 = launch { lineSectionService.release(transport2) }
 
             do {
                 delay(100)

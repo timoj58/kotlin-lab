@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Repository
 
 enum class SignalType {
@@ -30,16 +31,19 @@ data class Signal(
     private suspend fun receive(channel: Channel<SignalValue>) {
         do {
             val msg = channel.receive()
-            if (msg != status) status = msg
+            if (msg != status) {
+                status = msg
+            }
         } while (true)
     }
 
     private suspend fun send(channel: Channel<SignalValue>) {
         do {
             channel.send(this.status)
-            delay(timeStep)
+            delay(timeStep) //take this out?
         } while (true)
     }
+
 }
 
 @Repository

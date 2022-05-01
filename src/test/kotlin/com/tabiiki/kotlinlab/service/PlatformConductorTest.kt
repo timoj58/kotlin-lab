@@ -17,7 +17,7 @@ internal class PlatformConductorTest {
 
 
     private val stationRepo = mock(StationRepo::class.java)
-    private val lineConductor = PlatformConductorImpl(stationRepo, mock(LineSectionService::class.java))
+    private val lineConductor = LineConductorImpl(mock(LineSectionService::class.java))
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
@@ -58,37 +58,6 @@ internal class PlatformConductorTest {
 
         assertThat(transporters.size).isEqualTo(3)
 
-    }
-
-
-    @Test
-    fun `train hold and dont release`() = runBlocking {
-        val job = async {
-            lineConductor.hold(
-                transport = transport,
-                lineStations = listOf()
-            )
-        }
-        delay(5)
-
-        verify(stationRepo, never()).getNextStationOnLine(listOf(), Pair("A", "B"))
-        job.cancelAndJoin()
-
-    }
-
-    @Test
-    fun `train hold and release`() = runBlocking {
-        val job = async {
-            lineConductor.hold(
-                transport = transport,
-                lineStations = listOf()
-            )
-        }
-
-        delay(100)
-        verify(stationRepo, atLeastOnce()).getNextStationOnLine(listOf(), Pair("A", "B"))
-
-        job.cancelAndJoin()
     }
 
 }

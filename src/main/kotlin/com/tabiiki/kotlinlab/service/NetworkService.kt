@@ -19,8 +19,7 @@ class NetworkServiceImpl(
     @Value("\${network.start-delay}") startDelay: Long,
     private val stationService: StationService,
     lineFactory: LineFactory,
-    platformConductor: PlatformConductor,
-    journeyRepo: JourneyRepo
+    platformConductor: LineConductor,
 ) : NetworkService {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
@@ -35,7 +34,6 @@ class NetworkServiceImpl(
                     startDelay,
                     line,
                     platformConductor,
-                    journeyRepo,
                     listOf(line).flatten().flatMap { it.stations }.distinct()
                         .associateWith { stationService.getChannel(it) }
                 )
@@ -47,7 +45,6 @@ class NetworkServiceImpl(
         controllers.forEach { controller ->
             val channel = Channel<Transport>()
             launch { controller.start(channel) }
-            launch { controller.regulate(channel) }
         }
         launch { stationService.monitor(listener) }
     }
