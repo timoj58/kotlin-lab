@@ -30,7 +30,7 @@ internal class LineControllerTest {
         )
 
         listOf(line.transporters[0], line.transporters[1])
-            .forEach { `when`(conductor.clear(it)).thenReturn(true) }
+            .forEach { `when`(conductor.isClear(it)).thenReturn(true) }
 
         val lineControllerService =
             LineControllerImpl(100, listOf(line), conductor, mapOf())

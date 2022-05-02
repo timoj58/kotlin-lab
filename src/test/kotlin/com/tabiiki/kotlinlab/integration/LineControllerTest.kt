@@ -15,7 +15,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
-//@Disabled
 @ActiveProfiles("test")
 @SpringBootTest
 class LineControllerTest @Autowired constructor(
@@ -44,11 +42,11 @@ class LineControllerTest @Autowired constructor(
         "victoria",
         "bakerloo",
         "hammersmith",
-        "metropolitan",
-        "district",
+     //   "metropolitan",
+     //   "district",
         "central",
-        "northern",
-        "circle"
+     //   "northern",
+     //   "circle"
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
 

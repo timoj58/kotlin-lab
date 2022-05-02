@@ -26,7 +26,10 @@ enum class Status {
 }
 
 enum class Instruction {
-    STATIONARY, EMERGENCY_STOP, SCHEDULED_STOP, LIMIT_10, LIMIT_20, LIMIT_30, THROTTLE_ON
+    STATIONARY, EMERGENCY_STOP, SCHEDULED_STOP, LIMIT_10, LIMIT_20, LIMIT_30, THROTTLE_ON;
+
+    fun isMoving(): Boolean =
+        listOf(THROTTLE_ON, LIMIT_10, LIMIT_20, LIMIT_30).contains(this)
 }
 
 interface TransportInstructions {
@@ -125,11 +128,28 @@ data class Transport(
         Pair("${line.name} ${this.lineDirection()}", section().first)
 
     override fun lineDirection(): LineDirection {
-        //special case for circle.  to review. TODO
-        val fromIdx = line.stations.indexOf(section().first)
-        val toIdx = line.stations.indexOf(section().second)
+        val fromCount = line.stations.count { it == section().first }
+        val toCount = line.stations.count { it == section().second }
+        val fromIdx: Int?
+        val toIdx: Int?
 
-        return if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
+        return if (fromCount == toCount && fromCount == 1) {
+            fromIdx = line.stations.indexOf(section().first)
+            toIdx = line.stations.indexOf(section().second)
+
+            if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
+        } else {
+
+            if (fromCount > 1) {
+                toIdx = line.stations.indexOf(section().second)
+                fromIdx = getIndex(section().first, toIdx)
+                return if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
+            } else {
+                fromIdx = line.stations.indexOf(section().first)
+                toIdx = getIndex(section().second, fromIdx)
+                if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
+            }
+        }
     }
 
     override fun addSection(section: Pair<String, String>) {
@@ -138,13 +158,20 @@ data class Transport(
 
     override fun previousSection(): Pair<String, String> = sectionData.first!!
 
+    private fun getIndex(station: String, idx: Int) = listOf(
+        line.stations.indexOf(station),
+        line.stations.lastIndexOf(station)
+    ).first {
+        it + 1 == idx || it - 1 == idx
+    }
+
     private suspend fun motionLoop(newInstruction: Instruction) = coroutineScope {
         instruction = newInstruction
         do {
             delay(timeStep)
             journeyTime.second.incrementAndGet()
             physics.calcTimeStep(instruction)
-            if (newInstruction == Instruction.THROTTLE_ON && physics.shouldApplyBrakes()) instruction =
+            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
                 Instruction.SCHEDULED_STOP
         } while (physics.displacement <= physics.distance)
 
@@ -220,6 +247,9 @@ data class Transport(
             private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {
                 return when (instruction) {
                     Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
+                    Instruction.LIMIT_10 -> percentage * (power.toDouble() / 1500.0)
+                    Instruction.LIMIT_20 -> percentage * (power.toDouble() / 1000.0)
+                    Instruction.LIMIT_30 -> percentage * (power.toDouble() / 500.0)
                     Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 1000.0) * -1
                     Instruction.EMERGENCY_STOP -> power.toDouble() * -1
                     else -> 0.0
@@ -247,18 +277,25 @@ data class Transport(
                 velocity *= drag
                 displacement += velocity
 
-                // println("$instruction : $distance vs $displacement")
+                //   println("$instruction : $distance vs $displacement")
             }
 
-            fun shouldApplyBrakes(): Boolean {
+            fun shouldApplyBrakes(instruction: Instruction): Boolean {
                 val stoppingDistance = distance - displacement
                 val brakingForce = -power.toDouble()
                 val brakingVelocity = velocity + (brakingForce / weight)
                 val iterationsToPlatform = stoppingDistance / velocity
                 val iterationsToBrakeToPlatform = stoppingDistance / abs(brakingVelocity)
 
-                //        println("$iterationsToPlatform $iterationsToBrakeToPlatform")
-                return ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
+                //    println("$iterationsToPlatform $iterationsToBrakeToPlatform")
+
+                return when (instruction) {
+                    Instruction.THROTTLE_ON -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
+                    Instruction.LIMIT_10 -> floor(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
+                    Instruction.LIMIT_20 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform)
+                    Instruction.LIMIT_30 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform) - 1
+                    else -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
+                }
             }
         }
     }

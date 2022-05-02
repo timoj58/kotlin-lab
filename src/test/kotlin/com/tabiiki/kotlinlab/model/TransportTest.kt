@@ -13,6 +13,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 internal class TransportTest {
 
@@ -21,6 +23,34 @@ internal class TransportTest {
         line = LineBuilder().getLine(),
         timeStep = 10
     ).also { it.addSection(Pair("1", "2")) }
+
+    @ParameterizedTest
+    @CsvSource("A,B,POSITIVE", "D,A,POSITIVE", "A,D,NEGATIVE","B,A,NEGATIVE")
+    fun `line direction test for circle line`(from: String, to: String, direction: LineDirection){
+
+         val train = Transport(
+            config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
+            line = LineBuilder().getCircleLine(),
+            timeStep = 10
+        ).also { it.addSection(Pair(from, to)) }
+
+
+        assertThat(train.lineDirection()).isEqualTo(direction)
+    }
+
+    @ParameterizedTest
+    @CsvSource("B,A,POSITIVE","A,B,NEGATIVE", "D,A,POSITIVE","A,D,NEGATIVE")
+    fun `line direction test for circle line 2`(from: String, to: String, direction: LineDirection){
+
+        val train = Transport(
+            config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
+            line = LineBuilder().getCircleLine2(),
+            timeStep = 10
+        ).also { it.addSection(Pair(from, to)) }
+
+
+        assertThat(train.lineDirection()).isEqualTo(direction)
+    }
 
     @Test
     fun `at platform test`() {
@@ -38,14 +68,15 @@ internal class TransportTest {
         assertThat(train.atPlatform()).isEqualTo(false)
     }
 
-    @Test
-    fun `train moving between Stratford and West Ham stations`() = runBlocking {
+    @ParameterizedTest
+    @CsvSource("GREEN", "AMBER_10", "AMBER_20", "AMBER_30")
+    fun `train moving between Stratford and West Ham stations`(signal: SignalValue) = runBlocking {
         async { launch() }
         val channel = Channel<SignalValue>()
         val res = async { train.signal(channel) }
         delay(50)
 
-        channel.send(SignalValue.GREEN)
+        channel.send(signal)
         do {
             delay(1000)
         } while (!train.atPlatform())

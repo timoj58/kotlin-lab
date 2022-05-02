@@ -13,7 +13,7 @@ interface LineConductor {
     fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
     suspend fun release(transport: Transport)
     suspend fun start(line: String, lines: List<Line>)
-    fun clear(transport: Transport): Boolean
+    fun isClear(transport: Transport): Boolean
 }
 
 @Service
@@ -40,6 +40,6 @@ class LineConductorImpl(
         launch { lineSectionService.start(line, lines) }
     }
 
-    override fun clear(transport: Transport): Boolean = lineSectionService.clear(transport.platformKey())
+    override fun isClear(transport: Transport): Boolean = lineSectionService.isClear(transport.platformKey())
 
 }

@@ -43,4 +43,28 @@ class LineBuilder {
         ), listOf(transportConfig)
     )
 
+    fun getCircleLine() = Line(
+        timeStep = 10,
+        config = LineConfig(
+            id = "2",
+            name = "2",
+            transportId = 1,
+            transportCapacity = 6,
+            stations = listOf("A", "B", "C", "D", "A"),
+            depots = listOf("A", "D")
+        ), listOf(transportConfig)
+    )
+
+    fun getCircleLine2() = Line(
+        timeStep = 10,
+        config = LineConfig(
+            id = "2",
+            name = "2",
+            transportId = 1,
+            transportCapacity = 6,
+            stations = listOf("E", "B", "A", "C", "D", "A"),
+            depots = listOf("A", "D")
+        ), listOf(transportConfig)
+    )
+
 }

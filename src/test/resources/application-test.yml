@@ -1,7 +1,7 @@
 network:
-  time-step: 20
+  time-step: 10
   start-delay: 1000
-  lines: #will run the test faster for now.
+  lines:
     underground:
       - src/main/resources/network/underground/city.yml
       - src/main/resources/network/underground/jubilee.yml

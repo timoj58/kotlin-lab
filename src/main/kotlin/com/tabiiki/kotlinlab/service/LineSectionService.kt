@@ -27,7 +27,7 @@ data class LineInstructions(val from: Station, val to: Station, val next: Statio
 interface LineSectionService {
     suspend fun start(line: String, lines: List<Line>)
     suspend fun release(transport: Transport)
-    fun clear(key: Pair<String, String>): Boolean
+    fun isClear(key: Pair<String, String>): Boolean
 }
 
 @Service
@@ -45,6 +45,8 @@ class LineSectionServiceImpl(
         signalService.getSectionSignals().forEach { queues.initSectionQueues(it) }
         signalService.getPlatformSignals().forEach { queues.initPlatformQueues(it) }
     }
+
+    override fun isClear(key: Pair<String, String>): Boolean = queues.clear(key)
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
         queues.getPlatformQueueKeys().forEach {
@@ -70,24 +72,6 @@ class LineSectionServiceImpl(
         queues.platformRelease(key, transport)
     }
 
-    //TODO move at some point.
-    private suspend fun hold(
-        transport: Transport
-    ): Unit = coroutineScope {
-        val counter = AtomicInteger(0)
-        do {
-            delay(transport.timeStep)
-            if (counter.incrementAndGet() > 100) {
-                diagnostics.diagnostics(queues, transport)
-                throw RuntimeException("${transport.id} being held indefinitely ${transport.platformKey()}")
-            }
-        } while (counter.get() < 45 || !clear(transport.platformKey()))
-
-        release(transport)
-    }
-
-    override fun clear(key: Pair<String, String>): Boolean = queues.clear(key)
-
     private suspend fun initPlatform(key: Pair<String, String>) = coroutineScope {
         launch { initSignals(key) }
         launch { monitorPlatformChannel(key) }
@@ -106,6 +90,21 @@ class LineSectionServiceImpl(
         launch { signalService.start(key, channelIn, channelOut) }
     }
 
+    private suspend fun hold(
+        transport: Transport
+    ): Unit = coroutineScope {
+        val counter = AtomicInteger(0)
+        do {
+            delay(transport.timeStep)
+            if (counter.incrementAndGet() > 200) {
+                diagnostics.diagnostics(queues, transport)
+                throw RuntimeException("${transport.id} being held indefinitely ${transport.platformKey()}")
+            }
+        } while (counter.get() < 45 || !isClear(transport.platformKey()))
+
+        release(transport)
+    }
+
     private suspend fun addToLineSection(
         key: Pair<String, String>,
         transport: Transport,
@@ -121,7 +120,8 @@ class LineSectionServiceImpl(
         }
     }
 
-    suspend fun monitorPlatformSignal(key: Pair<String, String>) = coroutineScope {
+
+    private suspend fun monitorPlatformSignal(key: Pair<String, String>) = coroutineScope {
         do {
             channels.receive(key)?.let { queues.sendToPlatformQueue(key, it) }
         } while (true)
@@ -188,7 +188,6 @@ class LineSectionServiceImpl(
         private val log = LoggerFactory.getLogger(this.javaClass)
 
         class Queues {
-            //should only allow one train per queue.  would help identify errors.  (until more platforms).
             private val platformQueues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SignalValue>, ArrayDeque<Transport>>> =
                 ConcurrentHashMap()
             private val sectionQueues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
@@ -264,7 +263,9 @@ class LineSectionServiceImpl(
         }
 
         class Lines(private val stationRepo: StationRepo) {
+
             private val lineDetails: ConcurrentHashMap<String, List<Line>> = ConcurrentHashMap()
+            private val lineStations: ConcurrentHashMap<UUID, List<String>> = ConcurrentHashMap()
 
             fun addLineDetails(key: String, details: List<Line>) {
                 lineDetails[key] = details
@@ -280,9 +281,11 @@ class LineSectionServiceImpl(
                     direction = transport.lineDirection()
                 )
 
-            //need to memoize this ideally.  TODO.
-            fun getLineStations(transport: Transport) =
-                lineDetails[transport.line.name]!!.first { l -> l.transporters.any { it.id == transport.id } }.stations
+            fun getLineStations(transport: Transport): List<String> {
+                if(!lineStations.contains(transport.id))
+                    lineStations[transport.id] = lineDetails[transport.line.name]!!.first { l -> l.transporters.any { it.id == transport.id } }.stations
+                return lineStations[transport.id]!!
+            }
 
         }
 

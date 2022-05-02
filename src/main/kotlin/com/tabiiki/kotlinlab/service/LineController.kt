@@ -32,7 +32,7 @@ class LineControllerImpl(
         do {
             delay(startDelay)
             conductor.getNextTransportersToDispatch(line)
-                .filter { conductor.clear(it) }
+                .filter { conductor.isClear(it) }
                 .forEach { transport ->
                     delay(transport.timeStep)
                     launch { dispatch(transport, channel) }
