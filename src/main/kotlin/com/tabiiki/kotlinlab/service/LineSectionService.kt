@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -11,7 +12,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -27,18 +28,19 @@ data class LineInstructions(val from: Station, val to: Station, val next: Statio
 interface LineSectionService {
     suspend fun start(line: String, lines: List<Line>)
     suspend fun release(transport: Transport)
-    fun isClear(key: Pair<String, String>): Boolean
+    fun isClear(transport: Transport, counter: Int = 0): Boolean
 }
 
 @Service
 class LineSectionServiceImpl(
+    @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
+    private val journeyRepo: JourneyRepo,
     stationRepo: StationRepo
 ) : LineSectionService {
-    private val queues = Queues()
+    private val queues = Queues(minimumHold)
     private val channels = Channels()
     private val lines = Lines(stationRepo)
-    private val diagnostics = Diagnostics()
     private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
 
     init {
@@ -46,7 +48,10 @@ class LineSectionServiceImpl(
         signalService.getPlatformSignals().forEach { queues.initPlatformQueues(it) }
     }
 
-    override fun isClear(key: Pair<String, String>): Boolean = queues.clear(key)
+    override fun isClear(transport: Transport, counter: Int): Boolean =
+        queues.isPlatformClear(transport.platformKey()) &&
+                counter == 0 && queues.isSectionClear(transport.section(), counter)
+                || counter != 0 && queues.isSectionClear(transport.section(), counter)
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
         queues.getPlatformQueueKeys().forEach {
@@ -93,14 +98,12 @@ class LineSectionServiceImpl(
     private suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {
+        journeyRepo.addJourneyTime(transport.getJourneyTime())
         val counter = AtomicInteger(0)
         do {
             delay(transport.timeStep)
-            if (counter.incrementAndGet() > 200) {
-                diagnostics.diagnostics(queues, transport)
-                throw RuntimeException("${transport.id} being held indefinitely ${transport.platformKey()}")
-            }
-        } while (counter.get() < 45 || !isClear(transport.platformKey()))
+            counter.incrementAndGet()
+        } while (counter.get() < minimumHold || !isClear(transport, counter.get()))
 
         release(transport)
     }
@@ -185,9 +188,9 @@ class LineSectionServiceImpl(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(this.javaClass)
-
-        class Queues {
+        class Queues(
+            private val minimumHold: Int
+        ) {
             private val platformQueues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SignalValue>, ArrayDeque<Transport>>> =
                 ConcurrentHashMap()
             private val sectionQueues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
@@ -236,7 +239,15 @@ class LineSectionServiceImpl(
             fun getSectionQueue(key: Pair<String, String>): ArrayDeque<Transport> =
                 sectionQueues[key]!!.second
 
-            fun clear(key: Pair<String, String>): Boolean = platformQueues[key]?.second?.isEmpty() ?: false
+            fun isPlatformClear(key: Pair<String, String>): Boolean = platformQueues[key]?.second?.isEmpty() ?: false
+
+            fun isSectionClear(key: Pair<String, String>, counter: Int): Boolean {
+                //TODO how to make this one line, if its even possible..i think it is. ;)
+                if(!sectionQueues.containsKey(key)) return false
+                if(!sectionQueues[key]!!.second.isEmpty()) return true
+                if(counter == 0 || sectionQueues[key]!!.second.isEmpty()) return sectionQueues[key]!!.second.isEmpty()
+                return sectionQueues[key]!!.second.first().getJourneyTime().second > minimumHold
+            }
         }
 
         class Channels {
@@ -288,53 +299,6 @@ class LineSectionServiceImpl(
             }
 
         }
-
-        class Diagnostics {
-            fun diagnostics(queues: Queues, transport: Transport) {
-                transportDiagnostics(queues, transport)
-                signalDiagnostics(queues, transport)
-            }
-
-            private fun transportDiagnostics(queues: Queues, transport: Transport) {
-                log.warn("ALL DIAGNOSTICS")
-                var journals = mutableListOf<Transport.Companion.JournalRecord>()
-                journals.addAll(transport.journal.getLog())
-                queues.getSectionQueueKeys().forEach {
-                    queues.getSectionQueue(it).forEach { t ->
-                        journals.addAll(t.journal.getLog())
-                    }
-                }
-
-                journals.sortedBy { it.milliseconds }.forEach {
-                    log.info(it.print())
-                }
-            }
-
-            private fun signalDiagnostics(queues: Queues, transport: Transport) {
-                log.warn("waiting: ${transport.id}")
-                val platformKey = transport.platformKey()
-                var lineSection: Pair<String, String>? = null
-                queues.getPlatformQueue(platformKey).forEach {
-                    log.warn("platform key: $platformKey - ${it.id}")
-                    it.journal.getLog().sortedByDescending { s -> s.milliseconds }.forEach { l ->
-                        log.warn(l.print())
-                    }
-                    lineSection = it.section()
-                }
-
-                lineSection?.let { ls ->
-                    queues.getSectionQueue(ls).forEach {
-                        log.warn("section key: $ls - ${it.id}")
-                        it.journal.getLog().sortedByDescending { s -> s.milliseconds }.forEach { l ->
-                            log.warn(l.print())
-                        }
-                    }
-                }
-
-            }
-
-        }
-
     }
 
 }

@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.cancelAndJoin
@@ -23,6 +24,7 @@ internal class LineSectionServiceTest {
     private var signalFactory: SignalFactory? = null
     private var signalService: SignalServiceImpl? = null
     private val stationRepo = mock(StationRepo::class.java)
+    private val journeyRepo = mock(JourneyRepo::class.java)
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
@@ -67,7 +69,7 @@ internal class LineSectionServiceTest {
 
     @Test
     fun `train is first train added to section, so will be given a green light`() = runBlocking {
-        val lineSectionService = LineSectionServiceImpl(signalService!!, stationRepo)
+        val lineSectionService = LineSectionServiceImpl(45, signalService!!, journeyRepo, stationRepo)
 
         val job2 = launch { lineSectionService.start(LineBuilder().getLine().name, lines) }
         val job = launch { lineSectionService.release(transport) }
@@ -84,7 +86,7 @@ internal class LineSectionServiceTest {
 
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
-        val lineSectionService = LineSectionServiceImpl(signalService!!, stationRepo)
+        val lineSectionService = LineSectionServiceImpl(45, signalService!!,journeyRepo, stationRepo)
 
         val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, lines) }
         delay(200)
@@ -107,7 +109,7 @@ internal class LineSectionServiceTest {
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
-            val lineSectionService = LineSectionServiceImpl(signalService!!, stationRepo)
+            val lineSectionService = LineSectionServiceImpl(45, signalService!!,journeyRepo, stationRepo)
 
             val job3 = launch { lineSectionService.start(LineBuilder().getLine().name, lines) }
             val job = launch { lineSectionService.release(transport) }

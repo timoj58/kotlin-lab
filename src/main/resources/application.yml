@@ -4,6 +4,7 @@ server:
 network:
   start-delay: 10000
   time-step: 1000
+  minimum-hold: 45
   stations-csv: src/main/resources/network/stations.csv
   transporters:
     ferries:

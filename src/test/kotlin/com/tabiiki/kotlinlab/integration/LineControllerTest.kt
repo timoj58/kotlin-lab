@@ -5,7 +5,6 @@ import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.service.LineConductor
 import com.tabiiki.kotlinlab.service.LineControllerImpl
 import com.tabiiki.kotlinlab.service.StationMessage
@@ -27,7 +26,6 @@ import org.springframework.test.context.ActiveProfiles
 class LineControllerTest @Autowired constructor(
     @Value("\${network.start-delay}") val startDelay: Long,
     @Value("\${network.time-step}") val timeStep: Long,
-    val journeyRepo: JourneyRepo,
     val transportersConfig: TransportersConfig,
     val platformConductor: LineConductor,
     val stationService: StationService
@@ -42,11 +40,11 @@ class LineControllerTest @Autowired constructor(
         "victoria",
         "bakerloo",
         "hammersmith",
-     //   "metropolitan",
-     //   "district",
+        "metropolitan",
+        "district",
         "central",
-     //   "northern",
-     //   "circle"
+        "northern",
+        "circle"
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
 

@@ -40,6 +40,6 @@ class LineConductorImpl(
         launch { lineSectionService.start(line, lines) }
     }
 
-    override fun isClear(transport: Transport): Boolean = lineSectionService.isClear(transport.platformKey())
+    override fun isClear(transport: Transport): Boolean = lineSectionService.isClear(transport)
 
 }

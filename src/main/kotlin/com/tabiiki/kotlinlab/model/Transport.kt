@@ -10,9 +10,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.abs
@@ -64,7 +62,6 @@ data class Transport(
     private var journey: LineInstructions? = null
     private var journeyTime = Pair(Pair("", ""), AtomicInteger(0))
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
-    private val trackers: ConcurrentHashMap<Pair<String, String>, SendChannel<Transport>> = ConcurrentHashMap()
 
     fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
     fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
@@ -206,8 +203,6 @@ data class Transport(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(this.javaClass)
-
         enum class JournalActions { RELEASE, PLATFORM, DEPART, ARRIVE, ARRIVE_SECTION }
         data class JournalRecord(var id: UUID? = null, val action: JournalActions, val key: Pair<String, String>) {
             val milliseconds: Long = System.currentTimeMillis()
@@ -218,7 +213,6 @@ data class Transport(
             private val journal = mutableListOf<JournalRecord>()
             fun add(journalRecord: JournalRecord) {
                 journal.add(journalRecord.also { it.id = this.id })
-                //       log.info(journalRecord.print())
             }
 
             fun getLog() = journal
@@ -262,8 +256,6 @@ data class Transport(
                 var force = calculateForce(instruction)
                 var acceleration = calculateAcceleration(force)
                 var percentage = 100.0
-
-                // if(velocity + acceleration > topSpeed) println("above top speed"+(velocity + acceleration))
 
                 while (velocity + acceleration > topSpeed && percentage >= 0.0) {
                     percentage--

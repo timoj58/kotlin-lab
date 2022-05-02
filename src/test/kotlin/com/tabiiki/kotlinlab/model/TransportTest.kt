@@ -39,7 +39,7 @@ internal class TransportTest {
     }
 
     @ParameterizedTest
-    @CsvSource("B,A,POSITIVE","A,B,NEGATIVE", "D,A,POSITIVE","A,D,NEGATIVE")
+    @CsvSource("B,A,POSITIVE","A,B,NEGATIVE", "D,A,POSITIVE","A,D,NEGATIVE", "C,A,NEGATIVE")
     fun `line direction test for circle line 2`(from: String, to: String, direction: LineDirection){
 
         val train = Transport(
