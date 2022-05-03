@@ -7,6 +7,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Repository
+import java.util.Optional
+import java.util.UUID
 
 enum class SignalType {
     PLATFORM, SECTION
@@ -16,27 +18,29 @@ enum class SignalValue {
     RED, GREEN, AMBER_10, AMBER_20, AMBER_30
 }
 
+data class SignalMessage(val signalValue: SignalValue, val id: Optional<UUID> = Optional.empty())
+
 data class Signal(
     var section: Pair<String, String>,
-    var status: SignalValue = SignalValue.GREEN,
+    var status: SignalMessage = SignalMessage(SignalValue.GREEN),
     val type: SignalType = SignalType.SECTION,
     val timeStep: Long = 100
 ) {
-    suspend fun start(channelIn: Channel<SignalValue>, channelOut: Channel<SignalValue>) = coroutineScope {
+    suspend fun start(channelIn: Channel<SignalMessage>, channelOut: Channel<SignalMessage>) = coroutineScope {
         launch { receive(channelIn) }
         launch { send(channelOut) }
     }
 
-    private suspend fun receive(channel: Channel<SignalValue>) {
+    private suspend fun receive(channel: Channel<SignalMessage>) {
         do {
             val msg = channel.receive()
-            if (msg != status) {
+            if (msg.signalValue != status.signalValue) {
                 status = msg
             }
         } while (true)
     }
 
-    private suspend fun send(channel: Channel<SignalValue>) {
+    private suspend fun send(channel: Channel<SignalMessage>) {
         do {
             channel.send(this.status)
             delay(timeStep) //take this out?

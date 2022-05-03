@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.service
 
 
 import com.tabiiki.kotlinlab.configuration.TransportConfig
+import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
@@ -76,9 +77,9 @@ internal class StationServiceTest {
                 LineDirection.POSITIVE
             )
         )
-        val channel3 = Channel<SignalValue>()
+        val channel3 = Channel<SignalMessage>()
         val depart = async { transport.signal(channel3) }
-        channel3.send(SignalValue.GREEN)
+        channel3.send(SignalMessage(SignalValue.GREEN))
         val job2 = async { channel.send(transport) }
 
         delay(200)

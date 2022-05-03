@@ -41,10 +41,10 @@ class LineControllerTest @Autowired constructor(
         "bakerloo",
         "hammersmith",
         "metropolitan",
-        "district",
         "central",
         "northern",
-        "circle"
+        "circle",
+        "district",
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
 

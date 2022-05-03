@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalType
 import com.tabiiki.kotlinlab.factory.SignalValue
 import kotlinx.coroutines.channels.Channel
@@ -9,7 +10,7 @@ import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
 interface SignalService {
-    suspend fun start(key: Pair<String, String>, channelIn: Channel<SignalValue>, channelOut: Channel<SignalValue>)
+    suspend fun start(key: Pair<String, String>, channelIn: Channel<SignalMessage>, channelOut: Channel<SignalMessage>)
     fun getPlatformSignals(): List<Pair<String, String>>
     fun getSectionSignals(): List<Pair<String, String>>
 }
@@ -20,8 +21,8 @@ class SignalServiceImpl(
 ) : SignalService {
     override suspend fun start(
         key: Pair<String, String>,
-        channelIn: Channel<SignalValue>,
-        channelOut: Channel<SignalValue>
+        channelIn: Channel<SignalMessage>,
+        channelOut: Channel<SignalMessage>
     ): Unit = coroutineScope {
         launch { signalFactory.get(key).start(channelIn, channelOut) }
     }

@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.Signal
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -28,22 +29,22 @@ internal class SignalServiceImplTest {
 
     @Test
     fun `test signal`() = runBlocking {
-        val channelIn = Channel<SignalValue>()
-        val channelOut = Channel<SignalValue>()
+        val channelIn = Channel<SignalMessage>()
+        val channelOut = Channel<SignalMessage>()
 
         val job = async { signalService.start(Pair("A", "B"), channelIn, channelOut) }
         val job2 = async { testChannel(channelOut, job) }
 
         delay(100)
-        channelIn.send(SignalValue.AMBER_30)
+        channelIn.send(SignalMessage(SignalValue.AMBER_30))
         delay(200)
         job2.cancelAndJoin()
     }
 
-    suspend fun testChannel(channel: Channel<SignalValue>, job: Job) {
+    suspend fun testChannel(channel: Channel<SignalMessage>, job: Job) {
         var signal: SignalValue?
         do {
-            signal = channel.receive()
+            signal = channel.receive().signalValue
             println(signal)
         } while (signal != SignalValue.AMBER_30)
 

@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.TransportConfig
+import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.service.LineDirection
 import com.tabiiki.kotlinlab.service.LineInstructions
@@ -20,7 +21,8 @@ import kotlin.math.sqrt
 
 
 enum class Status {
-    ACTIVE, DEPOT, PLATFORM
+    ACTIVE, DEPOT, PLATFORM;
+    fun moving(): Boolean = listOf(ACTIVE ).contains(this)
 }
 
 enum class Instruction {
@@ -30,24 +32,27 @@ enum class Instruction {
         listOf(THROTTLE_ON, LIMIT_10, LIMIT_20, LIMIT_30).contains(this)
 }
 
-interface TransportInstructions {
+interface ITransport {
     suspend fun track(channel: SendChannel<Transport>)
     suspend fun release(instruction: LineInstructions)
-    suspend fun signal(channel: Channel<SignalValue>)
+    suspend fun signal(channel: Channel<SignalMessage>)
     fun section(): Pair<String, String>
     fun platformFromKey(): Pair<String, String>
     fun platformToKey(): Pair<String, String>
     fun platformKey(): Pair<String, String>
     fun addSection(section: Pair<String, String>)
-    fun previousSection(): Pair<String, String>
     fun lineDirection(): LineDirection
+    fun getJourneyTime(): Pair<Pair<String, String>, Int>
+    fun atPlatform(): Boolean
+    fun isStationary(): Boolean
+
 }
 
 data class Transport(
     private val config: TransportConfig,
     val line: Line,
     val timeStep: Long
-) : TransportInstructions {
+) : ITransport {
 
     var id: UUID = UUID.randomUUID()
     val transportId = config.transportId
@@ -63,47 +68,11 @@ data class Transport(
     private var journeyTime = Pair(Pair("", ""), AtomicInteger(0))
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
 
-    fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
-    fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
-    fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
-
-    override suspend fun track(channel: SendChannel<Transport>) {
-        val previousStatus = AtomicReference(Status.DEPOT)
-
-        do {
-            if (previousStatus.get() != Status.PLATFORM) channel.send(this)
-            previousStatus.set(status)
-            delay(timeStep)
-        } while (true)
-
-    }
-
-    override suspend fun release(instruction: LineInstructions): Unit = coroutineScope {
-        launch { startJourney(instruction) }
-        launch { motionLoop(Instruction.STATIONARY) }
-    }
-
-    override suspend fun signal(channel: Channel<SignalValue>) {
-
-        var previousMsg: SignalValue? = null
-        do {
-            val msg = channel.receive()
-            if (previousMsg == null || msg != previousMsg) {
-                if (msg == SignalValue.GREEN) journal.add(
-                    JournalRecord(action = JournalActions.DEPART, key = this.section())
-                )
-                when (msg) {
-                    SignalValue.GREEN -> Instruction.THROTTLE_ON
-                    SignalValue.AMBER_10 -> Instruction.LIMIT_10
-                    SignalValue.AMBER_20 -> Instruction.LIMIT_20
-                    SignalValue.AMBER_30 -> Instruction.LIMIT_30
-                    SignalValue.RED -> Instruction.EMERGENCY_STOP
-                }.also { instruction = it }
-            }
-            previousMsg = msg
-        } while (status == Status.ACTIVE)
-    }
-
+    override fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
+    override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
+    override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
+    override fun platformKey(): Pair<String, String> =
+        Pair("${line.name} ${this.lineDirection()}", section().first)
     override fun section(): Pair<String, String> =
         sectionData.second ?: sectionData.first!!
 
@@ -121,8 +90,46 @@ data class Transport(
         return Pair("$line $dir", journey!!.to.id)
     }
 
-    override fun platformKey(): Pair<String, String> =
-        Pair("${line.name} ${this.lineDirection()}", section().first)
+    override fun addSection(section: Pair<String, String>) {
+        sectionData = Pair(section, null)
+    }
+
+    override suspend fun track(channel: SendChannel<Transport>) {
+        val previousStatus = AtomicReference(Status.DEPOT)
+
+        do {
+            if (previousStatus.get() != Status.PLATFORM) channel.send(this)
+            previousStatus.set(status)
+            delay(timeStep)
+        } while (true)
+
+    }
+
+    override suspend fun release(instruction: LineInstructions): Unit = coroutineScope {
+        launch { startJourney(instruction) }
+        launch { motionLoop(Instruction.STATIONARY) }
+    }
+
+    override suspend fun signal(channel: Channel<SignalMessage>) {
+
+        var previousMsg: SignalValue? = null
+        do {
+            val msg = channel.receive()
+            if ((previousMsg == null || msg.signalValue != previousMsg) && msg.id.orElse(id).equals(id)) {
+                if (msg.signalValue == SignalValue.GREEN) journal.add(
+                    JournalRecord(action = JournalActions.DEPART, key = this.section())
+                )
+                when (msg.signalValue) {
+                    SignalValue.GREEN -> Instruction.THROTTLE_ON
+                    SignalValue.AMBER_10 -> Instruction.LIMIT_10
+                    SignalValue.AMBER_20 -> Instruction.LIMIT_20
+                    SignalValue.AMBER_30 -> Instruction.LIMIT_30
+                    SignalValue.RED -> Instruction.EMERGENCY_STOP
+                }.also { instruction = it }
+            }
+            previousMsg = msg.signalValue
+        } while (status.moving())
+    }
 
     override fun lineDirection(): LineDirection {
         val fromCount = line.stations.count { it == section().first }
@@ -149,12 +156,6 @@ data class Transport(
         }
     }
 
-    override fun addSection(section: Pair<String, String>) {
-        sectionData = Pair(section, null)
-    }
-
-    override fun previousSection(): Pair<String, String> = sectionData.first!!
-
     private fun getIndex(station: String, idx: Int) = listOf(
         line.stations.indexOf(station),
         line.stations.lastIndexOf(station)
@@ -170,6 +171,7 @@ data class Transport(
             physics.calcTimeStep(instruction)
             if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
                 Instruction.SCHEDULED_STOP
+
         } while (physics.displacement <= physics.distance)
 
         launch { stopJourney() }

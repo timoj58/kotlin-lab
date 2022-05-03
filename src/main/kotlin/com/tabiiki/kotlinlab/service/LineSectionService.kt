@@ -1,8 +1,10 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
@@ -14,21 +16,23 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.Optional
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 enum class LineDirection {
     POSITIVE, NEGATIVE
 }
 
-data class LineInstructions(val from: Station, val to: Station, val next: Station, val direction: LineDirection)
+data class LineInstructions(val from: Station, val to: Station, val next: Station, val direction: LineDirection, val minimumHold: Int = 45)
 
 interface LineSectionService {
     suspend fun start(line: String, lines: List<Line>)
     suspend fun release(transport: Transport)
-    fun isClear(transport: Transport, counter: Int = 0): Boolean
+    fun isClear(transport: Transport): Boolean
 }
 
 @Service
@@ -48,10 +52,8 @@ class LineSectionServiceImpl(
         signalService.getPlatformSignals().forEach { queues.initPlatformQueues(it) }
     }
 
-    override fun isClear(transport: Transport, counter: Int): Boolean =
-        queues.isPlatformClear(transport.platformKey()) &&
-                counter == 0 && queues.isSectionClear(transport.section(), counter)
-                || counter != 0 && queues.isSectionClear(transport.section(), counter)
+    override fun isClear(transport: Transport): Boolean =
+        queues.isPlatformClear(transport.platformKey()) && queues.isSectionClear(transport.section())
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
         queues.getPlatformQueueKeys().forEach {
@@ -103,7 +105,7 @@ class LineSectionServiceImpl(
         do {
             delay(transport.timeStep)
             counter.incrementAndGet()
-        } while (counter.get() < minimumHold || !isClear(transport, counter.get()))
+        } while (counter.get() < minimumHold || !isClear(transport))
 
         release(transport)
     }
@@ -111,7 +113,7 @@ class LineSectionServiceImpl(
     private suspend fun addToLineSection(
         key: Pair<String, String>,
         transport: Transport,
-        channel: Channel<SignalValue>
+        channel: Channel<SignalMessage>
     ) = coroutineScope {
         launch {
             do {
@@ -137,19 +139,22 @@ class LineSectionServiceImpl(
         var lock = AtomicBoolean(false)
         do {
             val signal = channel.receive()
-            if (previousSignal == null || signal != previousSignal) {
+            if (previousSignal == null || signal.signalValue != previousSignal) {
                 lock.set(false)
             }
-            previousSignal = signal
+            previousSignal = signal.signalValue
             if (!lock.get()) {
-                when (signal) {
-                    SignalValue.GREEN ->
+                when (signal.signalValue) {
+                    SignalValue.GREEN, SignalValue.AMBER_10, SignalValue.AMBER_20, SignalValue.AMBER_30 ->
                         queues.getPlatformQueue(key).firstOrNull()?.let {
                             channels.getChannel(it.section())?.let { channel ->
                                 lock.set(true)
                                 queues.getPlatformQueue(key).removeFirstOrNull()?.let { transport ->
+                                 /*   launch {
+                                        channels.send(it.section(), SignalMessage(signal.signalValue, Optional.of(it.id)))
+                                    } */
                                     launch {
-                                        channels.send(key, SignalValue.RED)
+                                        channels.send(key, SignalMessage(SignalValue.RED))
                                     }
                                     launch {
                                         addToLineSection(key, transport, channel)
@@ -165,6 +170,7 @@ class LineSectionServiceImpl(
     }
 
     private suspend fun monitorSectionChannel(key: Pair<String, String>, channel: Channel<Transport>) = coroutineScope {
+
         do {
             val msg = channel.receive()
             when (msg.atPlatform()) {
@@ -172,7 +178,20 @@ class LineSectionServiceImpl(
                     queues.getSectionQueue(key).removeFirstOrNull()?.let {
                         jobs[it.id]!!.cancelAndJoin()
                         val platformFromKey = msg.platformFromKey()
-                        launch { channels.send(platformFromKey, SignalValue.GREEN) }
+                        val platformSignalValue = when(queues.getSectionQueue(it.section()).size){
+                            0 -> SignalValue.GREEN
+                            1 -> SignalValue.AMBER_30
+                            2 -> SignalValue.AMBER_20
+                            else -> SignalValue.AMBER_10
+                        }
+                        val sectionSignalValue = when(queues.getSectionQueue(it.section()).size){
+                            1 -> SignalValue.GREEN
+                            2 -> SignalValue.AMBER_30
+                            3 -> SignalValue.AMBER_20
+                            else -> SignalValue.AMBER_10
+                        }
+                        launch { channels.send(platformFromKey,SignalMessage(platformSignalValue)) }
+                        //launch { channels.send(it.section(), SignalMessage((sectionSignalValue))) }
                         launch { hold(it) }
 
                         it.journal.add(
@@ -184,6 +203,7 @@ class LineSectionServiceImpl(
                 }
                 else -> {}
             }
+
         } while (true)
     }
 
@@ -191,7 +211,7 @@ class LineSectionServiceImpl(
         class Queues(
             private val minimumHold: Int
         ) {
-            private val platformQueues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SignalValue>, ArrayDeque<Transport>>> =
+            private val platformQueues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SignalMessage>, ArrayDeque<Transport>>> =
                 ConcurrentHashMap()
             private val sectionQueues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
                 ConcurrentHashMap()
@@ -227,11 +247,11 @@ class LineSectionServiceImpl(
                 )
             }
 
-            suspend fun sendToPlatformQueue(key: Pair<String, String>, signalValue: SignalValue) {
-                platformQueues[key]!!.first.send(signalValue)
+            suspend fun sendToPlatformQueue(key: Pair<String, String>, signalMessage: SignalMessage) {
+                platformQueues[key]!!.first.send(signalMessage)
             }
 
-            fun getPlatformChannel(key: Pair<String, String>): Channel<SignalValue> = platformQueues[key]!!.first
+            fun getPlatformChannel(key: Pair<String, String>): Channel<SignalMessage> = platformQueues[key]!!.first
             fun getSectionChannel(key: Pair<String, String>): Channel<Transport> = sectionQueues[key]!!.first
             fun getPlatformQueue(key: Pair<String, String>): ArrayDeque<Transport> =
                 platformQueues[key]!!.second
@@ -241,35 +261,33 @@ class LineSectionServiceImpl(
 
             fun isPlatformClear(key: Pair<String, String>): Boolean = platformQueues[key]?.second?.isEmpty() ?: false
 
-            fun isSectionClear(key: Pair<String, String>, counter: Int): Boolean {
-                //TODO how to make this one line, if its even possible..i think it is. ;)
+            fun isSectionClear(key: Pair<String, String>): Boolean {
                 if(!sectionQueues.containsKey(key)) return false
-                if(!sectionQueues[key]!!.second.isEmpty()) return true
-                if(counter == 0 || sectionQueues[key]!!.second.isEmpty()) return sectionQueues[key]!!.second.isEmpty()
+                if(sectionQueues[key]!!.second.isEmpty()) return true
                 return sectionQueues[key]!!.second.first().getJourneyTime().second > minimumHold
             }
         }
 
         class Channels {
-            private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalValue>> = ConcurrentHashMap()
-            private val channelsOut: ConcurrentHashMap<Pair<String, String>, Channel<SignalValue>> = ConcurrentHashMap()
+            private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> = ConcurrentHashMap()
+            private val channelsOut: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> = ConcurrentHashMap()
 
-            fun initIn(key: Pair<String, String>): Channel<SignalValue> {
+            fun initIn(key: Pair<String, String>): Channel<SignalMessage> {
                 channelsIn[key] = Channel()
                 return channelsIn[key]!!
             }
 
-            fun initOut(key: Pair<String, String>): Channel<SignalValue> {
+            fun initOut(key: Pair<String, String>): Channel<SignalMessage> {
                 channelsOut[key] = Channel()
                 return channelsOut[key]!!
             }
 
-            suspend fun send(key: Pair<String, String>, signalValue: SignalValue) {
-                channelsIn[key]!!.send(signalValue)
+            suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) {
+                channelsIn[key]!!.send(signalMessage)
             }
 
-            suspend fun receive(key: Pair<String, String>): SignalValue? = channelsOut[key]?.receive()
-            fun getChannel(key: Pair<String, String>): Channel<SignalValue>? = channelsOut[key]
+            suspend fun receive(key: Pair<String, String>): SignalMessage? = channelsOut[key]?.receive()
+            fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channelsOut[key]
 
         }
 

@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
+import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.service.LineDirection
 import com.tabiiki.kotlinlab.service.LineInstructions
@@ -72,11 +73,11 @@ internal class TransportTest {
     @CsvSource("GREEN", "AMBER_10", "AMBER_20", "AMBER_30")
     fun `train moving between Stratford and West Ham stations`(signal: SignalValue) = runBlocking {
         async { launch() }
-        val channel = Channel<SignalValue>()
+        val channel = Channel<SignalMessage>()
         val res = async { train.signal(channel) }
         delay(50)
 
-        channel.send(signal)
+        channel.send(SignalMessage(signal))
         do {
             delay(1000)
         } while (!train.atPlatform())
@@ -90,20 +91,20 @@ internal class TransportTest {
     @Test
     fun `emergency stop test`() = runBlocking {
         async { launch() }
-        val channel = Channel<SignalValue>()
+        val channel = Channel<SignalMessage>()
         val res = async { train.signal(channel) }
         delay(50)
 
-        channel.send(SignalValue.GREEN)
+        channel.send(SignalMessage(SignalValue.GREEN))
         delay(10)
-        channel.send(SignalValue.RED)
+        channel.send(SignalMessage(SignalValue.RED))
 
         do {
             delay(10)
         } while (!train.isStationary())
         assertThat(train.isStationary()).isEqualTo(true)
 
-        channel.send(SignalValue.GREEN)
+        channel.send(SignalMessage(SignalValue.GREEN))
 
         do {
             delay(1000)
