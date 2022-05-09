@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
+import java.time.LocalDateTime
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -33,21 +34,35 @@ class LineControllerTest @Autowired constructor(
 
     val integrationControl = IntegrationControl()
 
+    //NOTE: broken up as seem to block eventually due to laptop / process etc.  To confirm
+
     @ParameterizedTest
     @CsvSource(
-        "city",
-        "jubilee",
-        "victoria",
-        "bakerloo",
-        "hammersmith",
         "metropolitan",
         "central",
         "northern",
-        "circle",
         "district",
+        "victoria",
     )
-    fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
+    fun `test all transports complete a full journey on an underground line`(lineName: String) {
+        theTest(lineName)
+    }
 
+    @ParameterizedTest
+    @CsvSource(
+        "circle",
+        "city",
+        "jubilee",
+        "bakerloo",
+        "hammersmith",
+    )
+    fun `test all transports complete a full journey on an underground line (pt II)`(lineName: String) {
+        theTest(lineName)
+    }
+
+    private fun theTest(lineName: String) = runBlocking {
+
+        println(LocalDateTime.now())
 
         val lineFactory = LineFactory(
             linesConfig = LinesConfig(
@@ -85,7 +100,10 @@ class LineControllerTest @Autowired constructor(
         val job = launch { controller.start(channel) }
         val job3 = launch { stationService.monitor(listener) }
 
-        val running = async { integrationControl.status(listener, listOf(job3, job)) }
+        val running = async {
+            integrationControl.status(listener, listOf(job3, job)) { platformConductor.diagnostics() }
+        }
+
     }
 
 

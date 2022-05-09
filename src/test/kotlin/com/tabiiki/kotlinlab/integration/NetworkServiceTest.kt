@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
-//@Disabled
+@Disabled
 @ActiveProfiles("test")
 @SpringBootTest
 class NetworkServiceTest @Autowired constructor(
@@ -35,7 +35,7 @@ class NetworkServiceTest @Autowired constructor(
     {
         val channel = Channel<StationMessage>()
         val res = async { networkService.start(channel) }
-        val running = async { integrationControl.status(channel, listOf(res)) }
+        val running = async { integrationControl.status(channel, listOf(res)) {} }
     }
 
 }

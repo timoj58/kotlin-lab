@@ -117,7 +117,7 @@ data class Transport(
             val msg = channel.receive()
             if ((previousMsg == null || msg.signalValue != previousMsg) && msg.id.orElse(id).equals(id)) {
                 if (msg.signalValue == SignalValue.GREEN) journal.add(
-                    JournalRecord(action = JournalActions.DEPART, key = this.section())
+                    JournalRecord(action = JournalActions.DEPART, key = this.section(), signal = msg.signalValue)
                 )
                 when (msg.signalValue) {
                     SignalValue.GREEN -> Instruction.THROTTLE_ON
@@ -205,10 +205,10 @@ data class Transport(
     }
 
     companion object {
-        enum class JournalActions { RELEASE, PLATFORM, DEPART, ARRIVE, ARRIVE_SECTION }
-        data class JournalRecord(var id: UUID? = null, val action: JournalActions, val key: Pair<String, String>) {
+        enum class JournalActions { PLATFORM_HOLD, RELEASE, READY_TO_DEPART, DEPART, ARRIVE }
+        data class JournalRecord(var id: UUID? = null, val action: JournalActions, val key: Pair<String, String>, val signal: SignalValue = SignalValue.GREEN) {
             val milliseconds: Long = System.currentTimeMillis()
-            fun print() = "$id: $action - $key"
+            fun print() = "$id: $action $signal - $key"
         }
 
         class Journal(val id: UUID) {

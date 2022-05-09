@@ -14,6 +14,7 @@ interface LineConductor {
     suspend fun release(transport: Transport)
     suspend fun start(line: String, lines: List<Line>)
     fun isClear(transport: Transport): Boolean
+    fun diagnostics()
 }
 
 @Service
@@ -41,5 +42,8 @@ class LineConductorImpl(
     }
 
     override fun isClear(transport: Transport): Boolean = lineSectionService.isClear(transport)
+    override fun diagnostics() {
+       lineSectionService.dump()
+    }
 
 }

@@ -14,14 +14,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.Optional
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
 enum class LineDirection {
     POSITIVE, NEGATIVE
@@ -33,6 +32,7 @@ interface LineSectionService {
     suspend fun start(line: String, lines: List<Line>)
     suspend fun release(transport: Transport)
     fun isClear(transport: Transport): Boolean
+    fun dump()
 }
 
 @Service
@@ -44,6 +44,7 @@ class LineSectionServiceImpl(
 ) : LineSectionService {
     private val queues = Queues(minimumHold)
     private val channels = Channels()
+    private val diagnostics = Diagnostics()
     private val lines = Lines(stationRepo)
     private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
 
@@ -54,6 +55,10 @@ class LineSectionServiceImpl(
 
     override fun isClear(transport: Transport): Boolean =
         queues.isPlatformClear(transport.platformKey()) && queues.isSectionClear(transport.section())
+
+    override fun dump() {
+        diagnostics.dump(queues)
+    }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
         queues.getPlatformQueueKeys().forEach {
@@ -100,6 +105,11 @@ class LineSectionServiceImpl(
     private suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {
+        transport.journal.add(
+            Transport.Companion.JournalRecord(
+                action = Transport.Companion.JournalActions.PLATFORM_HOLD, key = transport.platformToKey(), signal = SignalValue.RED
+            )
+        )
         journeyRepo.addJourneyTime(transport.getJourneyTime())
         val counter = AtomicInteger(0)
         do {
@@ -113,13 +123,14 @@ class LineSectionServiceImpl(
     private suspend fun addToLineSection(
         key: Pair<String, String>,
         transport: Transport,
-        channel: Channel<SignalMessage>
+        channel: Channel<SignalMessage>,
+        signalValue: SignalValue
     ) = coroutineScope {
         launch {
             do {
                 delay(transport.timeStep)
             } while (queues.getPlatformQueue(key).contains(transport))
-            queues.sectionRelease(transport.section(), transport)
+            queues.sectionRelease(transport.section(), transport, signalValue)
             jobs[transport.id] = launch { transport.track(queues.getSectionChannel(transport.section())) }
             launch { transport.signal(channel) }
         }
@@ -145,7 +156,7 @@ class LineSectionServiceImpl(
             previousSignal = signal.signalValue
             if (!lock.get()) {
                 when (signal.signalValue) {
-                    SignalValue.GREEN, SignalValue.AMBER_10, SignalValue.AMBER_20, SignalValue.AMBER_30 ->
+                    SignalValue.GREEN ->
                         queues.getPlatformQueue(key).firstOrNull()?.let {
                             channels.getChannel(it.section())?.let { channel ->
                                 lock.set(true)
@@ -157,7 +168,7 @@ class LineSectionServiceImpl(
                                         channels.send(key, SignalMessage(SignalValue.RED))
                                     }
                                     launch {
-                                        addToLineSection(key, transport, channel)
+                                        addToLineSection(key, transport, channel, signal.signalValue)
                                     }
                                 }
                             }
@@ -178,27 +189,9 @@ class LineSectionServiceImpl(
                     queues.getSectionQueue(key).removeFirstOrNull()?.let {
                         jobs[it.id]!!.cancelAndJoin()
                         val platformFromKey = msg.platformFromKey()
-                        val platformSignalValue = when(queues.getSectionQueue(it.section()).size){
-                            0 -> SignalValue.GREEN
-                            1 -> SignalValue.AMBER_30
-                            2 -> SignalValue.AMBER_20
-                            else -> SignalValue.AMBER_10
-                        }
-                        val sectionSignalValue = when(queues.getSectionQueue(it.section()).size){
-                            1 -> SignalValue.GREEN
-                            2 -> SignalValue.AMBER_30
-                            3 -> SignalValue.AMBER_20
-                            else -> SignalValue.AMBER_10
-                        }
-                        launch { channels.send(platformFromKey,SignalMessage(platformSignalValue)) }
-                        //launch { channels.send(it.section(), SignalMessage((sectionSignalValue))) }
+                        //TODO remove this once section handling set for all transporters.
+                        launch { channels.send(platformFromKey,SignalMessage(SignalValue.GREEN)) }
                         launch { hold(it) }
-
-                        it.journal.add(
-                            Transport.Companion.JournalRecord(
-                                action = Transport.Companion.JournalActions.ARRIVE_SECTION, key = key
-                            )
-                        )
                     }
                 }
                 else -> {}
@@ -208,6 +201,8 @@ class LineSectionServiceImpl(
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(this.javaClass)
+
         class Queues(
             private val minimumHold: Int
         ) {
@@ -233,16 +228,16 @@ class LineSectionServiceImpl(
                 platformQueues[key]!!.second.add(transport)
                 transport.journal.add(
                     Transport.Companion.JournalRecord(
-                        action = Transport.Companion.JournalActions.PLATFORM, key = key
+                        action = Transport.Companion.JournalActions.READY_TO_DEPART, key = key, signal = SignalValue.RED
                     )
                 )
             }
 
-            fun sectionRelease(key: Pair<String, String>, transport: Transport) {
+            fun sectionRelease(key: Pair<String, String>, transport: Transport, signalValue: SignalValue) {
                 sectionQueues[key]!!.second.add(transport)
                 transport.journal.add(
                     Transport.Companion.JournalRecord(
-                        action = Transport.Companion.JournalActions.RELEASE, key = key
+                        action = Transport.Companion.JournalActions.RELEASE, key = key, signal = signalValue
                     )
                 )
             }
@@ -315,7 +310,24 @@ class LineSectionServiceImpl(
                     lineStations[transport.id] = lineDetails[transport.line.name]!!.first { l -> l.transporters.any { it.id == transport.id } }.stations
                 return lineStations[transport.id]!!
             }
+        }
 
+        class Diagnostics {
+
+            fun dump(queues: Queues){
+                val items = mutableListOf<Transport>()
+
+                queues.getSectionQueueKeys().forEach {
+                    items.addAll(queues.getSectionQueue(it))
+                }
+
+                queues.getPlatformQueueKeys().forEach {
+                    items.addAll(queues.getPlatformQueue(it))
+                }
+
+                items.map { it.journal.getLog() }.flatten().sortedBy { it.milliseconds }
+                    .forEach { log.info(it.print()) }
+            }
         }
     }
 

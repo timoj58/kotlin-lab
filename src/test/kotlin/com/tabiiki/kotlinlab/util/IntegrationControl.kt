@@ -20,7 +20,7 @@ class IntegrationControl {
         transportersPerLine += line.transporters.size
     }
 
-    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>) {
+    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>, dump: Runnable) {
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
@@ -33,6 +33,7 @@ class IntegrationControl {
             if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 10) > System.currentTimeMillis())
 
+        dump.run()
         jobs.forEach { it.cancelAndJoin() }
         assert()
     }
