@@ -38,11 +38,11 @@ class LineControllerTest @Autowired constructor(
 
     @ParameterizedTest
     @CsvSource(
+        "city",
         "metropolitan",
         "central",
         "northern",
         "district",
-        "victoria",
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) {
         theTest(lineName)
@@ -50,8 +50,8 @@ class LineControllerTest @Autowired constructor(
 
     @ParameterizedTest
     @CsvSource(
+        "victoria",
         "circle",
-        "city",
         "jubilee",
         "bakerloo",
         "hammersmith",

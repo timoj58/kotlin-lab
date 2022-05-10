@@ -14,7 +14,7 @@ internal class PlatformConductorTest {
 
 
     private val stationRepo = mock(StationRepo::class.java)
-    private val lineConductor = LineConductorImpl(mock(LineSectionService::class.java))
+    private val lineConductor = LineConductorImpl(mock(LineService::class.java))
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,

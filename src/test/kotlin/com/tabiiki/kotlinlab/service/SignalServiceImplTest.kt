@@ -29,14 +29,17 @@ internal class SignalServiceImplTest {
 
     @Test
     fun `test signal`() = runBlocking {
-        val channelIn = Channel<SignalMessage>()
-        val channelOut = Channel<SignalMessage>()
 
-        val job = async { signalService.start(Pair("A", "B"), channelIn, channelOut) }
+        val job = async { signalService.init(Pair("A", "B")) }
+
+        delay(100)
+        val channelOut = signalService.getChannel(Pair("A", "B"))!!
+
+
         val job2 = async { testChannel(channelOut, job) }
 
         delay(100)
-        channelIn.send(SignalMessage(SignalValue.AMBER_30))
+        signalService.send(Pair("A", "B"), SignalMessage(SignalValue.AMBER_30))
         delay(200)
         job2.cancelAndJoin()
     }
