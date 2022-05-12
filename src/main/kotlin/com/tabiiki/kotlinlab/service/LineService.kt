@@ -5,7 +5,6 @@ import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -49,7 +48,7 @@ class LineServiceImpl(
     private val diagnostics = Diagnostics()
     private val lines = Lines(stationRepo)
 
-    init {
+     init {
         signalService.getSectionSignals().forEach { sectionService.initQueues(it) }
         signalService.getPlatformSignals().forEach { queues.initQueues(it) }
     }
@@ -63,15 +62,15 @@ class LineServiceImpl(
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
-        queues.getQueueKeys().forEach {
-            launch { init(it) }
-            launch { monitorPlatformHold(it) }
-        }
-        sectionService.getQueueKeys().forEach {
-            launch { sectionService.init(it) }
+        if(lines.addLineDetails(line, lineDetails)) {
+            launch {  sectionService.init() }
+
+            queues.getQueueKeys().forEach {
+                launch { init(it) }
+                launch { monitorPlatformHold(it) }
+            }
         }
 
-        lines.addLineDetails(line, lineDetails)
     }
 
     override suspend fun release(
@@ -92,15 +91,6 @@ class LineServiceImpl(
         launch { signalService.init(key) }
         launch { monitorPlatformChannel(key) }
         launch { monitorPlatformSignal(key) }
-    }
-
-    private suspend fun monitorPlatformHold(key: Pair<String, String>){
-        val channel = Channel<Transport>()
-        holdChannels[key] = channel
-
-        do {
-            hold(channel.receive())
-        }while (true)
     }
 
     private suspend fun hold(
@@ -126,6 +116,14 @@ class LineServiceImpl(
         sectionService.add(transport, holdChannels[transport.platformToKey()]!!)
     }
 
+    private suspend fun monitorPlatformHold(key: Pair<String, String>){
+        val channel = Channel<Transport>()
+        holdChannels[key] = channel
+
+        do {
+            hold(channel.receive())
+        }while (true)
+    }
 
     private suspend fun monitorPlatformSignal(key: Pair<String, String>) = coroutineScope {
         do {
@@ -189,6 +187,7 @@ class LineServiceImpl(
                         action = Transport.Companion.JournalActions.READY_TO_DEPART, key = key, signal = SignalValue.RED
                     )
                 )
+
             }
 
             suspend fun sendToQueue(key: Pair<String, String>, signalMessage: SignalMessage) {
@@ -204,8 +203,11 @@ class LineServiceImpl(
             private val lineDetails: ConcurrentHashMap<String, List<Line>> = ConcurrentHashMap()
             private val lineStations: ConcurrentHashMap<UUID, List<String>> = ConcurrentHashMap()
 
-            fun addLineDetails(key: String, details: List<Line>) {
+            fun addLineDetails(key: String, details: List<Line>): Boolean {
+                val res = lineDetails.isEmpty()
                 lineDetails[key] = details
+
+                return res
             }
 
             fun lineInstructions(transport: Transport, lineStations: List<String>): LineInstructions =

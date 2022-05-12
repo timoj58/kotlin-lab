@@ -7,20 +7,27 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
+import javax.naming.ConfigurationException
 
 interface LineController {
-    suspend fun start(channel: Channel<Transport>)
+    suspend fun start(line: List<Line>, channel: Channel<Transport>)
     fun getStationChannels(): Map<String, Channel<Transport>>
+    fun setStationChannels(stationChannels: Map<String, Channel<Transport>>)
 }
 
+@Service
 class LineControllerImpl(
-    private val startDelay: Long,
-    private val line: List<Line>,
-    private val conductor: LineConductor,
-    private val stationChannels: Map<String, Channel<Transport>>
+    @Value("\${network.start-delay}") private val startDelay: Long,
+    private val conductor: LineConductor
 ) : LineController {
 
-    override suspend fun start(channel: Channel<Transport>) = coroutineScope {
+    init {
+        if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
+    }
+
+    override suspend fun start(line: List<Line>, channel: Channel<Transport>) = coroutineScope {
         launch { conductor.start(line.map { it.name }.distinct().first(), line) }
 
         conductor.getFirstTransportersToDispatch(line).forEach {
@@ -46,6 +53,10 @@ class LineControllerImpl(
         return stationChannels
     }
 
+    override fun setStationChannels(channels: Map<String, Channel<Transport>>) {
+        stationChannels = channels
+    }
+
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { conductor.release(transport) }
         launch { publish(transport, channel) }
@@ -61,5 +72,9 @@ class LineControllerImpl(
                 .forEach { stationChannels[it]?.send(message) }
 
         } while (true)
+    }
+
+    companion object {
+        private var stationChannels: Map<String, Channel<Transport>> = mutableMapOf()
     }
 }

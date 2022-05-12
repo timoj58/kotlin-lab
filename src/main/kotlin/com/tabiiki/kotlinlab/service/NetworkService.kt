@@ -15,35 +15,24 @@ interface NetworkService {
 
 @Service
 class NetworkServiceImpl(
-    @Value("\${network.start-delay}") startDelay: Long,
+    private val lineController: LineController,
     private val stationService: StationService,
     lineFactory: LineFactory,
-    platformConductor: LineConductor,
 ) : NetworkService {
-
     private val lines = lineFactory.get().map { lineFactory.get(it) }
-    private val controllers = mutableListOf<LineController>()
 
     init {
-        if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
 
-        lines.groupBy { it.name }.values.forEach { line ->
-            controllers.add(
-                LineControllerImpl(
-                    startDelay,
-                    line,
-                    platformConductor,
-                    listOf(line).flatten().flatMap { it.stations }.distinct()
-                        .associateWith { stationService.getChannel(it) }
-                )
-            )
-        }
+        lineController.setStationChannels(
+            listOf(lines).flatten().flatMap { it.stations }.distinct()
+                .associateWith { stationService.getChannel(it) }
+        )
     }
 
     override suspend fun start(listener: Channel<StationMessage>): Unit = coroutineScope {
-        controllers.forEach { controller ->
+        lines.groupBy { it.name }.values.forEach { line ->
             val channel = Channel<Transport>()
-            launch { controller.start(channel) }
+            launch { lineController.start(line, channel) }
         }
         launch { stationService.monitor(listener) }
     }

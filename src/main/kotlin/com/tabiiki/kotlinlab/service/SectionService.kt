@@ -17,10 +17,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 interface SectionService {
     suspend fun add(transport: Transport, channel: Channel<Transport>)
-    suspend fun init(key: Pair<String, String>)
+    suspend fun init()
     fun isClear(key: Pair<String, String>): Boolean
     fun initQueues(key: Pair<String, String>)
-    fun getQueueKeys(): Iterator<Pair<String, String>>
     fun dump()
 }
 
@@ -44,9 +43,11 @@ class SectionServiceImpl(
         launch { transport.signal(signalService.getChannel(transport.section())!!) }
     }
 
-    override suspend fun init(key: Pair<String, String>): Unit = coroutineScope {
-        launch { signalService.init(key) }
-        launch { monitor(key) }
+    override suspend fun init(): Unit = coroutineScope {
+        queues.getQueueKeys().forEach {
+            launch { signalService.init(it) }
+            launch { monitor(it) }
+        }
     }
 
     override fun isClear(key: Pair<String, String>): Boolean = queues.isClear(key)
@@ -55,7 +56,6 @@ class SectionServiceImpl(
 
     }
 
-    override fun getQueueKeys(): Iterator<Pair<String, String>> = queues.getQueueKeys()
     override fun dump() {
         diagnostics.dump(queues)
     }

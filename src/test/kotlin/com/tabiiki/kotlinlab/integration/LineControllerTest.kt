@@ -4,11 +4,11 @@ import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
+import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.service.LineConductor
-import com.tabiiki.kotlinlab.service.LineControllerImpl
-import com.tabiiki.kotlinlab.service.StationMessage
-import com.tabiiki.kotlinlab.service.StationService
+import com.tabiiki.kotlinlab.repo.JourneyRepo
+import com.tabiiki.kotlinlab.repo.StationRepo
+import com.tabiiki.kotlinlab.service.*
 import com.tabiiki.kotlinlab.util.IntegrationControl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -27,14 +27,14 @@ import java.time.LocalDateTime
 class LineControllerTest @Autowired constructor(
     @Value("\${network.start-delay}") val startDelay: Long,
     @Value("\${network.time-step}") val timeStep: Long,
+    @Value("\${network.minimum-hold}") val minimumHold: Int,
     val transportersConfig: TransportersConfig,
-    val platformConductor: LineConductor,
-    val stationService: StationService
+    val stationService: StationService,
+    val stationRepo: StationRepo,
+    val signalFactory: SignalFactory,
+    val journeyRepo: JourneyRepo
 ) {
-
     val integrationControl = IntegrationControl()
-
-    //NOTE: broken up as seem to block eventually due to laptop / process etc.  To confirm
 
     @ParameterizedTest
     @CsvSource(
@@ -43,26 +43,20 @@ class LineControllerTest @Autowired constructor(
         "central",
         "northern",
         "district",
-    )
-    fun `test all transports complete a full journey on an underground line`(lineName: String) {
-        theTest(lineName)
-    }
-
-    @ParameterizedTest
-    @CsvSource(
         "victoria",
         "circle",
         "jubilee",
         "bakerloo",
         "hammersmith",
     )
-    fun `test all transports complete a full journey on an underground line (pt II)`(lineName: String) {
-        theTest(lineName)
-    }
-
-    private fun theTest(lineName: String) = runBlocking {
-
+     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
         println(LocalDateTime.now())
+
+        val signalService = SignalServiceImpl(signalFactory)
+        val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
+
+        val lineService = LineServiceImpl(minimumHold, signalService, stationRepo, sectionService)
+        val lineConductor = LineConductorImpl(lineService)
 
         val lineFactory = LineFactory(
             linesConfig = LinesConfig(
@@ -88,23 +82,23 @@ class LineControllerTest @Autowired constructor(
 
         val controller = LineControllerImpl(
             startDelay = startDelay,
-            line = line,
-            conductor = platformConductor,
-            stationChannels = listOf(line).flatten().flatMap { it.stations }.distinct()
+            conductor = lineConductor
+        )
+
+        controller.setStationChannels(
+            listOf(line).flatten().flatMap { it.stations }.distinct()
                 .associateWith { stationService.getChannel(it) }
         )
 
         val channel = Channel<Transport>()
         val listener = Channel<StationMessage>()
 
-        val job = launch { controller.start(channel) }
+        val job = launch { controller.start(line, channel) }
         val job3 = launch { stationService.monitor(listener) }
 
         val running = async {
-            integrationControl.status(listener, listOf(job3, job)) { platformConductor.diagnostics() }
+            integrationControl.status(listener, listOf(job3, job)) { lineConductor.diagnostics() }
         }
-
     }
-
 
 }

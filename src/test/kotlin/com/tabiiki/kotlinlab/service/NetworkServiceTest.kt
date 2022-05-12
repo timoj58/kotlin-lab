@@ -8,16 +8,4 @@ import javax.naming.ConfigurationException
 
 internal class NetworkServiceTest {
 
-
-    @Test
-    fun `invalid start delay test`() {
-        Assertions.assertThrows(ConfigurationException::class.java) {
-            NetworkServiceImpl(
-                80,
-                mock(StationService::class.java),
-                mock(LineFactory::class.java),
-                mock(LineConductor::class.java)
-            )
-        }
-    }
 }

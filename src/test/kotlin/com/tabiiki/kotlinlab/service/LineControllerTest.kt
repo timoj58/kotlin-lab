@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
@@ -7,16 +8,27 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.atLeast
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import javax.naming.ConfigurationException
 
 internal class LineControllerTest {
 
     private val line = LineBuilder().getLine()
 
+    @Test
+    fun `invalid start delay test`() {
+        Assertions.assertThrows(ConfigurationException::class.java) {
+            LineControllerImpl(
+                2000,
+                mock(LineConductor::class.java),
+            )
+        }
+    }
 
     @Test
     fun `start line and expect all trains to arrive at station B`() = runBlocking {
@@ -33,10 +45,10 @@ internal class LineControllerTest {
             .forEach { `when`(conductor.isClear(it)).thenReturn(true) }
 
         val lineControllerService =
-            LineControllerImpl(100, listOf(line), conductor, mapOf())
+            LineControllerImpl(100, conductor)
 
         val channel = Channel<Transport>()
-        val res = async { lineControllerService.start(channel) }
+        val res = async { lineControllerService.start(listOf(line), channel) }
         delay(1000)
 
         verify(conductor, atLeast(line.transporters.size)).release(
@@ -54,10 +66,10 @@ internal class LineControllerTest {
             listOf(line.transporters[0], line.transporters[1])
         )
         val lineControllerService =
-            LineControllerImpl(100, listOf(line), conductor, mapOf())
+            LineControllerImpl(100, conductor)
 
         val channel = Channel<Transport>()
-        val res = async { lineControllerService.start(channel) }
+        val res = async { lineControllerService.start(listOf(line), channel) }
         delay(100)
 
         verify(conductor, atLeast(2)).release(
