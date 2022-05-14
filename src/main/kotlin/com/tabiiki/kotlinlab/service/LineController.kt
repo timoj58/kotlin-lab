@@ -15,6 +15,7 @@ interface LineController {
     suspend fun start(line: List<Line>, channel: Channel<Transport>)
     fun getStationChannels(): Map<String, Channel<Transport>>
     fun setStationChannels(stationChannels: Map<String, Channel<Transport>>)
+    fun diagnostics()
 }
 
 @Service
@@ -55,6 +56,10 @@ class LineControllerImpl(
 
     override fun setStationChannels(channels: Map<String, Channel<Transport>>) {
         stationChannels = channels
+    }
+
+    override fun diagnostics() {
+        conductor.diagnostics()
     }
 
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {

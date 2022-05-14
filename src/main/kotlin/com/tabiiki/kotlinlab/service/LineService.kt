@@ -48,7 +48,7 @@ class LineServiceImpl(
     private val diagnostics = Diagnostics()
     private val lines = Lines(stationRepo)
 
-     init {
+    init {
         signalService.getSectionSignals().forEach { sectionService.initQueues(it) }
         signalService.getPlatformSignals().forEach { queues.initQueues(it) }
     }
@@ -62,8 +62,8 @@ class LineServiceImpl(
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
-        if(lines.addLineDetails(line, lineDetails)) {
-            launch {  sectionService.init() }
+        if (lines.addLineDetails(line, lineDetails)) {
+            launch { sectionService.init() }
 
             queues.getQueueKeys().forEach {
                 launch { init(it) }
@@ -99,10 +99,10 @@ class LineServiceImpl(
         val counter = AtomicInteger(0)
         do {
             delay(transport.timeStep)
-            counter.incrementAndGet()
-        } while (counter.get() < minimumHold || !isClear(transport))
+            //minimumHold if(counter.get() > 100) throw RuntimeException("${transport.id} is held too long")
+        } while (counter.incrementAndGet() < minimumHold || !isClear(transport))
 
-        release(transport)
+        launch { release(transport) }
     }
 
     private suspend fun addToSection(
@@ -116,13 +116,13 @@ class LineServiceImpl(
         sectionService.add(transport, holdChannels[transport.platformToKey()]!!)
     }
 
-    private suspend fun monitorPlatformHold(key: Pair<String, String>){
+    private suspend fun monitorPlatformHold(key: Pair<String, String>) {
         val channel = Channel<Transport>()
         holdChannels[key] = channel
 
         do {
             hold(channel.receive())
-        }while (true)
+        } while (true)
     }
 
     private suspend fun monitorPlatformSignal(key: Pair<String, String>) = coroutineScope {
@@ -154,7 +154,7 @@ class LineServiceImpl(
                                 }
                             }
                         }
-                   //TODO this is better SignalValue.RED -> queues.getQueue(key).firstOrNull()?.let { launch { hold(it) } }
+                    //TODO this is better SignalValue.RED -> queues.getQueue(key).firstOrNull()?.let { launch { hold(it) } }
                     else -> {}
                 }
             }
@@ -239,6 +239,7 @@ class LineServiceImpl(
 
                 items.map { it.journal.getLog() }.flatten().sortedBy { it.milliseconds }
                     .forEach { log.info(it.print()) }
+
             }
         }
     }

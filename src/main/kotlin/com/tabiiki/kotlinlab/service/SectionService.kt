@@ -81,7 +81,7 @@ class SectionServiceImpl(
         } while (true)
     }
 
-    private suspend fun arrive(transport: Transport) = coroutineScope{
+    private suspend fun arrive(transport: Transport) = coroutineScope {
         transport.journal.add(
             Transport.Companion.JournalRecord(
                 action = Transport.Companion.JournalActions.PLATFORM_HOLD,

@@ -5,12 +5,11 @@ import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import javax.naming.ConfigurationException
 
 interface NetworkService {
     suspend fun start(listener: Channel<StationMessage>)
+    fun diagnostics()
 }
 
 @Service
@@ -35,6 +34,10 @@ class NetworkServiceImpl(
             launch { lineController.start(line, channel) }
         }
         launch { stationService.monitor(listener) }
+    }
+
+    override fun diagnostics() {
+        lineController.diagnostics()
     }
 
 }

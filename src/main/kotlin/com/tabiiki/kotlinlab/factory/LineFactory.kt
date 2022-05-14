@@ -15,7 +15,7 @@ class LineFactory(
 ) {
 
     init {
-        if (timeStep < 10) throw ConfigurationException("timestep is too small, minimum 10 ms")
+        if (timeStep < 5) throw ConfigurationException("timestep is too small, minimum 10 ms")
     }
 
     private val lines = linesConfig.lines.map { Line(timeStep, it, transportConfig.get()) }

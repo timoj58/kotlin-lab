@@ -48,13 +48,15 @@ class SignalServiceImpl(
     override suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
 
     override suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) {
-       channels.send(key, signalMessage)
+        channels.send(key, signalMessage)
     }
 
     companion object {
         class Channels {
-            private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> = ConcurrentHashMap()
-            private val channelsOut: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> = ConcurrentHashMap()
+            private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
+                ConcurrentHashMap()
+            private val channelsOut: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
+                ConcurrentHashMap()
 
             fun initIn(key: Pair<String, String>): Channel<SignalMessage> {
                 channelsIn[key] = Channel()

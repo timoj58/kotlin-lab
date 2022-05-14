@@ -26,10 +26,10 @@ internal class TransportTest {
     ).also { it.addSection(Pair("1", "2")) }
 
     @ParameterizedTest
-    @CsvSource("A,B,POSITIVE", "D,A,POSITIVE", "A,D,NEGATIVE","B,A,NEGATIVE")
-    fun `line direction test for circle line`(from: String, to: String, direction: LineDirection){
+    @CsvSource("A,B,POSITIVE", "D,A,POSITIVE", "A,D,NEGATIVE", "B,A,NEGATIVE")
+    fun `line direction test for circle line`(from: String, to: String, direction: LineDirection) {
 
-         val train = Transport(
+        val train = Transport(
             config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
             line = LineBuilder().getCircleLine(),
             timeStep = 10
@@ -40,8 +40,8 @@ internal class TransportTest {
     }
 
     @ParameterizedTest
-    @CsvSource("B,A,POSITIVE","A,B,NEGATIVE", "D,A,POSITIVE","A,D,NEGATIVE", "C,A,NEGATIVE")
-    fun `line direction test for circle line 2`(from: String, to: String, direction: LineDirection){
+    @CsvSource("B,A,POSITIVE", "A,B,NEGATIVE", "D,A,POSITIVE", "A,D,NEGATIVE", "C,A,NEGATIVE")
+    fun `line direction test for circle line 2`(from: String, to: String, direction: LineDirection) {
 
         val train = Transport(
             config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),

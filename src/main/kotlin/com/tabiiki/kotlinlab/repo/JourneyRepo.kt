@@ -21,7 +21,7 @@ class JourneyRepoImpl : JourneyRepo {
     }
 
     override fun getJourneyTime(section: Pair<String, String>): Int {
-        if(!journeyTimes.containsKey(section)) return 0
+        if (!journeyTimes.containsKey(section)) return 0
 
         val journey = journeyTimes[section]!!
         return journey.second / journey.first

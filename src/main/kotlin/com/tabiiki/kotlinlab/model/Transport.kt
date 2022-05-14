@@ -22,7 +22,8 @@ import kotlin.math.sqrt
 
 enum class Status {
     ACTIVE, DEPOT, PLATFORM;
-    fun moving(): Boolean = listOf(ACTIVE ).contains(this)
+
+    fun moving(): Boolean = listOf(ACTIVE).contains(this)
 }
 
 enum class Instruction {
@@ -73,6 +74,7 @@ data class Transport(
     override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
     override fun platformKey(): Pair<String, String> =
         Pair("${line.name} ${this.lineDirection()}", section().first)
+
     override fun section(): Pair<String, String> =
         sectionData.second ?: sectionData.first!!
 
@@ -206,7 +208,12 @@ data class Transport(
 
     companion object {
         enum class JournalActions { PLATFORM_HOLD, RELEASE, READY_TO_DEPART, DEPART, ARRIVE }
-        data class JournalRecord(var id: UUID? = null, val action: JournalActions, val key: Pair<String, String>, val signal: SignalValue = SignalValue.GREEN) {
+        data class JournalRecord(
+            var id: UUID? = null,
+            val action: JournalActions,
+            val key: Pair<String, String>,
+            val signal: SignalValue = SignalValue.GREEN
+        ) {
             val milliseconds: Long = System.currentTimeMillis()
             fun print() = "$id: $action $signal - $key"
         }
