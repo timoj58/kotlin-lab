@@ -1,5 +1,5 @@
 network:
-  time-step: 7
+  time-step: 5
   start-delay: 1000
   lines:
     underground:

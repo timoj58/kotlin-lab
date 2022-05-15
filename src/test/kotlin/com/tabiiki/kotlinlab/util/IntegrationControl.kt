@@ -31,7 +31,7 @@ class IntegrationControl {
 
             trainsByLine[msg.line.id]?.add(msg.transportId)
             if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 7) > System.currentTimeMillis())
+        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 5) > System.currentTimeMillis())
 
         //dump.run()
         jobs.forEach { it.cancelAndJoin() }
