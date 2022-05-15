@@ -46,6 +46,7 @@ interface ITransport {
     fun getJourneyTime(): Pair<Pair<String, String>, Int>
     fun atPlatform(): Boolean
     fun isStationary(): Boolean
+    fun getSectionStationCode(): String
 
 }
 
@@ -72,6 +73,8 @@ data class Transport(
     override fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
+    override fun getSectionStationCode(): String = section().first.substringAfter(":")
+
     override fun platformKey(): Pair<String, String> =
         Pair("${line.name} ${this.lineDirection()}", section().first)
 
@@ -82,14 +85,14 @@ data class Transport(
         val line = line.name
         val dir = journey!!.direction
 
-        return Pair("$line $dir", journey!!.from.id)
+        return Pair("$line $dir", "$line:${journey!!.from.id}")
     }
 
     override fun platformToKey(): Pair<String, String> {
         val line = line.name
         val dir = journey!!.direction
 
-        return Pair("$line $dir", journey!!.to.id)
+        return Pair("$line $dir", "$line:${journey!!.to.id}")
     }
 
     override fun addSection(section: Pair<String, String>) {
@@ -134,13 +137,14 @@ data class Transport(
     }
 
     override fun lineDirection(): LineDirection {
-        val fromCount = line.stations.count { it == section().first }
+        val firstStation = getSectionStationCode()
+        val fromCount = line.stations.count { it == firstStation }
         val toCount = line.stations.count { it == section().second }
         val fromIdx: Int?
         val toIdx: Int?
 
         return if (fromCount == toCount && fromCount == 1) {
-            fromIdx = line.stations.indexOf(section().first)
+            fromIdx = line.stations.indexOf(firstStation)
             toIdx = line.stations.indexOf(section().second)
 
             if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
@@ -148,10 +152,10 @@ data class Transport(
 
             if (fromCount > 1) {
                 toIdx = line.stations.indexOf(section().second)
-                fromIdx = getIndex(section().first, toIdx)
+                fromIdx = getIndex(firstStation, toIdx)
                 return if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
             } else {
-                fromIdx = line.stations.indexOf(section().first)
+                fromIdx = line.stations.indexOf(firstStation)
                 toIdx = getIndex(section().second, fromIdx)
                 if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
             }
@@ -193,8 +197,8 @@ data class Transport(
         physics.reset()
         journey?.let {
             sectionData = Pair(
-                Pair(it.from.id, it.to.id),
-                Pair(it.to.id, it.next.id)
+                Pair("${line.name}:${it.from.id}", it.to.id),
+                Pair("${line.name}:${it.to.id}", it.next.id)
             )
             journal.add(
                 JournalRecord(

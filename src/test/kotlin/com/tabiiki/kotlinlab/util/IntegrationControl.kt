@@ -16,7 +16,7 @@ class IntegrationControl {
     private var transportersPerLine = 0
 
     fun initControl(line: Line) {
-        sectionsByLine[line.id] = getLineStations(line.stations)
+        sectionsByLine[line.id] = getLineStations(line)
         transportersPerLine += line.transporters.size
     }
 
@@ -31,9 +31,9 @@ class IntegrationControl {
 
             trainsByLine[msg.line.id]?.add(msg.transportId)
             if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 5) > System.currentTimeMillis())
+        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 8) > System.currentTimeMillis())
 
-        //dump.run()
+        dump.run()
         jobs.forEach { it.cancelAndJoin() }
         assert()
     }
@@ -80,11 +80,11 @@ class IntegrationControl {
         return line
     }
 
-    private fun getLineStations(stations: List<String>): Set<Pair<String, String>> {
+    private fun getLineStations(line: Line): Set<Pair<String, String>> {
         val pairs = mutableSetOf<Pair<String, String>>()
-        for (station in 0..stations.size - 2 step 1) {
-            pairs.add(Pair(stations[station], stations[station + 1]))
-            pairs.add(Pair(stations.reversed()[station], stations.reversed()[station + 1]))
+        for (station in 0..line.stations.size - 2 step 1) {
+            pairs.add(Pair("${line.name}:${line.stations[station]}", line.stations[station + 1]))
+            pairs.add(Pair("${line.name}:${line.stations.reversed()[station]}", line.stations.reversed()[station + 1]))
         }
         return pairs.toSet()
     }

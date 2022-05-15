@@ -19,7 +19,8 @@ class StationRepoImpl(
     private val stations = stationFactory.get().map { stationFactory.get(it) }
 
     override fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
-        var fromStationIdx = lineStations.indexOf(section.first)
+        val station = section.first.substringAfter(":")
+        var fromStationIdx = lineStations.indexOf(station)
         var toStationIdx = lineStations.indexOf(section.second)
         if (abs(fromStationIdx - toStationIdx) > 1)
             if (fromStationIdx > toStationIdx)

@@ -58,7 +58,7 @@ class SignalFactory(
     init {
         val lines = lineFactory.get().map { lineFactory.get(it) }
         lines.forEach { line ->
-            getLineSections(line.stations).forEach { section ->
+            getLineSections(line).forEach { section ->
                 val signal = Signal(section = section, type = SignalType.SECTION, timeStep = lineFactory.timeStep)
                 signals[section] = signal
             }
@@ -76,17 +76,17 @@ class SignalFactory(
         val pairs = mutableSetOf<Pair<String, String>>()
         lines.forEach { line ->
             val id = line.name
-            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.POSITIVE}", it) })
-            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.NEGATIVE}", it) })
+            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.POSITIVE}", "$id:$it") })
+            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.NEGATIVE}", "$id:$it") })
         }
         return pairs.toSet()
     }
 
-    private fun getLineSections(stations: List<String>): Set<Pair<String, String>> {
+    private fun getLineSections(line: Line): Set<Pair<String, String>> {
         val pairs = mutableSetOf<Pair<String, String>>()
-        for (station in 0..stations.size - 2 step 1) {
-            pairs.add(Pair(stations[station], stations[station + 1]))
-            pairs.add(Pair(stations.reversed()[station], stations.reversed()[station + 1]))
+        for (station in 0..line.stations.size - 2 step 1) {
+            pairs.add(Pair("${line.name}:${line.stations[station]}", line.stations[station + 1]))
+            pairs.add(Pair("${line.name}:${line.stations.reversed()[station]}", line.stations.reversed()[station + 1]))
         }
         return pairs.toSet()
     }

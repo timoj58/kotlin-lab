@@ -55,7 +55,7 @@ data class Line(
 
     private fun transporterSlice(startIndex: Int, perDepot: Int, depot: String, nextStation: (String) -> String) =
         transporters.slice(startIndex until startIndex + perDepot)
-            .forEach { transport -> transport.addSection(Pair(depot, nextStation(depot))) }
+            .forEach { transport -> transport.addSection(Pair("$name:$depot", nextStation(depot))) }
 
 
     private fun nextStationFromDepot(currentStation: String): String =

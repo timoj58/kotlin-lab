@@ -99,7 +99,7 @@ class LineServiceImpl(
         val counter = AtomicInteger(0)
         do {
             delay(transport.timeStep)
-            //minimumHold if(counter.get() > 100) throw RuntimeException("${transport.id} is held too long")
+          //  if(counter.get() > 75) throw RuntimeException("${transport.id} is held too long")
         } while (counter.incrementAndGet() < minimumHold || !isClear(transport))
 
         launch { release(transport) }
@@ -212,10 +212,10 @@ class LineServiceImpl(
 
             fun lineInstructions(transport: Transport, lineStations: List<String>): LineInstructions =
                 LineInstructions(
-                    from = stationRepo.get(transport.section().first),
+                    from = stationRepo.get(transport.getSectionStationCode()),
                     to = stationRepo.get(transport.section().second),
                     next = stationRepo.getNextStationOnLine(
-                        lineStations = lineStations, section = transport.section()
+                        lineStations = lineStations, section = Pair(transport.getSectionStationCode(), transport.section().second)
                     ),
                     direction = transport.lineDirection()
                 )
