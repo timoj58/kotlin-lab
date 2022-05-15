@@ -33,7 +33,7 @@ class IntegrationControl {
             if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 7) > System.currentTimeMillis())
 
-        dump.run()
+        //dump.run()
         jobs.forEach { it.cancelAndJoin() }
         assert()
     }
