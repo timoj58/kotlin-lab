@@ -96,6 +96,7 @@ data class Transport(
     }
 
     override fun addSection(section: Pair<String, String>) {
+        assert(section.first.contains(":"))
         sectionData = Pair(section, null)
     }
 

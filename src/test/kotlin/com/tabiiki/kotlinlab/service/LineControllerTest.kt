@@ -30,7 +30,6 @@ internal class LineControllerTest {
         }
     }
 
-    @Disabled //TODO fix me
     @Test
     fun `start line and expect all trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
@@ -50,7 +49,7 @@ internal class LineControllerTest {
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(listOf(line), channel) }
-        delay(1000)
+        delay(2000)
 
         verify(conductor, atLeast(line.transporters.size)).release(
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
@@ -71,7 +70,7 @@ internal class LineControllerTest {
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(listOf(line), channel) }
-        delay(100)
+        delay(2000)
 
         verify(conductor, atLeast(2)).release(
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())

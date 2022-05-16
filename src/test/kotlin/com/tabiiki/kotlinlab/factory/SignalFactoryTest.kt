@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
-@Disabled //requires full config.  need to improve test, also refactoring shared lines for now.
 @SpringBootTest
 internal class SignalFactoryTest @Autowired constructor(
     private val signalFactory: SignalFactory,
@@ -17,14 +16,14 @@ internal class SignalFactoryTest @Autowired constructor(
 
     @Test
     fun `create section signals test`() {
-        assertThat(signalFactory.get().filter { it.type == SignalType.SECTION }.size).isEqualTo(548)
+        assertThat(signalFactory.get().filter { it.type == SignalType.SECTION }.size).isEqualTo(752)
     }
 
     @Test
     fun `create platform signals test`() {
 
         //need to fix this, and above.  for now hard coded.
-        assertThat(signalFactory.get().filter { it.type == SignalType.PLATFORM }.size).isEqualTo(660)
+        assertThat(signalFactory.get().filter { it.type == SignalType.PLATFORM }.size).isEqualTo(764)
     }
 
 }

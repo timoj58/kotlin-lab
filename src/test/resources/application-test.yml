@@ -13,3 +13,4 @@ network:
       - src/main/resources/network/underground/district.yml
       - src/main/resources/network/underground/northern.yml
       - src/main/resources/network/underground/circle.yml
+      - src/main/resources/network/underground/piccadilly.yml

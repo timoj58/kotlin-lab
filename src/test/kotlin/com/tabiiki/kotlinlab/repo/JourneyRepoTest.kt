@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.util.LineBuilder
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
-@Disabled
 internal class JourneyRepoTest {
 
     private val journeyTimeRepoImpl = JourneyRepoImpl()
@@ -14,7 +13,7 @@ internal class JourneyRepoTest {
     fun `journey time is greater than holding delay`() {
         journeyTimeRepoImpl.addJourneyTime(Pair(Pair("A", "B"), 100))
         val train = line.transporters.first()
-        train.addSection(Pair("A", "B"))
+        train.addSection(Pair("1:A", "B"))
         //     assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isGreaterThan(0)
     }
 
@@ -22,7 +21,7 @@ internal class JourneyRepoTest {
     fun `journey time is less than holding delay`() {
         journeyTimeRepoImpl.addJourneyTime(Pair(Pair("B", "C"), 10))
         val train = line.transporters.first()
-        train.addSection(Pair("B", "C"))
+        train.addSection(Pair("1:B", "C"))
         //     assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isLessThan(0)
 
     }
@@ -30,7 +29,7 @@ internal class JourneyRepoTest {
     @Test
     fun `journey time does not exist`() {
         val train = line.transporters.first()
-        train.addSection(Pair("X", "Y"))
+        train.addSection(Pair("1:X", "Y"))
         //     assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(0)
 
     }
@@ -39,7 +38,7 @@ internal class JourneyRepoTest {
     fun `journey time is zero and therefore doesnt exist test`() {
         journeyTimeRepoImpl.addJourneyTime(Pair(Pair("B", "C"), 0))
         val train = line.transporters.first()
-        train.addSection(Pair("B", "C"))
+        train.addSection(Pair("1:B", "C"))
         //    assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(0)
     }
 

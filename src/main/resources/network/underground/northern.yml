@@ -1,7 +1,7 @@
 lines:
   - id: NORTH01
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 36
@@ -32,7 +32,7 @@ lines:
 
   - id: NORTH02
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 36
@@ -64,7 +64,7 @@ lines:
 
   - id: NORTH03
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 372
@@ -104,7 +104,7 @@ lines:
 
   - id: NORTH04
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 372
@@ -142,7 +142,7 @@ lines:
 
   - id: NORTH05
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 372
@@ -183,7 +183,7 @@ lines:
 
   - id: NORTH06
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 372
@@ -223,7 +223,7 @@ lines:
 
   - id: NORTH07
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 372
@@ -261,7 +261,7 @@ lines:
 
   - id: NORTH08
     transport-id: 3
-    transport-capacity: 2
+    transport-capacity: 4
     name: Northern
     stations:
       - 372

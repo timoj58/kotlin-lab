@@ -42,7 +42,7 @@ network:
       - src/main/resources/network/underground/central.yml
       - src/main/resources/network/underground/district.yml
       - src/main/resources/network/underground/northern.yml
-      #- src/main/resources/network/underground/piccadilly.yml
+      - src/main/resources/network/underground/piccadilly.yml
     overground:
       - src/main/resources/network/overground/highbury.yml
     cable:

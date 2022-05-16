@@ -11,6 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -18,10 +19,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
-@Disabled
 internal class StationServiceTest {
-
-    //TODO need to fix all of this
 
     private val stationRepo = mock(StationRepo::class.java)
 
@@ -44,7 +42,7 @@ internal class StationServiceTest {
                 line = LineBuilder().getLine(),
                 timeStep = 1000
             )
-        transport.addSection(Pair("B", "A"))
+        transport.addSection(Pair("1:B", "A"))
         val job2 = async { channel.send(transport) }
 
         delay(100)
@@ -68,15 +66,15 @@ internal class StationServiceTest {
                 line = LineBuilder().getLine(),
                 timeStep = 1000
             )
-        transport.addSection(Pair("A", "B"))
-        transport.release(
+        transport.addSection(Pair("1:A", "B"))
+        val release = launch { transport.release(
             LineInstructions(
                 LineBuilder().stations[0],
                 LineBuilder().stations[1],
                 LineBuilder().stations[2],
                 LineDirection.POSITIVE
-            )
-        )
+            ) ) }
+
         val channel3 = Channel<SignalMessage>()
         val depart = async { transport.signal(channel3) }
         channel3.send(SignalMessage(SignalValue.GREEN))
@@ -87,6 +85,7 @@ internal class StationServiceTest {
         depart.cancelAndJoin()
         job.cancelAndJoin()
         job2.cancelAndJoin()
+        release.cancelAndJoin()
 
     }
 

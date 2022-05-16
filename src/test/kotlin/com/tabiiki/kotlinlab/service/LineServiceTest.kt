@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
-@Disabled //TODO fixme
+@Disabled //this is out of date massively.
 internal class LineServiceTest {
 
     private val lineFactory = mock(LineFactory::class.java)
@@ -30,7 +30,7 @@ internal class LineServiceTest {
         timeStep = 10,
         line = LineBuilder().getLine()
     ).also {
-        it.addSection(Pair("A", "B"))
+        it.addSection(Pair("1:A", "B"))
     }
 
     private val transport2 = Transport(
@@ -38,7 +38,7 @@ internal class LineServiceTest {
         timeStep = 10,
         line = LineBuilder().getLine()
     ).also {
-        it.addSection(Pair("A", "B"))
+        it.addSection(Pair("1:A", "B"))
     }
 
     private val lines = listOf(LineBuilder().getLine().also {

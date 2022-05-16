@@ -20,6 +20,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -29,6 +30,7 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import java.time.LocalDateTime
 
+//@Disabled
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ActiveProfiles("test")
 @SpringBootTest
@@ -56,6 +58,7 @@ class LineControllerTest @Autowired constructor(
         "jubilee",
         "bakerloo",
         "hammersmith",
+        "piccadilly"
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
         println(LocalDateTime.now())
