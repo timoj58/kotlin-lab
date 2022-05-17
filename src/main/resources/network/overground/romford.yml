@@ -1,0 +1,12 @@
+lines:
+  - id: ROM01
+    transport-id: 3
+    line-capacity: 4
+    name: Romford - Upminster
+    stations:
+      - 464
+      - 193
+      - 574
+    depots:
+      - 464
+      - 574

@@ -1,0 +1,21 @@
+lines:
+  - id: GOSPEL01
+    transport-id: 3
+    line-capacity: 8
+    name: Gospel Oak - Barking
+    stations:
+      - 230
+      - 577
+      - 148
+      - 259
+      - 502
+      - 61
+      - 588
+      - 339
+      - 341
+      - 594
+      - 646
+      - 29
+    depots:
+      - 230
+      - 29

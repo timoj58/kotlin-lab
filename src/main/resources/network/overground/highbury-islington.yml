@@ -1,0 +1,106 @@
+lines:
+  - id: HIGH01
+    transport-id: 3
+    line-capacity: 4
+    name: Highbury & Islington
+    stations:
+      - 279
+      - 97
+      - 157
+      - 245
+      - 294
+      - 482
+      - 632
+      - 478
+      - 595
+      - 465
+      - 93
+      - 541
+      - 384
+    depots:
+      - 279
+      - 384
+
+  - id: HIGH02
+    transport-id: 3
+    line-capacity: 4
+    name: Highbury & Islington
+    stations:
+      - 279
+      - 97
+      - 157
+      - 245
+      - 294
+      - 482
+      - 632
+      - 478
+      - 595
+      - 465
+      - 93
+      - 541
+      - 385
+      - 75
+      - 287
+      - 216
+      - 545
+      - 150
+    depots:
+      - 279
+      - 150
+
+  - id: HIGH03
+    transport-id: 3
+    line-capacity: 4
+    name: Highbury & Islington
+    stations:
+      - 279
+      - 97
+      - 157
+      - 245
+      - 294
+      - 482
+      - 632
+      - 478
+      - 595
+      - 465
+      - 93
+      - 541
+      - 385
+      - 75
+      - 287
+      - 216
+      - 545
+      - 424
+      - 16
+      - 407
+      - 610
+    depots:
+      - 279
+      - 610
+
+  - id: HIGH04
+    transport-id: 3
+    line-capacity: 4
+    name: Highbury & Islington
+    stations:
+      - 279
+      - 97
+      - 157
+      - 245
+      - 294
+      - 482
+      - 632
+      - 478
+      - 595
+      - 465
+      - 93
+      - 541
+      - 445
+      - 422
+      - 160
+      - 130
+      - 591
+      - 131
+    depots:
+      - 279
+      - 131

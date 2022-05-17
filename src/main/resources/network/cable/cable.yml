@@ -1,1 +1,11 @@
-lines: [ ]
+lines:
+  - id: EMIRATES01
+    transport-id: 2
+    line-capacity: 2
+    name: Emirates Air Line
+    stations:
+      - 654
+      - 655
+    depots:
+      - 654
+      - 655

@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.util
 
 import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.Job
@@ -8,6 +9,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import org.assertj.core.api.Assertions
 import java.util.UUID
+import java.util.function.Consumer
 
 class IntegrationControl {
     private val stationVisitedPerTrain = mutableMapOf<UUID, MutableSet<Pair<String, String>>>()
@@ -20,7 +22,7 @@ class IntegrationControl {
         transportersPerLine += line.transporters.size
     }
 
-    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>, dump: Runnable) {
+    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>, timeout: Int, dump: Consumer<List<UUID>>) {
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
@@ -31,23 +33,30 @@ class IntegrationControl {
 
             trainsByLine[msg.line.id]?.add(msg.transportId)
             if (msg.type == MessageType.ARRIVE) stationVisitedPerTrain[msg.transportId]?.add(msg.section)
-        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * 10) > System.currentTimeMillis())
+        } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * timeout) > System.currentTimeMillis())
 
-        dump.run()
+        dump.accept(diagnosticsCheck())
         jobs.forEach { it.cancelAndJoin() }
         assert()
+
+    }
+
+    private fun diagnosticsCheck(): List<UUID> {
+        val toLog = mutableListOf<UUID>()
+        stationVisitedPerTrain.forEach { (k, u) ->
+            val line = getLineByTrain(k)
+            val total = sectionsByLine[line]!!.toList()
+            println("$line - $k visited ${u.size} vs ${total.size}")
+
+            if(u.size != total.size) toLog.add(k)
+        }
+        return toLog
     }
 
     private fun assert() {
         println("total trains: $transportersPerLine, trains running: ${stationVisitedPerTrain.keys.size}  and stations visited ${stationVisitedPerTrain.values.flatten().size}")
         val count = testSectionsVisited()
         println("completed journeys count: $count")
-
-        stationVisitedPerTrain.forEach { (k, u) ->
-            val line = getLineByTrain(k)
-            val total = sectionsByLine[line]!!.toList()
-            println("$line - $k visited ${u.size} vs ${total.size}")
-        }
 
         Assertions.assertThat(count).isEqualTo(transportersPerLine)
         stationVisitedPerTrain.values.flatten()

@@ -7,6 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
+import java.util.UUID
 
 interface LineConductor {
     fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport>
@@ -14,7 +15,7 @@ interface LineConductor {
     suspend fun release(transport: Transport)
     suspend fun start(line: String, lines: List<Line>)
     fun isClear(transport: Transport): Boolean
-    fun diagnostics()
+    fun diagnostics(transports: List<UUID>)
 }
 
 @Service
@@ -42,8 +43,8 @@ class LineConductorImpl(
     }
 
     override fun isClear(transport: Transport): Boolean = lineService.isClear(transport)
-    override fun diagnostics() {
-        lineService.dump()
+    override fun diagnostics(transports: List<UUID>) {
+        lineService.diagnostics(transports)
     }
 
 }

@@ -1,0 +1,70 @@
+lines:
+  - id: LIV01
+    transport-id: 3
+    line-capacity: 6
+    name: London Liverpool St
+    stations:
+      - 343
+      - 53
+      - 90
+      - 347
+      - 242
+      - 134
+      - 511
+      - 587
+      - 644
+      - 278
+      - 121
+    depots:
+      - 343
+      - 121
+
+  - id: LIV02
+    transport-id: 3
+    line-capacity: 6
+    name: London Liverpool St
+    stations:
+      - 343
+      - 53
+      - 90
+      - 347
+      - 242
+      - 455
+      - 525
+      - 520
+      - 477
+      - 82
+      - 631
+      - 485
+      - 184
+      - 86
+      - 196
+    depots:
+      - 343
+      - 196
+
+  - id: LIV03
+    transport-id: 3
+    line-capacity: 2
+    name: London Liverpool St
+    stations:
+      - 343
+      - 53
+      - 90
+      - 347
+      - 242
+      - 455
+      - 525
+      - 520
+      - 477
+      - 82
+      - 631
+      - 485
+      - 184
+      - 506
+      - 569
+      - 554
+      - 117
+    depots:
+      - 343
+      - 117

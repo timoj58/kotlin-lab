@@ -15,7 +15,7 @@ internal class LineTest {
         id = "1",
         name = "",
         transportId = 1,
-        transportCapacity = 4,
+        lineCapacity = 4,
         stations = listOf("A", "B", "C", "D"),
         depots = listOf("A", "D")
     )
@@ -24,7 +24,7 @@ internal class LineTest {
         id = "1",
         name = "",
         transportId = 1,
-        transportCapacity = 6,
+        lineCapacity = 6,
         stations = listOf("A", "B", "C", "D", "A"),
         depots = listOf("A", "A")
     )
@@ -33,7 +33,7 @@ internal class LineTest {
         id = "1",
         name = "",
         transportId = 1,
-        transportCapacity = 5,
+        lineCapacity = 5,
         stations = listOf("A", "B", "C", "D"),
         depots = listOf("A", "D")
     )

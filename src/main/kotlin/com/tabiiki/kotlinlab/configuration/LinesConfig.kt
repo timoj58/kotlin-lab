@@ -8,13 +8,14 @@ import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import org.springframework.context.annotation.Configuration
 import java.io.File
 import java.nio.file.Files
+import java.util.Optional
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 data class LineConfig(
     @JsonProperty("id") val id: String,
     @JsonProperty("name") val name: String,
     @JsonProperty("transport-id") val transportId: Int,
-    @JsonProperty("transport-capacity") val transportCapacity: Int,
+    @JsonProperty("line-capacity") val lineCapacity: Int,
     @JsonProperty("stations") val stations: List<String>,
     @JsonProperty("depots") val depots: List<String> = listOf()
 
@@ -33,6 +34,7 @@ class LinesConfig(linesAdapter: LinesAdapter) {
     companion object
     class Config(@JsonProperty("lines") val lines: List<LineConfig>)
 
+    val defaultLineCapacity: Optional<Int>? = linesAdapter.defaultLineCapacity
     private val loadLines = mutableListOf<LineConfig>()
     val lines
         get() = loadLines.toList()

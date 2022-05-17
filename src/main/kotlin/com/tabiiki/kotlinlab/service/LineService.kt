@@ -34,7 +34,7 @@ interface LineService {
     suspend fun start(line: String, lines: List<Line>)
     suspend fun release(transport: Transport)
     fun isClear(transport: Transport): Boolean
-    fun dump()
+    fun diagnostics(transports: List<UUID>)
 }
 
 @Service
@@ -56,9 +56,9 @@ class LineServiceImpl(
     override fun isClear(transport: Transport): Boolean =
         queues.isClear(transport.platformKey()) && sectionService.isClear(transport.section())
 
-    override fun dump() {
-        diagnostics.dump(queues)
-        sectionService.dump()
+    override fun diagnostics(transports: List<UUID>) {
+        diagnostics.dump(queues, transports)
+        sectionService.diagnostics(transports)
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
@@ -230,14 +230,18 @@ class LineServiceImpl(
 
         class Diagnostics {
 
-            fun dump(queues: Queues) {
-                val items = mutableListOf<Transport>()
+            fun dump(queues: Queues, transports: List<UUID>) {
+                val items = mutableListOf<Transport.Companion.JournalRecord>()
 
-                queues.getQueueKeys().forEach {
-                    items.addAll(queues.getQueue(it))
+                queues.getQueueKeys().forEach { queue ->
+                    val toAdd = queues.getQueue(queue)
+                        .filter { t -> transports.contains(t.id) }
+                        .map { m -> m.journal.getLog().sortedBy { l -> l.milliseconds }.takeLast(5) }
+                        .flatten()
+                    items.addAll(toAdd)
                 }
 
-                items.map { it.journal.getLog() }.flatten().sortedBy { it.milliseconds }
+                items.sortedBy { it.milliseconds }
                     .forEach { log.info(it.print()) }
 
             }

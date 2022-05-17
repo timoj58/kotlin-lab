@@ -1,7 +1,7 @@
 lines:
   - id: CIRCLE01
     transport-id: 3
-    transport-capacity: 8
+    line-capacity: 8
     name: Circle
     stations:
       - 247
@@ -46,7 +46,7 @@ lines:
 
   - id: CIRCLE02
     transport-id: 3
-    transport-capacity: 8
+    line-capacity: 8
     name: Circle
     stations:
       - 418

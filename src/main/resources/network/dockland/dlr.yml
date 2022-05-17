@@ -1,1 +1,110 @@
-lines: [ ]
+lines:
+  - id: DLR01
+    transport-id: 5
+    line-capacity: 4
+    name: DLR
+    stations:
+      - 26
+      - 478
+      - 342
+      - 628
+      - 94
+      - 275
+      - 500
+      - 147
+      - 379
+      - 299
+      - 152
+      - 237
+      - 162
+      - 191
+      - 337
+    depots:
+      - 26
+      - 337
+
+  - id: DLR02
+    transport-id: 5
+    line-capacity: 4
+    name: DLR
+    stations:
+      - 26
+      - 478
+      - 342
+      - 628
+      - 435
+      - 62
+      - 177
+      - 95
+      - 623
+      - 434
+      - 346
+      - 317
+      - 651
+    depots:
+      - 26
+      - 651
+
+  - id: DLR03
+    transport-id: 5
+    line-capacity: 4
+    name: DLR
+    stations:
+      - 528
+      - 438
+      - 67
+      - 163
+      - 330
+      - 12
+      - 435
+      - 619
+      - 94
+    depots:
+      - 528
+      - 94
+
+  - id: DLR04
+    transport-id: 5
+    line-capacity: 4
+    name: DLR
+    stations:
+      - 530
+      - 528
+      - 529
+      - 1
+      - 615
+      - 522
+      - 95
+      - 623
+      - 434
+      - 346
+      - 317
+      - 651
+    depots:
+      - 530
+      - 651
+
+  - id: DLR05
+    transport-id: 5
+    line-capacity: 4
+    name: DLR
+    stations:
+      - 565
+      - 478
+      - 342
+      - 628
+      - 435
+      - 62
+      - 177
+      - 95
+      - 468
+      - 151
+      - 437
+      - 466
+      - 42
+      - 153
+      - 219
+      - 41
+    depots:
+      - 565
+      - 41

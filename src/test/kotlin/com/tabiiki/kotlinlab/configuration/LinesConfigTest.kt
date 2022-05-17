@@ -16,13 +16,13 @@ internal class LinesConfigTest {
             mutableListOf("src/main/resources/network/cable/cable.yml")
         )
         linesAdapter.setRiver(
-            mutableListOf("src/main/resources/network/river/river.yml")
+            mutableListOf("src/main/resources/network/river/rb1.yml")
         )
         linesAdapter.setUnderground(
             mutableListOf("src/main/resources/network/underground/city.yml")
         )
         linesAdapter.setOverground(
-            mutableListOf("src/main/resources/network/overground/highbury.yml")
+            mutableListOf("src/main/resources/network/overground/highbury-islington.yml")
         )
         linesAdapter.setDockland(
             mutableListOf("src/main/resources/network/dockland/dlr.yml")
@@ -37,7 +37,6 @@ internal class LinesConfigTest {
     fun `load network`() {
         val lines = LinesConfig(linesAdapter)
 
-        assertThat(lines.lines.size).isEqualTo(1)
-        assertThat(lines.lines[0].type).isEqualTo(LineType.UNDERGROUND)
+        assertThat(lines.lines.size).isEqualTo(15)
     }
 }

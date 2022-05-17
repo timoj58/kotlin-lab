@@ -2,25 +2,11 @@ network:
   time-step: 5
   start-delay: 1000
   lines:
-    default-line-capacity: 2
     river:
-      - src/main/resources/network/river/rb1.yml
-      - src/main/resources/network/river/rb2.yml
-      - src/main/resources/network/river/rb4.yml
-      - src/main/resources/network/river/rb6.yml
     tram:
-      - src/main/resources/network/tram/tram.yml
     dockland:
-      - src/main/resources/network/dockland/dlr.yml
     cable:
-      - src/main/resources/network/cable/cable.yml
     overground:
-      - src/main/resources/network/overground/gospel-oak.yml
-      - src/main/resources/network/overground/highbury-islington.yml
-      - src/main/resources/network/overground/london-euston.yml
-      - src/main/resources/network/overground/romford.yml
-      - src/main/resources/network/overground/london-liverpool-st.yml
-      - src/main/resources/network/overground/stratford.yml
     underground:
       - src/main/resources/network/underground/city.yml
       - src/main/resources/network/underground/jubilee.yml

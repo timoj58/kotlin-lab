@@ -9,13 +9,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.UUID
 import javax.naming.ConfigurationException
 
 interface LineController {
     suspend fun start(line: List<Line>, channel: Channel<Transport>)
     fun getStationChannels(): Map<String, Channel<Transport>>
     fun setStationChannels(stationChannels: Map<String, Channel<Transport>>)
-    fun diagnostics()
+    fun diagnostics(transports: List<UUID>)
 }
 
 @Service
@@ -58,8 +59,8 @@ class LineControllerImpl(
         stationChannels = channels
     }
 
-    override fun diagnostics() {
-        conductor.diagnostics()
+    override fun diagnostics(transports: List<UUID>) {
+        conductor.diagnostics(transports)
     }
 
     private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {

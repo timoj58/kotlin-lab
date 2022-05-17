@@ -1,0 +1,16 @@
+network:
+  time-step: 5
+  start-delay: 1000
+  lines:
+    river:
+    tram:
+    dockland:
+    cable:
+    overground:
+      - src/main/resources/network/overground/gospel-oak.yml
+      - src/main/resources/network/overground/highbury-islington.yml
+      - src/main/resources/network/overground/london-euston.yml
+      - src/main/resources/network/overground/romford.yml
+      - src/main/resources/network/overground/london-liverpool-st.yml
+      - src/main/resources/network/overground/stratford.yml
+    underground:

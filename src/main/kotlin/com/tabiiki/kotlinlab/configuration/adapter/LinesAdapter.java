@@ -6,10 +6,13 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Configuration
 @ConfigurationProperties(prefix = "network.lines")
 public class LinesAdapter {
+
+    private Integer defaultLineCapacity;
     private List<String> underground;
     private List<String> overground;
     private List<String> cable;
@@ -40,6 +43,14 @@ public class LinesAdapter {
 
     public void setTram(List<String> tram) {
         this.tram = tram;
+    }
+
+    public Optional<Integer> getDefaultLineCapacity() {
+        return Optional.ofNullable(defaultLineCapacity);
+    }
+
+    public void setDefaultLineCapacity(Integer defaultLineCapacity) {
+        this.defaultLineCapacity =defaultLineCapacity;
     }
 
     public Map<LineType, List<String>> getLines() {

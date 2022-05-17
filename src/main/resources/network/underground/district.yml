@@ -1,7 +1,7 @@
 lines:
   - id: DISTRICT01
     transport-id: 3
-    transport-capacity: 4
+    line-capacity: 4
     name: District
     stations:
       - 168
@@ -53,7 +53,7 @@ lines:
 
   - id: DISTRICT02
     transport-id: 3
-    transport-capacity: 4
+    line-capacity: 4
     name: District
     stations:
       - 306
@@ -96,7 +96,7 @@ lines:
 
   - id: DISTRICT03
     transport-id: 3
-    transport-capacity: 2
+    line-capacity: 2
     name: District
     stations:
       - 306
@@ -112,7 +112,7 @@ lines:
 
   - id: DISTRICT04
     transport-id: 3
-    transport-capacity: 4
+    line-capacity: 2
     name: District
     stations:
       - 460
@@ -163,7 +163,7 @@ lines:
 
   - id: DISTRICT05
     transport-id: 3
-    transport-capacity: 2
+    line-capacity: 2
     name: District
     stations:
       - 460
@@ -187,7 +187,7 @@ lines:
 
   - id: DISTRICT06
     transport-id: 3
-    transport-capacity: 4
+    line-capacity: 4
     name: District
     stations:
       - 638
@@ -237,7 +237,7 @@ lines:
 
   - id: DISTRICT07
     transport-id: 3
-    transport-capacity: 2
+    line-capacity: 2
     name: District
     stations:
       - 638

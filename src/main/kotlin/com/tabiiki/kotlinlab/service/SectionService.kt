@@ -20,7 +20,7 @@ interface SectionService {
     suspend fun init()
     fun isClear(key: Pair<String, String>): Boolean
     fun initQueues(key: Pair<String, String>)
-    fun dump()
+    fun diagnostics(transports: List<UUID>)
 }
 
 @Service
@@ -56,8 +56,8 @@ class SectionServiceImpl(
 
     }
 
-    override fun dump() {
-        diagnostics.dump(queues)
+    override fun diagnostics(transports: List<UUID>) {
+        diagnostics.dump(queues, transports)
     }
 
     private suspend fun monitor(key: Pair<String, String>) = coroutineScope {
@@ -132,14 +132,18 @@ class SectionServiceImpl(
 
         class Diagnostics {
 
-            fun dump(queues: Queues) {
-                val items = mutableListOf<Transport>()
+            fun dump(queues: Queues, transports: List<UUID>) {
+                val items = mutableListOf<Transport.Companion.JournalRecord>()
 
-                queues.getQueueKeys().forEach {
-                    items.addAll(queues.getQueue(it))
+                queues.getQueueKeys().forEach { queue ->
+                    val toAdd = queues.getQueue(queue)
+                        .filter { t -> transports.contains(t.id) }
+                        .map { m -> m.journal.getLog().sortedBy { l -> l.milliseconds }.takeLast(5) }
+                        .flatten()
+                    items.addAll(toAdd)
                 }
 
-                items.map { it.journal.getLog() }.flatten().sortedBy { it.milliseconds }
+                items.sortedBy { it.milliseconds }
                     .forEach { log.info(it.print()) }
             }
         }

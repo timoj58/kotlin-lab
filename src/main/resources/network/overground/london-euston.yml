@@ -1,0 +1,28 @@
+lines:
+  - id: EUST01
+    transport-id: 3
+    line-capacity: 8
+    name: London Euston
+    stations:
+      - 201
+      - 495
+      - 315
+      - 444
+      - 304
+      - 637
+      - 256
+      - 526
+      - 605
+      - 399
+      - 498
+      - 310
+      - 261
+      - 268
+      - 263
+      - 99
+      - 87
+      - 601
+      - 602
+    depots:
+      - 201
+      - 602

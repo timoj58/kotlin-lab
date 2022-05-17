@@ -25,7 +25,7 @@ class LineBuilder {
             id = "1",
             name = "1",
             transportId = 1,
-            transportCapacity = 6,
+            lineCapacity = 6,
             stations = listOf("A", "B", "C"),
             depots = listOf("A", "C")
         ), listOf(transportConfig)
@@ -37,7 +37,7 @@ class LineBuilder {
             id = "2",
             name = "2",
             transportId = 1,
-            transportCapacity = 6,
+            lineCapacity = 6,
             stations = listOf("A", "B", "C", "D"),
             depots = listOf("A", "D")
         ), listOf(transportConfig)
@@ -49,7 +49,7 @@ class LineBuilder {
             id = "2",
             name = "2",
             transportId = 1,
-            transportCapacity = 6,
+            lineCapacity = 6,
             stations = listOf("A", "B", "C", "D", "A"),
             depots = listOf("A", "D")
         ), listOf(transportConfig)
@@ -61,7 +61,7 @@ class LineBuilder {
             id = "2",
             name = "2",
             transportId = 1,
-            transportCapacity = 6,
+            lineCapacity = 6,
             stations = listOf("E", "B", "A", "C", "D", "A"),
             depots = listOf("A", "D")
         ), listOf(transportConfig)

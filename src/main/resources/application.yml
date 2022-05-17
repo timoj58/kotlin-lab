@@ -9,16 +9,16 @@ network:
   transporters:
     ferries:
       - transport-id: 1
-        capacity: 1000
-        weight: 100
-        top-speed: 20
-        power: 10
+        capacity: 200
+        weight: 10000
+        top-speed: 15
+        power: 5000
     cable-cars:
       - transport-id: 2
-        capacity: 1000
+        capacity: 20
         weight: 100
         top-speed: 5
-        power: 5
+        power: 100
     trains:
       - transport-id: 3
         capacity: 1000
@@ -30,7 +30,13 @@ network:
         weight: 1500
         top-speed: 20
         power: 2300
+      - transport-id: 5
+        capacity: 500
+        weight: 1000
+        top-speed: 15
+        power: 1500
   lines:
+    default-line-capacity:
     underground:
       - src/main/resources/network/underground/city.yml
       - src/main/resources/network/underground/jubilee.yml
@@ -44,11 +50,19 @@ network:
       - src/main/resources/network/underground/northern.yml
       - src/main/resources/network/underground/piccadilly.yml
     overground:
-      - src/main/resources/network/overground/highbury.yml
+      - src/main/resources/network/overground/gospel-oak.yml
+      - src/main/resources/network/overground/highbury-islington.yml
+      - src/main/resources/network/overground/london-euston.yml
+      - src/main/resources/network/overground/romford.yml
+      - src/main/resources/network/overground/london-liverpool-st.yml
+      - src/main/resources/network/overground/stratford.yml
     cable:
       - src/main/resources/network/cable/cable.yml
     river:
-      - src/main/resources/network/river/river.yml
+      - src/main/resources/network/river/rb1.yml
+      - src/main/resources/network/river/rb2.yml
+      - src/main/resources/network/river/rb4.yml
+      - src/main/resources/network/river/rb6.yml
     dockland:
       - src/main/resources/network/dockland/dlr.yml
     tram:

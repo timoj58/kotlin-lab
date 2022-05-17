@@ -20,24 +20,11 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.context.ActiveProfiles
-import java.time.LocalDateTime
 
-//@Disabled
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@ActiveProfiles("test")
-@SpringBootTest
-class LineControllerTest @Autowired constructor(
-    @Value("\${network.start-delay}") val startDelay: Long,
-    @Value("\${network.time-step}") val timeStep: Long,
-    @Value("\${network.minimum-hold}") val minimumHold: Int,
+class LineControllerTest(
+    val startDelay: Long,
+    val timeStep: Long,
+    val minimumHold: Int,
     val transportersConfig: TransportersConfig,
     val stationService: StationService,
     val stationRepo: StationRepo,
@@ -46,23 +33,8 @@ class LineControllerTest @Autowired constructor(
 ) {
     val integrationControl = IntegrationControl()
 
-    @ParameterizedTest
-    @CsvSource(
-        "city",
-        "metropolitan",
-        "central",
-        "northern",
-        "district",
-        "victoria",
-        "circle",
-        "jubilee",
-        "bakerloo",
-        "hammersmith",
-        "piccadilly"
-    )
-    fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
-        println(LocalDateTime.now())
 
+    suspend fun test(lineType: String, lineName: String, timeout: Int) = runBlocking {
         val signalService = SignalServiceImpl(signalFactory)
         val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
 
@@ -77,7 +49,7 @@ class LineControllerTest @Autowired constructor(
                     it.setDockland(listOf())
                     it.setOverground(listOf())
                     it.setRiver(listOf())
-                    it.setUnderground(listOf("src/main/resources/network/underground/$lineName.yml"))
+                    it.setUnderground(listOf("src/main/resources/network/$lineType/$lineName.yml"))
                 }
             ),
             timeStep = timeStep,
@@ -108,7 +80,7 @@ class LineControllerTest @Autowired constructor(
         val job3 = launch { stationService.monitor(listener) }
 
         val running = async {
-            integrationControl.status(listener, listOf(job3, job)) { lineConductor.diagnostics() }
+            integrationControl.status(listener, listOf(job3, job), timeout) { t -> lineConductor.diagnostics(t) }
         }
     }
 

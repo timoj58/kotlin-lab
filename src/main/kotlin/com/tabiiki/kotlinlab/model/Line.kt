@@ -2,12 +2,14 @@ package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
+import java.util.Optional
 import javax.naming.ConfigurationException
 
 data class Line(
     val timeStep: Long,
     private val config: LineConfig,
-    private val transportConfig: List<TransportConfig>
+    private val transportConfig: List<TransportConfig>,
+    private val defaultLineCapacity: Optional<Int> = Optional.empty()
 ) {
     val id = config.id
     val name = config.name
@@ -22,7 +24,7 @@ data class Line(
                 )
             }.first { it.transportId == config.transportId }
         }.take(
-            config.transportCapacity
+            defaultLineCapacity.orElse(config.lineCapacity)
         ).toList()
     private val depots = config.depots
 

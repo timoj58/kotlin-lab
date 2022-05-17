@@ -1,0 +1,22 @@
+lines:
+  - id: RIVER02
+    transport-id: 1
+    line-capacity: 8
+    name: RB2
+    stations:
+      - 661
+      - 662
+      - 663
+      - 665
+      - 666
+      - 668
+      - 669
+      - 670
+      - 671
+      - 672
+      - 673
+      - 675
+      - 676
+    depots:
+      - 661
+      - 676

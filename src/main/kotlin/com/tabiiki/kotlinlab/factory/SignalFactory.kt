@@ -43,7 +43,7 @@ data class Signal(
     private suspend fun send(channel: Channel<SignalMessage>) {
         do {
             channel.send(this.status)
-            delay(timeStep) //take this out?
+            delay(timeStep)
         } while (true)
     }
 
