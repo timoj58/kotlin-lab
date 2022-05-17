@@ -31,7 +31,7 @@ data class LineInstructions(
 )
 
 interface LineService {
-    suspend fun start(line: String, lines: List<Line>)
+    suspend fun start(line: String, lineDetails: List<Line>)
     suspend fun release(transport: Transport)
     fun isClear(transport: Transport): Boolean
     fun diagnostics(transports: List<UUID>)
@@ -62,15 +62,14 @@ class LineServiceImpl(
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
-        if (lines.addLineDetails(line, lineDetails)) {
-            launch { sectionService.init() }
+        lines.addLineDetails(line, lineDetails)
 
-            queues.getQueueKeys().forEach {
-                launch { init(it) }
-                launch { monitorPlatformHold(it) }
-            }
+        launch { sectionService.init(line) }
+
+        queues.getQueueKeys().filter { it.first.contains(line) }.forEach {
+            launch { init(it) }
+            launch { monitorPlatformHold(it) }
         }
-
     }
 
     override suspend fun release(
@@ -99,7 +98,7 @@ class LineServiceImpl(
         val counter = AtomicInteger(0)
         do {
             delay(transport.timeStep)
-          //  if(counter.get() > 75) throw RuntimeException("${transport.id} is held too long")
+            //  if(counter.get() > 75) throw RuntimeException("${transport.id} is held too long")
         } while (counter.incrementAndGet() < minimumHold || !isClear(transport))
 
         launch { release(transport) }
@@ -154,7 +153,6 @@ class LineServiceImpl(
                                 }
                             }
                         }
-                    //TODO this is better SignalValue.RED -> queues.getQueue(key).firstOrNull()?.let { launch { hold(it) } }
                     else -> {}
                 }
             }
@@ -176,7 +174,7 @@ class LineServiceImpl(
 
             fun isClear(key: Pair<String, String>): Boolean = queues[key]?.second?.isEmpty() ?: false
 
-            fun getQueueKeys(): Iterator<Pair<String, String>> = queues.keys().asIterator()
+            fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
 
             fun release(key: Pair<String, String>, transport: Transport) {
                 if (!queues[key]!!.second.isEmpty()) throw RuntimeException("FATAL - $key")
@@ -203,19 +201,15 @@ class LineServiceImpl(
             private val lineDetails: ConcurrentHashMap<String, List<Line>> = ConcurrentHashMap()
             private val lineStations: ConcurrentHashMap<UUID, List<String>> = ConcurrentHashMap()
 
-            fun addLineDetails(key: String, details: List<Line>): Boolean {
-                val res = lineDetails.isEmpty()
-                lineDetails[key] = details
-
-                return res
-            }
+            fun addLineDetails(key: String, details: List<Line>) { lineDetails[key] = details }
 
             fun lineInstructions(transport: Transport, lineStations: List<String>): LineInstructions =
                 LineInstructions(
                     from = stationRepo.get(transport.getSectionStationCode()),
                     to = stationRepo.get(transport.section().second),
                     next = stationRepo.getNextStationOnLine(
-                        lineStations = lineStations, section = Pair(transport.getSectionStationCode(), transport.section().second)
+                        lineStations = lineStations,
+                        section = Pair(transport.getSectionStationCode(), transport.section().second)
                     ),
                     direction = transport.lineDirection()
                 )
