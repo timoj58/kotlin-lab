@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Lines
-import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.channels.Channel
@@ -18,18 +17,6 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-
-enum class LineDirection {
-    POSITIVE, NEGATIVE
-}
-
-data class LineInstructions(
-    val from: Station,
-    val to: Station,
-    val next: Station,
-    val direction: LineDirection,
-    val minimumHold: Int = 45
-)
 
 interface PlatformService {
     suspend fun start(line: String, lineDetails: List<Line>)

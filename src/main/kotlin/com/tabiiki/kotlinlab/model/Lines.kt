@@ -1,9 +1,22 @@
 package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.repo.StationRepo
-import com.tabiiki.kotlinlab.service.LineInstructions
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+
+
+enum class LineDirection {
+    POSITIVE, NEGATIVE
+}
+
+data class LineInstructions(
+    val from: Station,
+    val to: Station,
+    val next: Station,
+    val direction: LineDirection,
+    val minimumHold: Int = 45
+)
+
 
 class Lines(private val stationRepo: StationRepo) {
 

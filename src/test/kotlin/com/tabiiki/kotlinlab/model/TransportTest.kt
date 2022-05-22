@@ -4,8 +4,6 @@ import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
-import com.tabiiki.kotlinlab.service.LineDirection
-import com.tabiiki.kotlinlab.service.LineInstructions
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
