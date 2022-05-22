@@ -20,7 +20,7 @@ interface LineConductor {
 
 @Service
 class LineConductorImpl(
-    private val lineService: LineService
+    private val platformService: PlatformService
 ) : LineConductor {
 
     override fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport> =
@@ -35,16 +35,16 @@ class LineConductorImpl(
         transport: Transport
     ): Unit = coroutineScope {
         delay(transport.timeStep)
-        launch { lineService.release(transport) }
+        launch { platformService.release(transport) }
     }
 
     override suspend fun start(line: String, lines: List<Line>): Unit = coroutineScope {
-        launch { lineService.start(line, lines) }
+        launch { platformService.start(line, lines) }
     }
 
-    override fun isClear(transport: Transport): Boolean = lineService.isClear(transport)
+    override fun isClear(transport: Transport): Boolean = platformService.isClear(transport)
     override fun diagnostics(transports: List<UUID>) {
-        lineService.diagnostics(transports)
+        platformService.diagnostics(transports)
     }
 
 }

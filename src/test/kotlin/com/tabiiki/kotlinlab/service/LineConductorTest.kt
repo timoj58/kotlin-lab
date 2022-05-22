@@ -12,7 +12,7 @@ internal class LineConductorTest {
 
 
     private val stationRepo = mock(StationRepo::class.java)
-    private val lineConductor = LineConductorImpl(mock(LineService::class.java))
+    private val lineConductor = LineConductorImpl(mock(PlatformService::class.java))
 
 
     @BeforeEach

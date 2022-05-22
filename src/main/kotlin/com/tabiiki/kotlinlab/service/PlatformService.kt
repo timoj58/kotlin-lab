@@ -30,7 +30,7 @@ data class LineInstructions(
     val minimumHold: Int = 45
 )
 
-interface LineService {
+interface PlatformService {
     suspend fun start(line: String, lineDetails: List<Line>)
     suspend fun release(transport: Transport)
     fun isClear(transport: Transport): Boolean
@@ -38,12 +38,12 @@ interface LineService {
 }
 
 @Service
-class LineServiceImpl(
+class PlatformServiceImpl(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
     stationRepo: StationRepo,
     private val sectionService: SectionService
-) : LineService {
+) : PlatformService {
     private val queues = Queues()
     private val diagnostics = Diagnostics()
     private val lines = Lines(stationRepo)

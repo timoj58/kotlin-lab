@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.cancelAndJoin
@@ -16,14 +17,19 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
-@Disabled //this is out of date massively.
-internal class LineServiceTest {
+internal class PlatformServiceTest {
+
+    /*
+      todo:  these tests are wrong, in that its two releases, without a bold.
+      need to simulate the hold...so better plan
+
+      release transport 1, release transport 2, then do the tests in section B, C
+     */
 
     private val lineFactory = mock(LineFactory::class.java)
     private var signalFactory: SignalFactory? = null
     private var signalService: SignalServiceImpl? = null
     private val stationRepo = mock(StationRepo::class.java)
-    private val sectionService = mock(SectionService::class.java)
 
     private val transport = Transport(
         config = LineBuilder().transportConfig,
@@ -88,10 +94,11 @@ internal class LineServiceTest {
 
     @Test
     fun `train is first train added to section, so will be given a green light`() = runBlocking {
-        val lineService = LineServiceImpl(45, signalService!!, stationRepo, sectionService)
+        val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
+        val platformService = PlatformServiceImpl(45, signalService!!, stationRepo, sectionService)
 
-        val job2 = launch { lineService.start(LineBuilder().getLine().name, lines) }
-        val job = launch { lineService.release(transport) }
+        val job2 = launch { platformService.start(LineBuilder().getLine().name, lines) }
+        val job = launch { platformService.release(transport) }
 
         do {
             delay(100)
@@ -105,14 +112,15 @@ internal class LineServiceTest {
 
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
-        val lineService = LineServiceImpl(45, signalService!!, stationRepo, sectionService)
+        val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
+        val platformService = PlatformServiceImpl(45, signalService!!, stationRepo, sectionService)
 
-        val job3 = launch { lineService.start(LineBuilder().getLine().name, lines) }
+        val job3 = launch { platformService.start(LineBuilder().getLine().name, lines) }
         delay(200)
 
-        val job = launch { lineService.release(transport) }
+        val job = launch { platformService.release(transport) }
         delay(100)
-        val job2 = launch { lineService.release(transport2) }
+        val job2 = launch { platformService.release(transport2) }
 
         do {
             delay(100)
@@ -128,12 +136,14 @@ internal class LineServiceTest {
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
-            val lineService = LineServiceImpl(45, signalService!!, stationRepo, sectionService)
+            val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
+            val platformService = PlatformServiceImpl(45, signalService!!, stationRepo, sectionService)
 
-            val job3 = launch { lineService.start(LineBuilder().getLine().name, lines) }
-            val job = launch { lineService.release(transport) }
-            delay(100)
-            val job2 = launch { lineService.release(transport2) }
+            val job3 = launch { platformService.start(LineBuilder().getLine().name, lines) }
+            delay(200)
+            val job = launch { platformService.release(transport) }
+            delay(1000)
+            val job2 = launch { platformService.release(transport2) }
 
             do {
                 delay(100)
