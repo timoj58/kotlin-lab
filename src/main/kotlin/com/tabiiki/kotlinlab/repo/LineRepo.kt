@@ -7,6 +7,10 @@ import org.springframework.stereotype.Repository
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
+interface LineRepo {
+    fun addLineDetails(key: String, details: List<Line>)
+    fun getLineInstructions(transport: Transport): LineInstructions
+}
 
 enum class LineDirection {
     POSITIVE, NEGATIVE
@@ -21,14 +25,14 @@ data class LineInstructions(
 )
 
 @Repository
-class LineRepo(private val stationRepo: StationRepo) {
+class LineRepoImpl(private val stationRepo: StationRepo): LineRepo {
 
     private val lineDetails: ConcurrentHashMap<String, List<Line>> = ConcurrentHashMap()
     private val lineStations: ConcurrentHashMap<UUID, List<String>> = ConcurrentHashMap()
 
-    fun addLineDetails(key: String, details: List<Line>) { lineDetails[key] = details }
+    override fun addLineDetails(key: String, details: List<Line>) { lineDetails[key] = details }
 
-    fun lineInstructions(transport: Transport): LineInstructions =
+    override fun getLineInstructions(transport: Transport): LineInstructions =
         LineInstructions(
             from = stationRepo.get(transport.getSectionStationCode()),
             to = stationRepo.get(transport.section().second),

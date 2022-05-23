@@ -61,7 +61,7 @@ class PlatformServiceImpl(
     override suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
-        val instructions = lineRepo.lineInstructions(transport)
+        val instructions = lineRepo.getLineInstructions(transport)
 
         launch { transport.release(instructions) }
 

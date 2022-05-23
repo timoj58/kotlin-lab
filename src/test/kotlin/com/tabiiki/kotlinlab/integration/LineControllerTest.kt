@@ -7,7 +7,7 @@ import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import com.tabiiki.kotlinlab.repo.LineRepo
+import com.tabiiki.kotlinlab.repo.LineRepoImpl
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.LineConductorImpl
 import com.tabiiki.kotlinlab.service.LineControllerImpl
@@ -39,7 +39,7 @@ class LineControllerTest(
         val signalService = SignalServiceImpl(signalFactory)
         val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
 
-        val lineService = PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepo(stationRepo))
+        val lineService = PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo))
         val lineConductor = LineConductorImpl(lineService)
 
         val lineFactory = LineFactory(
