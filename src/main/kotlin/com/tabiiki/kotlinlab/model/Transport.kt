@@ -3,6 +3,8 @@ package com.tabiiki.kotlinlab.model
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
+import com.tabiiki.kotlinlab.repo.LineDirection
+import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.HaversineCalculator
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel

@@ -4,9 +4,9 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
-import com.tabiiki.kotlinlab.model.LineDirection
-import com.tabiiki.kotlinlab.model.LineInstructions
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.repo.LineDirection
+import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async

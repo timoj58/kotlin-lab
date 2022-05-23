@@ -1,7 +1,7 @@
 package com.tabiiki.kotlinlab.factory
 
 import com.tabiiki.kotlinlab.model.Line
-import com.tabiiki.kotlinlab.model.LineDirection
+import com.tabiiki.kotlinlab.repo.LineDirection
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay

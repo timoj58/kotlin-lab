@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
+import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.cancelAndJoin
@@ -12,7 +13,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -95,7 +95,7 @@ internal class PlatformServiceTest {
     @Test
     fun `train is first train added to section, so will be given a green light`() = runBlocking {
         val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-        val platformService = PlatformServiceImpl(45, signalService!!, stationRepo, sectionService)
+        val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepo(stationRepo))
 
         val job2 = launch { platformService.start(LineBuilder().getLine().name, lines) }
         val job = launch { platformService.release(transport) }
@@ -113,7 +113,7 @@ internal class PlatformServiceTest {
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
         val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-        val platformService = PlatformServiceImpl(45, signalService!!, stationRepo, sectionService)
+        val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepo(stationRepo))
 
         val job3 = launch { platformService.start(LineBuilder().getLine().name, lines) }
         delay(200)
@@ -137,7 +137,7 @@ internal class PlatformServiceTest {
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
             val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-            val platformService = PlatformServiceImpl(45, signalService!!, stationRepo, sectionService)
+            val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepo(stationRepo))
 
             val job3 = launch { platformService.start(LineBuilder().getLine().name, lines) }
             delay(200)

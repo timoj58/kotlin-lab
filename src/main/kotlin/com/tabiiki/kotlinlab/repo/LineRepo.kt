@@ -1,6 +1,9 @@
-package com.tabiiki.kotlinlab.model
+package com.tabiiki.kotlinlab.repo
 
-import com.tabiiki.kotlinlab.repo.StationRepo
+import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.model.Transport
+import org.springframework.stereotype.Repository
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -17,8 +20,8 @@ data class LineInstructions(
     val minimumHold: Int = 45
 )
 
-
-class Lines(private val stationRepo: StationRepo) {
+@Repository
+class LineRepo(private val stationRepo: StationRepo) {
 
     private val lineDetails: ConcurrentHashMap<String, List<Line>> = ConcurrentHashMap()
     private val lineStations: ConcurrentHashMap<UUID, List<String>> = ConcurrentHashMap()

@@ -3,9 +3,8 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
-import com.tabiiki.kotlinlab.model.Lines
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.StationRepo
+import com.tabiiki.kotlinlab.repo.LineRepo
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -29,12 +28,11 @@ interface PlatformService {
 class PlatformServiceImpl(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
-    stationRepo: StationRepo,
-    private val sectionService: SectionService
+    private val sectionService: SectionService,
+    private val lineRepo: LineRepo
 ) : PlatformService {
     private val queues = Queues()
     private val diagnostics = Diagnostics()
-    private val lines = Lines(stationRepo)
 
     init {
         signalService.getSectionSignals().forEach { sectionService.initQueues(it) }
@@ -50,7 +48,7 @@ class PlatformServiceImpl(
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
-        lines.addLineDetails(line, lineDetails)
+        lineRepo.addLineDetails(line, lineDetails)
 
         launch { sectionService.init(line) }
 
@@ -63,7 +61,7 @@ class PlatformServiceImpl(
     override suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
-        val instructions = lines.lineInstructions(transport)
+        val instructions = lineRepo.lineInstructions(transport)
 
         launch { transport.release(instructions) }
 
