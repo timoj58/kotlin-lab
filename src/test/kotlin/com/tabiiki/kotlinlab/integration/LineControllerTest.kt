@@ -39,7 +39,7 @@ class LineControllerTest(
         val signalService = SignalServiceImpl(signalFactory)
         val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
 
-        val lineService = PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo))
+        val lineService = PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo)
         val lineConductor = LineConductorImpl(lineService)
 
         val lineFactory = LineFactory(

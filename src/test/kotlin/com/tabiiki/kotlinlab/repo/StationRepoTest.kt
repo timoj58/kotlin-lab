@@ -1,6 +1,8 @@
 package com.tabiiki.kotlinlab.repo
 
+import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -13,56 +15,74 @@ internal class StationRepoTest {
     private val stations = LineBuilder().stations
     private val line = listOf("A", "B", "C")
     private val circleLine = listOf("A", "B", "C", "A")
+    private val circleLine2 = listOf("E","F","A", "B", "C", "A")
+
 
     @BeforeEach
     fun `init`() {
-        Mockito.`when`(stationFactory.get()).thenReturn(stations.map { it.id })
-        Mockito.`when`(stationFactory.get("A")).thenReturn(stations.get(0))
-        Mockito.`when`(stationFactory.get("B")).thenReturn(stations.get(1))
-        Mockito.`when`(stationFactory.get("C")).thenReturn(stations.get(2))
+        val allStations = mutableListOf<Station>()
+        allStations.addAll(stations)
+        allStations.add(Station(StationConfig(id = "E", latitude = 51.5002551610895, longitude = 0.00358625912595083), listOf()))
+        allStations.add(Station(StationConfig(id = "F", latitude = 51.5002551610895, longitude = 0.00358625912595083), listOf()))
+
+        Mockito.`when`(stationFactory.get()).thenReturn(allStations.map { it.id })
+        Mockito.`when`(stationFactory.get("A")).thenReturn(stations[0])
+        Mockito.`when`(stationFactory.get("B")).thenReturn(stations[1])
+        Mockito.`when`(stationFactory.get("C")).thenReturn(stations[2])
+        Mockito.`when`(stationFactory.get("E")).thenReturn(allStations[3])
+        Mockito.`when`(stationFactory.get("F")).thenReturn(allStations[4])
+
     }
 
 
     @Test
-    fun `next station is first in line`() {
+    fun `next & previous when station is first in line`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("B", "A")).id).isEqualTo("B")
+        assertThat(stationRepo.getPreviousStationOnLine(line, Pair("B", "A")).id).isEqualTo("C")
     }
 
     @Test
-    fun `next station is last in line`() {
+    fun `next & previous when station is last in line`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("B", "C")).id).isEqualTo("B")
-
+        assertThat(stationRepo.getPreviousStationOnLine(line, Pair("B", "C")).id).isEqualTo("A")
     }
 
     @Test
-    fun `next station is going forwards`() {
+    fun `next & previous when station is going forwards`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("A", "B")).id).isEqualTo("C")
-
+        assertThat(stationRepo.getPreviousStationOnLine(line, Pair("A", "B")).id).isEqualTo("B")
     }
 
     @Test
-    fun `next station is going reverse`() {
+    fun `next & previous when station is going reverse`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("C", "B")).id).isEqualTo("A")
-
+        assertThat(stationRepo.getPreviousStationOnLine(line, Pair("C", "B")).id).isEqualTo("B")
     }
 
     @Test
-    fun `circle line test where start and end is same`() {
+    fun `next & previous circle line test where start and end is same`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("C", "A")).id).isEqualTo("C")
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "C")).id).isEqualTo("B")
-
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine, Pair("C", "A")).id).isEqualTo("B")
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine, Pair("A", "C")).id).isEqualTo("C")
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("C", "A")).id).isEqualTo("B")
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("A", "C")).id).isEqualTo("C")
     }
 
     @Test
-    fun `circle line test where start and end is same reversed`() {
+    fun `next & previous circle line test where start and end is same reversed`() {
         val stationRepo = StationRepoImpl(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("B", "A")).id).isEqualTo("B")
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "B")).id).isEqualTo("C")
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine, Pair("B", "A")).id).isEqualTo("C")
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine, Pair("A", "B")).id).isEqualTo("B")
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("B", "A")).id).isEqualTo("C")
+        assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("A", "B")).id).isEqualTo("F")
 
 
     }

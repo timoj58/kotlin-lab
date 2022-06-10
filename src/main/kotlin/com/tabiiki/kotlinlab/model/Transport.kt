@@ -47,7 +47,6 @@ interface ITransport {
     fun atPlatform(): Boolean
     fun isStationary(): Boolean
     fun getSectionStationCode(): String
-
 }
 
 data class Transport(
@@ -282,8 +281,6 @@ data class Transport(
 
                 velocity *= drag
                 displacement += velocity
-
-                //   println("$instruction : $distance vs $displacement")
             }
 
             fun shouldApplyBrakes(instruction: Instruction): Boolean {
@@ -292,8 +289,6 @@ data class Transport(
                 val brakingVelocity = velocity + (brakingForce / weight)
                 val iterationsToPlatform = stoppingDistance / velocity
                 val iterationsToBrakeToPlatform = stoppingDistance / abs(brakingVelocity)
-
-                //    println("$iterationsToPlatform $iterationsToBrakeToPlatform")
 
                 return when (instruction) {
                     Instruction.THROTTLE_ON -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)

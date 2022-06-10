@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineRepoImpl
@@ -19,12 +20,6 @@ import org.mockito.Mockito.mock
 
 internal class PlatformServiceTest {
 
-    /*
-      todo:  these tests are wrong, in that its two releases, without a bold.
-      need to simulate the hold...so better plan
-
-      release transport 1, release transport 2, then do the tests in section B, C
-     */
 
     private val lineFactory = mock(LineFactory::class.java)
     private var signalFactory: SignalFactory? = null
@@ -70,13 +65,13 @@ internal class PlatformServiceTest {
                 listOf("A", "B", "C"),
                 Pair("A", "B")
             )
-        ).thenReturn(LineBuilder().stations[0])
+        ).thenReturn(LineBuilder().stations[2])
         `when`(
             stationRepo.getNextStationOnLine(
                 listOf("A", "B", "C"),
                 Pair("B", "C")
             )
-        ).thenReturn(LineBuilder().stations[0])
+        ).thenReturn(LineBuilder().stations[1])
         `when`(
             stationRepo.getNextStationOnLine(
                 listOf("A", "B", "C"),
@@ -88,16 +83,44 @@ internal class PlatformServiceTest {
                 listOf("A", "B", "C"),
                 Pair("B", "A")
             )
+        ).thenReturn(LineBuilder().stations[1])
+
+        `when`(
+            stationRepo.getPreviousStationOnLine(
+                listOf("A", "B", "C"),
+                Pair("1:A", "B")
+            )
+        ).thenReturn(LineBuilder().stations[1])
+
+        `when`(
+            stationRepo.getPreviousStationOnLine(
+                listOf("A", "B", "C"),
+                Pair("1:B", "C")
+            )
         ).thenReturn(LineBuilder().stations[0])
+
+        `when`(
+            stationRepo.getPreviousStationOnLine(
+                listOf("A", "B", "C"),
+                Pair("1:C", "B")
+            )
+        ).thenReturn(LineBuilder().stations[1])
+
+        `when`(
+            stationRepo.getPreviousStationOnLine(
+                listOf("A", "B", "C"),
+                Pair("1:B", "A")
+            )
+        ).thenReturn(LineBuilder().stations[2])
 
     }
 
     @Test
     fun `train is first train added to section, so will be given a green light`() = runBlocking {
         val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-        val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo))
+        val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
 
-        val job2 = launch { platformService.start(LineBuilder().getLine().name, lines) }
+        val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
         val job = launch { platformService.release(transport) }
 
         do {
@@ -106,16 +129,16 @@ internal class PlatformServiceTest {
 
         assertThat(transport.isStationary()).isEqualTo(false)
 
-        job2.cancelAndJoin()
         job.cancelAndJoin()
+        start.cancelAndJoin()
     }
 
     @Test
     fun `train is second train added to section, so will be given a red light`() = runBlocking {
         val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-        val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo))
+        val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
 
-        val job3 = launch { platformService.start(LineBuilder().getLine().name, lines) }
+        val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
         delay(200)
 
         val job = launch { platformService.release(transport) }
@@ -130,16 +153,16 @@ internal class PlatformServiceTest {
 
         job.cancelAndJoin()
         job2.cancelAndJoin()
-        job3.cancelAndJoin()
+        start.cancelAndJoin()
     }
 
     @Test
     fun `train is second train added to section, so will be given a red light, and then get a green light once section clear`() =
         runBlocking {
             val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-            val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo))
+            val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
 
-            val job3 = launch { platformService.start(LineBuilder().getLine().name, lines) }
+            val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
             delay(200)
             val job = launch { platformService.release(transport) }
             delay(1000)
@@ -159,7 +182,32 @@ internal class PlatformServiceTest {
 
             job.cancelAndJoin()
             job2.cancelAndJoin()
-            job3.cancelAndJoin()
+            start.cancelAndJoin()
         }
+
+    @Test
+    fun `test that section to platform is set Amber when a train is held at platform`() = runBlocking{
+        val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
+        val platformService = PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
+
+        val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
+        delay(200)
+        val job = launch { platformService.release(transport) }
+        delay(200)
+        val channelToListenTo = signalService!!.getChannel(Pair("1:A","B"))
+
+        var signalValue: SignalValue?
+        do {
+            delay(transport.timeStep)
+            signalValue = channelToListenTo!!.receive().signalValue
+
+        }while (transport.section() != Pair("1:C", "B") &&  signalValue != SignalValue.AMBER_30)
+
+        assertThat(signalValue).isEqualTo(SignalValue.AMBER_30)
+
+        job.cancelAndJoin()
+        start.cancelAndJoin()
+
+    }
 
 }

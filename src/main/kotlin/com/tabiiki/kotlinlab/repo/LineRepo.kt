@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 interface LineRepo {
     fun addLineDetails(key: String, details: List<Line>)
     fun getLineInstructions(transport: Transport): LineInstructions
+    fun getLineStations(transport: Transport): List<String>
 }
 
 enum class LineDirection {
@@ -43,7 +44,7 @@ class LineRepoImpl(private val stationRepo: StationRepo): LineRepo {
             direction = transport.lineDirection()
         )
 
-    private fun getLineStations(transport: Transport): List<String> {
+    override fun getLineStations(transport: Transport): List<String> {
         if (!lineStations.contains(transport.id))
             lineStations[transport.id] =
                 lineDetails[transport.line.name]!!.first { l -> l.transporters.any { it.id == transport.id } }.stations

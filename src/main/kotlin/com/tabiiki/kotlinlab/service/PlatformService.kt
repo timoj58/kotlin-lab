@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.LineRepo
+import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -29,7 +30,8 @@ class PlatformServiceImpl(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
     private val sectionService: SectionService,
-    private val lineRepo: LineRepo
+    private val lineRepo: LineRepo,
+    private val stationRepo: StationRepo
 ) : PlatformService {
     private val queues = Queues()
     private val diagnostics = Diagnostics()
@@ -81,6 +83,8 @@ class PlatformServiceImpl(
     private suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {
+        signalService.send(getPreviousSection(transport), SignalMessage(signalValue = SignalValue.AMBER_30))
+
         val counter = AtomicInteger(0)
         do {
             delay(transport.timeStep)
@@ -98,6 +102,7 @@ class PlatformServiceImpl(
             delay(transport.timeStep)
         } while (queues.getQueue(key).contains(transport))
 
+        signalService.send(getPreviousSection(transport), SignalMessage(signalValue = SignalValue.GREEN))
         sectionService.add(transport, holdChannels[transport.platformToKey()]!!)
     }
 
@@ -144,6 +149,13 @@ class PlatformServiceImpl(
             }
 
         } while (true)
+    }
+
+    private fun getPreviousSection(transport: Transport): Pair<String, String> {
+        val stationTo = transport.getSectionStationCode()
+        val stationFrom =  stationRepo.getPreviousStationOnLine(lineRepo.getLineStations(transport), transport.section()).id
+
+        return Pair("${transport.line.name}:${stationFrom}", stationTo)
     }
 
     companion object {

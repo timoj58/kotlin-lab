@@ -8,6 +8,7 @@ import kotlin.math.abs
 
 interface StationRepo {
     fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station
+    fun getPreviousStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station
     fun get(): List<Station>
     fun get(id: String): Station
 }
@@ -19,22 +20,36 @@ class StationRepoImpl(
     private val stations = stationFactory.get().map { stationFactory.get(it) }
 
     override fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
-        val station = section.first.substringAfter(":")
-        var fromStationIdx = lineStations.indexOf(station)
-        var toStationIdx = lineStations.indexOf(section.second)
-        if (abs(fromStationIdx - toStationIdx) > 1)
-            if (fromStationIdx > toStationIdx)
-                toStationIdx = lineStations.lastIndexOf(section.second)
-            else fromStationIdx = lineStations.lastIndexOf(section.second)
-
-        val direction = fromStationIdx - toStationIdx
+        val config = getConfig(lineStations, section)
+        val toStationIdx = config.second
+        val direction = config.third
 
         return if (direction >= 0) if (toStationIdx > 0) get(lineStations[toStationIdx - 1]) else get(lineStations[1]) else
             if (toStationIdx < lineStations.size - 1) get(lineStations[toStationIdx + 1]) else get(lineStations.reversed()[1])
+    }
 
+    override fun getPreviousStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
+        val config = getConfig(lineStations, section)
+        val fromStationIdx = config.first
+        val direction = config.third
+
+        return if (direction < 0) if (fromStationIdx > 0) get(lineStations[fromStationIdx - 1]) else get(lineStations[1]) else
+            if (fromStationIdx < lineStations.size - 1) get(lineStations[fromStationIdx + 1]) else get(lineStations.reversed()[1])
     }
 
     override fun get(): List<Station> = stations.toList()
     override fun get(id: String): Station = stations.first { it.id == id }
+
+    private fun getConfig(lineStations: List<String>, section: Pair<String, String>): Triple<Int, Int, Int> {
+        var fromStationIdx = lineStations.indexOf(section.first.substringAfter(":"))
+        var toStationIdx = lineStations.indexOf(section.second)
+        if (abs(fromStationIdx - toStationIdx) > 1)
+            if (fromStationIdx > toStationIdx)
+                toStationIdx = lineStations.lastIndexOf(section.second)
+            else fromStationIdx = lineStations.lastIndexOf(section.first.substringAfter(":"))
+        val direction = fromStationIdx - toStationIdx
+
+        return Triple(fromStationIdx, toStationIdx, direction)
+    }
 
 }
