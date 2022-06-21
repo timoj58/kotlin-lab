@@ -12,29 +12,34 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.Optional
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 interface SectionService {
     suspend fun add(transport: Transport, channel: Channel<Transport>)
     suspend fun init(line: String)
-    fun isClear(key: Pair<String, String>): Boolean
+    fun isClear(section: Pair<String, String>, checkTime: Boolean = true): Boolean
     fun initQueues(key: Pair<String, String>)
     fun diagnostics(transports: List<UUID>)
 }
 
 @Service
 class SectionServiceImpl(
-    @Value("\${network.minimum-hold}") minimumHold: Int,
+    @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
     private val journeyRepo: JourneyRepo
 ) : SectionService {
 
-    private val queues = Queues(minimumHold)
+    private val queues = Queues(minimumHold, journeyRepo)
     private val diagnostics = Diagnostics()
 
     override suspend fun add(transport: Transport, channel: Channel<Transport>): Unit = coroutineScope {
-        holdChannels[transport.id] = channel
+        if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id })
+            throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
+
+        holdChannels[transport.id] = Pair(AtomicBoolean(false), channel)
         queues.release(transport.section(), transport)
         jobs[transport.id] = launch {
             transport.track(queues.getChannel(transport.section()))
@@ -50,7 +55,9 @@ class SectionServiceImpl(
         }
     }
 
-    override fun isClear(key: Pair<String, String>): Boolean = queues.isClear(key)
+    override fun isClear(section: Pair<String, String>, checkTime: Boolean): Boolean =
+        queues.isClear(section, checkTime)
+
     override fun initQueues(key: Pair<String, String>) {
         queues.initQueues(key)
 
@@ -68,11 +75,24 @@ class SectionServiceImpl(
                 true -> {
                     queues.getQueue(key).removeFirstOrNull()?.let {
                         jobs[it.id]!!.cancelAndJoin()
-
-                        val platformFromKey = msg.platformFromKey()
-                        //TODO remove this once section handling set for all transporters.  yes remove this...
-                        launch { signalService.send(platformFromKey, SignalMessage(SignalValue.GREEN)) }
                         launch { arrive(it) }
+                    }
+                }
+                else -> {}
+            }
+            when (msg.isStationary()) {
+                false -> {
+                    if (!holdChannels[msg.id]!!.first.get() && msg.getJourneyTime().second > minimumHold) {
+                        holdChannels[msg.id]!!.first.set(true)
+                        launch {
+                            signalService.send(
+                                msg.platformKey(), SignalMessage(
+                                    signalValue = SignalValue.GREEN,
+                                    id = Optional.of(msg.id),
+                                    key = Optional.of(msg.section())
+                                )
+                            )
+                        }
                     }
                 }
                 else -> {}
@@ -82,24 +102,24 @@ class SectionServiceImpl(
     }
 
     private suspend fun arrive(transport: Transport) = coroutineScope {
+        println("arriving ${transport.id} to ${transport.platformToKey()}")
         transport.journal.add(
             Transport.Companion.JournalRecord(
                 action = Transport.Companion.JournalActions.PLATFORM_HOLD,
-                key = transport.platformToKey(),
+                key = transport.platformToKey().get(),
                 signal = SignalValue.RED
             )
         )
         journeyRepo.addJourneyTime(transport.getJourneyTime())
-        holdChannels[transport.id]!!.send(transport)
-
+        holdChannels[transport.id]!!.second.send(transport)
     }
 
     companion object {
         private val log = LoggerFactory.getLogger(this.javaClass)
         private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
-        private val holdChannels: ConcurrentHashMap<UUID, Channel<Transport>> = ConcurrentHashMap()
+        private val holdChannels: ConcurrentHashMap<UUID, Pair<AtomicBoolean, Channel<Transport>>> = ConcurrentHashMap()
 
-        class Queues(private val minimumHold: Int) {
+        class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
             private val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
                 ConcurrentHashMap()
 
@@ -110,10 +130,20 @@ class SectionServiceImpl(
                 queues[key] = Pair(Channel(), ArrayDeque())
             }
 
+            fun isClear(section: Pair<String, String>, checkTime: Boolean): Boolean = queues[section]!!.second.isEmpty()
+                    || (queues[section]!!.second.size < 2
+                    && (!checkTime || checkTime && queues[section]!!.second.last()
+                .getJourneyTime().second > minimumHold)
+                    && !queues[section]!!.second.last().isStationary()
+                    && journeyRepo.getJourneyTime(section) > minimumHold)
+
             fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
 
             fun release(key: Pair<String, String>, transport: Transport) {
-                queues[key]!!.second.add(transport)
+                if (queues[key]!!.second.size >= 2) throw RuntimeException("Only two transporters allowed in $key")
+
+                queues[key]!!.second.addLast(transport)
+                println("releasing ${transport.id} to $key")
                 transport.journal.add(
                     Transport.Companion.JournalRecord(
                         action = Transport.Companion.JournalActions.RELEASE, key = key
@@ -122,18 +152,18 @@ class SectionServiceImpl(
             }
 
             fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
-            fun isClear(key: Pair<String, String>): Boolean {
-                if (!queues.containsKey(key)) return false
-                if (queues[key]!!.second.isEmpty()) return true
-                return queues[key]!!.second.first().getJourneyTime().second > minimumHold
-            }
-
         }
 
         class Diagnostics {
 
             fun dump(queues: Queues, transports: List<UUID>) {
                 val items = mutableListOf<Transport.Companion.JournalRecord>()
+
+                queues.getQueueKeys().forEach { queue ->
+                    queues.getQueue(queue).forEach {
+                        log.info("${it.id} current instruction ${it.getCurrentInstruction()} in ${it.section()}")
+                    }
+                }
 
                 queues.getQueueKeys().forEach { queue ->
                     val toAdd = queues.getQueue(queue)

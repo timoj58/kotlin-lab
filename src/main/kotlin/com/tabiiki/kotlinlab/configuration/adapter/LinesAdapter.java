@@ -50,7 +50,7 @@ public class LinesAdapter {
     }
 
     public void setDefaultLineCapacity(Integer defaultLineCapacity) {
-        this.defaultLineCapacity =defaultLineCapacity;
+        this.defaultLineCapacity = defaultLineCapacity;
     }
 
     public Map<LineType, List<String>> getLines() {

@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.util
 
 import com.tabiiki.kotlinlab.model.Line
-import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.Job
@@ -48,7 +47,7 @@ class IntegrationControl {
             val total = sectionsByLine[line]!!.toList()
             println("$line - $k visited ${u.size} vs ${total.size}")
 
-            if(u.size != total.size) toLog.add(k)
+            if (u.size != total.size) toLog.add(k)
         }
         return toLog
     }

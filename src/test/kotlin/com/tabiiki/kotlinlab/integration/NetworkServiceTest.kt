@@ -7,12 +7,14 @@ import com.tabiiki.kotlinlab.util.IntegrationControl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
+@Disabled
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
 @SpringBootTest
@@ -24,7 +26,7 @@ class NetworkServiceTest @Autowired constructor(
     val integrationControl = IntegrationControl()
 
     init {
-        lineFactory.get().forEach { id -> integrationControl.initControl(lineFactory.get(id)) }
+        lineFactory.get().forEach { id -> with(integrationControl) { initControl(lineFactory.get(id)) } }
     }
 
     @Test

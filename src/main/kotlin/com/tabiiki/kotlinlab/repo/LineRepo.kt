@@ -11,6 +11,8 @@ interface LineRepo {
     fun addLineDetails(key: String, details: List<Line>)
     fun getLineInstructions(transport: Transport): LineInstructions
     fun getLineStations(transport: Transport): List<String>
+    fun getLineStations(line: String): List<Line>
+
 }
 
 enum class LineDirection {
@@ -26,12 +28,14 @@ data class LineInstructions(
 )
 
 @Repository
-class LineRepoImpl(private val stationRepo: StationRepo): LineRepo {
+class LineRepoImpl(private val stationRepo: StationRepo) : LineRepo {
 
     private val lineDetails: ConcurrentHashMap<String, List<Line>> = ConcurrentHashMap()
     private val lineStations: ConcurrentHashMap<UUID, List<String>> = ConcurrentHashMap()
 
-    override fun addLineDetails(key: String, details: List<Line>) { lineDetails[key] = details }
+    override fun addLineDetails(key: String, details: List<Line>) {
+        lineDetails[key] = details
+    }
 
     override fun getLineInstructions(transport: Transport): LineInstructions =
         LineInstructions(
@@ -50,4 +54,7 @@ class LineRepoImpl(private val stationRepo: StationRepo): LineRepo {
                 lineDetails[transport.line.name]!!.first { l -> l.transporters.any { it.id == transport.id } }.stations
         return lineStations[transport.id]!!
     }
+
+    override fun getLineStations(line: String): List<Line> = lineDetails[line]!!
+
 }

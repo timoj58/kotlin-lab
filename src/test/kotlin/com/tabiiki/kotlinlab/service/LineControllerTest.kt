@@ -8,7 +8,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.atLeast
@@ -51,7 +50,11 @@ internal class LineControllerTest {
         val res = async { lineControllerService.start(listOf(line), channel) }
         delay(2000)
 
-        verify(conductor, atLeast(line.transporters.size)).release(
+        verify(conductor, atLeast(2)).release(
+            Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
+        )
+
+        verify(conductor, atLeast(4)).hold(
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 

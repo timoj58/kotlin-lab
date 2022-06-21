@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.repo
 
 import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import org.springframework.stereotype.Repository
 import kotlin.math.abs
@@ -9,6 +10,7 @@ import kotlin.math.abs
 interface StationRepo {
     fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station
     fun getPreviousStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station
+    fun getPreviousStationsOnLine(lineStations: List<Line>, stationTo: String, direction: LineDirection): List<Station>
     fun get(): List<Station>
     fun get(id: String): Station
 }
@@ -37,6 +39,27 @@ class StationRepoImpl(
             if (fromStationIdx < lineStations.size - 1) get(lineStations[fromStationIdx + 1]) else get(lineStations.reversed()[1])
     }
 
+    override fun getPreviousStationsOnLine(
+        lineStations: List<Line>,
+        stationTo: String,
+        direction: LineDirection
+    ): List<Station> {
+        val stations = mutableListOf<Station>()
+
+        outer@ for (line in lineStations) {
+            val firstIdx = line.stations.indexOf(stationTo)
+            val lastIdx = line.stations.lastIndexOf(stationTo)
+            if (firstIdx == -1) continue@outer
+            if (firstIdx == lastIdx) {
+                stations.addAll(addStations(firstIdx, direction, line.stations))
+            } else {
+                stations.addAll(addStations(firstIdx, direction, line.stations))
+                stations.addAll(addStations(lastIdx, direction, line.stations))
+            }
+        }
+        return stations
+    }
+
     override fun get(): List<Station> = stations.toList()
     override fun get(id: String): Station = stations.first { it.id == id }
 
@@ -50,6 +73,21 @@ class StationRepoImpl(
         val direction = fromStationIdx - toStationIdx
 
         return Triple(fromStationIdx, toStationIdx, direction)
+    }
+
+    private fun addStations(index: Int, direction: LineDirection, stations: List<String>): List<Station> {
+        val result = mutableListOf<Station>()
+        val max = stations.size - 1
+        when (index) {
+            0 -> result.add(get(stations[1]))
+            max -> result.add(get(stations[stations.size - 2]))
+            else ->
+                when (direction) {
+                    LineDirection.POSITIVE -> result.add(get(stations[index - 1]))
+                    LineDirection.NEGATIVE -> result.add(get(stations[index + 1]))
+                }
+        }
+        return result
     }
 
 }

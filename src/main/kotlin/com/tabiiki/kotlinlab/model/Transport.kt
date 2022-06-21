@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Optional
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -39,7 +40,7 @@ interface ITransport {
     suspend fun signal(channel: Channel<SignalMessage>)
     fun section(): Pair<String, String>
     fun platformFromKey(): Pair<String, String>
-    fun platformToKey(): Pair<String, String>
+    fun platformToKey(): Optional<Pair<String, String>>
     fun platformKey(): Pair<String, String>
     fun addSection(section: Pair<String, String>)
     fun lineDirection(): LineDirection
@@ -47,6 +48,7 @@ interface ITransport {
     fun atPlatform(): Boolean
     fun isStationary(): Boolean
     fun getSectionStationCode(): String
+    fun getCurrentInstruction(): Instruction
 }
 
 data class Transport(
@@ -73,25 +75,27 @@ data class Transport(
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
     override fun getSectionStationCode(): String = section().first.substringAfter(":")
+    override fun getCurrentInstruction(): Instruction = this.instruction
 
     override fun platformKey(): Pair<String, String> =
-        Pair("${line.name} ${this.lineDirection()}", section().first)
+        Pair("${line.name}:${this.lineDirection()}", section().first)
 
     override fun section(): Pair<String, String> =
         sectionData.second ?: sectionData.first!!
 
     override fun platformFromKey(): Pair<String, String> {
         val line = line.name
-        val dir = journey!!.direction
+        val dir = journey?.direction ?: this.lineDirection()
+        val stationId = journey?.from?.id ?: section().first.substringAfter(":")
 
-        return Pair("$line $dir", "$line:${journey!!.from.id}")
+        return Pair("$line:$dir", "$line:$stationId")
     }
 
-    override fun platformToKey(): Pair<String, String> {
+    override fun platformToKey(): Optional<Pair<String, String>> {
         val line = line.name
-        val dir = journey!!.direction
+        val dir = journey?.direction ?: return Optional.empty()
 
-        return Pair("$line $dir", "$line:${journey!!.to.id}")
+        return Optional.of(Pair("$line:$dir", "$line:${journey!!.to.id}"))
     }
 
     override fun addSection(section: Pair<String, String>) {
@@ -116,23 +120,28 @@ data class Transport(
     }
 
     override suspend fun signal(channel: Channel<SignalMessage>) {
-
-        var previousMsg: SignalValue? = null
+        val timeRegistered = System.currentTimeMillis()
+        var previousMsg: SignalMessage? = null
         do {
             val msg = channel.receive()
-            if ((previousMsg == null || msg.signalValue != previousMsg) && msg.id.orElse(id).equals(id)) {
-                if (msg.signalValue == SignalValue.GREEN) journal.add(
-                    JournalRecord(action = JournalActions.DEPART, key = this.section(), signal = msg.signalValue)
-                )
-                when (msg.signalValue) {
-                    SignalValue.GREEN -> Instruction.THROTTLE_ON
-                    SignalValue.AMBER_10 -> Instruction.LIMIT_10
-                    SignalValue.AMBER_20 -> Instruction.LIMIT_20
-                    SignalValue.AMBER_30 -> Instruction.LIMIT_30
-                    SignalValue.RED -> Instruction.EMERGENCY_STOP
-                }.also { instruction = it }
+            if (msg.timesStamp >= timeRegistered) {
+                if (previousMsg == null || msg.signalValue != previousMsg.signalValue && !msg.id.orElse(UUID.randomUUID())
+                        .equals(id)
+                ) {
+                    previousMsg = msg
+                    if (msg.signalValue == SignalValue.GREEN) journal.add(
+                        JournalRecord(action = JournalActions.DEPART, key = this.section(), signal = msg.signalValue)
+                    )
+
+                    // if(msg.signalValue == SignalValue.RED) println("received ${msg.signalValue}: $id ${section()} current $instruction and ${physics.displacement} vs ${physics.distance} time $journeyTime")
+
+                    when (msg.signalValue) {
+                        SignalValue.GREEN -> Instruction.THROTTLE_ON
+                        SignalValue.AMBER -> Instruction.LIMIT_20 // TODO this is not implemented properly
+                        SignalValue.RED -> Instruction.EMERGENCY_STOP
+                    }.also { instruction = it }
+                }
             }
-            previousMsg = msg.signalValue
         } while (status.moving())
     }
 

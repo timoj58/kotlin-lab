@@ -70,7 +70,7 @@ internal class TransportTest {
     }
 
     @ParameterizedTest
-    @CsvSource("GREEN", "AMBER_10", "AMBER_20", "AMBER_30")
+    @CsvSource("GREEN"/*, "AMBER_10", "AMBER_20", "AMBER_30"*/)
     fun `train moving between Stratford and West Ham stations`(signal: SignalValue) = runBlocking {
         async { launch() }
         val channel = Channel<SignalMessage>()
@@ -96,14 +96,13 @@ internal class TransportTest {
         delay(50)
 
         channel.send(SignalMessage(SignalValue.GREEN))
-        delay(10)
+        delay(500)
         channel.send(SignalMessage(SignalValue.RED))
 
         do {
             delay(10)
         } while (!train.isStationary())
         assertThat(train.isStationary()).isEqualTo(true)
-
         channel.send(SignalMessage(SignalValue.GREEN))
 
         do {

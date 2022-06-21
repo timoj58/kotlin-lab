@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.repo
 
 import com.tabiiki.kotlinlab.util.LineBuilder
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class JourneyRepoTest {

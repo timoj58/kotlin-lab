@@ -35,7 +35,7 @@ class LineControllerImpl(
         conductor.getFirstTransportersToDispatch(line).forEach {
             delay(it.timeStep)
             launch {
-                dispatch(it, channel)
+                release(it, channel)
             }
         }
         do {
@@ -44,11 +44,10 @@ class LineControllerImpl(
                 .filter { conductor.isClear(it) }
                 .forEach { transport ->
                     delay(transport.timeStep)
-                    launch { dispatch(transport, channel) }
+                    launch { hold(transport, channel) }
                 }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
-
     }
 
     override fun getStationChannels(): Map<String, Channel<Transport>> {
@@ -63,10 +62,14 @@ class LineControllerImpl(
         conductor.diagnostics(transports)
     }
 
-    private suspend fun dispatch(transport: Transport, channel: Channel<Transport>) = coroutineScope {
+    private suspend fun release(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { conductor.release(transport) }
         launch { publish(transport, channel) }
+    }
 
+    private suspend fun hold(transport: Transport, channel: Channel<Transport>) = coroutineScope {
+        launch { conductor.hold(transport) }
+        launch { publish(transport, channel) }
     }
 
     private suspend fun publish(transport: Transport, channel: Channel<Transport>) = coroutineScope {

@@ -15,14 +15,19 @@ enum class SignalType {
 }
 
 enum class SignalValue {
-    RED, GREEN, AMBER_10, AMBER_20, AMBER_30
+    RED, GREEN, AMBER
 }
 
-data class SignalMessage(val signalValue: SignalValue, val id: Optional<UUID> = Optional.empty())
+data class SignalMessage(
+    val signalValue: SignalValue,
+    val id: Optional<UUID> = Optional.empty(),
+    val key: Optional<Pair<String, String>> = Optional.empty(),
+    var timesStamp: Long = System.currentTimeMillis()
+)
 
 data class Signal(
     var section: Pair<String, String>,
-    var status: SignalMessage = SignalMessage(SignalValue.GREEN),
+    var status: SignalMessage = SignalMessage(signalValue = SignalValue.GREEN, key = Optional.of(section)),
     val type: SignalType = SignalType.SECTION,
     val timeStep: Long = 100
 ) {
@@ -35,14 +40,18 @@ data class Signal(
         do {
             val msg = channel.receive()
             if (msg.signalValue != status.signalValue) {
-                status = msg
+                status = SignalMessage(
+                    signalValue = msg.signalValue,
+                    id = msg.id,
+                    key = msg.key
+                )
             }
         } while (true)
     }
 
     private suspend fun send(channel: Channel<SignalMessage>) {
         do {
-            channel.send(this.status)
+            channel.send(status.also { it.timesStamp = System.currentTimeMillis() })
             delay(timeStep)
         } while (true)
     }
@@ -76,8 +85,8 @@ class SignalFactory(
         val pairs = mutableSetOf<Pair<String, String>>()
         lines.forEach { line ->
             val id = line.name
-            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.POSITIVE}", "$id:$it") })
-            pairs.addAll(line.stations.map { Pair("$id ${LineDirection.NEGATIVE}", "$id:$it") })
+            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.POSITIVE}", "$id:$it") })
+            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.NEGATIVE}", "$id:$it") })
         }
         return pairs.toSet()
     }

@@ -13,6 +13,7 @@ interface LineConductor {
     fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport>
     fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
     suspend fun release(transport: Transport)
+    suspend fun hold(transport: Transport)
     suspend fun start(line: String, lines: List<Line>)
     fun isClear(transport: Transport): Boolean
     fun diagnostics(transports: List<UUID>)
@@ -38,11 +39,17 @@ class LineConductorImpl(
         launch { platformService.release(transport) }
     }
 
+    override suspend fun hold(transport: Transport): Unit = coroutineScope {
+        launch { platformService.hold(transport) }
+    }
+
     override suspend fun start(line: String, lines: List<Line>): Unit = coroutineScope {
         launch { platformService.start(line, lines) }
     }
 
-    override fun isClear(transport: Transport): Boolean = platformService.isClear(transport)
+    override fun isClear(transport: Transport): Boolean =
+        platformService.isClear(transport) && platformService.canLaunch(transport)
+
     override fun diagnostics(transports: List<UUID>) {
         platformService.diagnostics(transports)
     }

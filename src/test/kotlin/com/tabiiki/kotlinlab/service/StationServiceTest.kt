@@ -68,13 +68,16 @@ internal class StationServiceTest {
                 timeStep = 1000
             )
         transport.addSection(Pair("1:A", "B"))
-        val release = launch { transport.release(
-            LineInstructions(
-                LineBuilder().stations[0],
-                LineBuilder().stations[1],
-                LineBuilder().stations[2],
-                LineDirection.POSITIVE
-            ) ) }
+        val release = launch {
+            transport.release(
+                LineInstructions(
+                    LineBuilder().stations[0],
+                    LineBuilder().stations[1],
+                    LineBuilder().stations[2],
+                    LineDirection.POSITIVE
+                )
+            )
+        }
 
         val channel3 = Channel<SignalMessage>()
         val depart = async { transport.signal(channel3) }

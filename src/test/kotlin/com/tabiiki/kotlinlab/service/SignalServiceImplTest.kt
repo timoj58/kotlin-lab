@@ -39,7 +39,7 @@ internal class SignalServiceImplTest {
         val job2 = async { testChannel(channelOut, job) }
 
         delay(100)
-        signalService.send(Pair("A", "B"), SignalMessage(SignalValue.AMBER_30))
+        signalService.send(Pair("A", "B"), SignalMessage(SignalValue.AMBER))
         delay(200)
         job2.cancelAndJoin()
     }
@@ -49,7 +49,7 @@ internal class SignalServiceImplTest {
         do {
             signal = channel.receive().signalValue
             println(signal)
-        } while (signal != SignalValue.AMBER_30)
+        } while (signal != SignalValue.AMBER)
 
         job.cancelAndJoin()
     }

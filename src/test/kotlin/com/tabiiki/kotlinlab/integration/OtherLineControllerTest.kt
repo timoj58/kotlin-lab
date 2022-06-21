@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.StationService
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
+@Disabled
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ActiveProfiles("test-other")
 @SpringBootTest
@@ -27,11 +29,9 @@ class OtherLineControllerTest @Autowired constructor(
     signalFactory: SignalFactory,
     journeyRepo: JourneyRepo
 ) {
-
     val lineControllerTest = LineControllerTest(
         startDelay, timeStep, minimumHold, transportersConfig, stationService, stationRepo, signalFactory, journeyRepo
     )
-
 
     @ParameterizedTest
     @CsvSource(
@@ -45,6 +45,6 @@ class OtherLineControllerTest @Autowired constructor(
     )
     fun `test all transports complete a full journey on an overground line`(lineType: String, lineName: String) =
         runBlocking {
-            lineControllerTest.test(lineType, lineName, 4)
+            lineControllerTest.test(lineType, lineName, 2)
         }
 }
