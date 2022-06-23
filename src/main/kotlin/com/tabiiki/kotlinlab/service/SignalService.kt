@@ -69,9 +69,6 @@ class SignalServiceImpl(
             }
 
             suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) {
-                if (!channelsIn.containsKey(key)) {
-                    println()
-                }
                 channelsIn[key]!!.send(signalMessage)
             }
 

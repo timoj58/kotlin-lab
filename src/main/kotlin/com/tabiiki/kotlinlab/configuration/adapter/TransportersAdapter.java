@@ -14,6 +14,16 @@ public class TransportersAdapter {
     private List<TransportConfig> ferries;
     private List<TransportConfig> cableCars;
 
+    public TransportersAdapter(List<TransportConfig> trains){
+        this.trains = trains;
+        this.ferries = List.of();
+        this.cableCars = List.of();
+    }
+
+    public TransportersAdapter(){
+
+    }
+
     public List<TransportConfig> getFerries() {
         return ferries;
     }

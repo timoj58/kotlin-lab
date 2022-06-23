@@ -29,11 +29,9 @@ class UndergroundLineControllerTest @Autowired constructor(
     signalFactory: SignalFactory,
     journeyRepo: JourneyRepo
 ) {
-
     val lineControllerTest = LineControllerTest(
         startDelay, timeStep, minimumHold, transportersConfig, stationService, stationRepo, signalFactory, journeyRepo
     )
-
 
     @ParameterizedTest
     @CsvSource(
@@ -49,7 +47,7 @@ class UndergroundLineControllerTest @Autowired constructor(
         "victoria",
         "hammersmith"
     )
-    fun `test all transports complete a full journey on an overground line`(lineName: String) = runBlocking {
-        lineControllerTest.test("underground", lineName, 1)
+    fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
+        lineControllerTest.test("underground", lineName, 5)
     }
 }

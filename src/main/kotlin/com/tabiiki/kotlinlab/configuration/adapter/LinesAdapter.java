@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Configuration
 @ConfigurationProperties(prefix = "network.lines")
@@ -19,6 +18,20 @@ public class LinesAdapter {
     private List<String> river;
     private List<String> dockland;
     private List<String> tram;
+
+    public LinesAdapter(
+            List<String> underground){
+        this.underground = underground;
+        this.tram = List.of();
+        this.overground = List.of();
+        this.cable = List.of();
+        this.river = List.of();
+        this.dockland = List.of();
+    }
+
+    public LinesAdapter(){
+
+    }
 
 
     public void setUnderground(List<String> underground) {
@@ -45,8 +58,8 @@ public class LinesAdapter {
         this.tram = tram;
     }
 
-    public Optional<Integer> getDefaultLineCapacity() {
-        return Optional.ofNullable(defaultLineCapacity);
+    public Integer getDefaultLineCapacity() {
+        return defaultLineCapacity;
     }
 
     public void setDefaultLineCapacity(Integer defaultLineCapacity) {

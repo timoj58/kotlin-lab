@@ -27,7 +27,7 @@ interface PlatformService {
     suspend fun release(transport: Transport)
     fun isClear(transport: Transport): Boolean
     fun canLaunch(transport: Transport): Boolean
-    fun diagnostics(transports: List<UUID>)
+    fun diagnostics(transports: List<UUID>?)
 }
 
 @Service
@@ -52,6 +52,8 @@ class PlatformServiceImpl(
         platforms.isClear(transport.platformKey()) && sectionService.isClear(transport.section())
 
     override fun canLaunch(transport: Transport): Boolean {
+        if (lineRepo.getLineStations(transport).size == 2) return true
+
         var response = true
         val line = transport.section().first.substringBefore(":")
         val stations = stationRepo.getPreviousStationsOnLine(
@@ -61,7 +63,7 @@ class PlatformServiceImpl(
         )
         outer@ for (station in stations) {
             val toTest = Pair("$line:${station.id}", transport.getSectionStationCode())
-            if (!sectionService.isClear(toTest, false)) {
+            if (!sectionService.isClear(toTest, true)) {
                 response = false
                 break@outer
             }
@@ -69,7 +71,7 @@ class PlatformServiceImpl(
         return response
     }
 
-    override fun diagnostics(transports: List<UUID>) {
+    override fun diagnostics(transports: List<UUID>?) {
         diagnostics.dump(platforms, transports)
         sectionService.diagnostics(transports)
     }
@@ -91,14 +93,14 @@ class PlatformServiceImpl(
         val key = platformKey(transport, lineInstructions)
 
         platforms.add(key, transport)
-        //TODO this fixes the city line for now
-        if (lineRepo.getLineStations(transport).size != 2) {
+        //TODO this fixes the city line for now, and Romford.  3 or less
+        if (lineRepo.getLineStations(transport).size > 3) {
             launch {
                 signalService.send(
                     key, SignalMessage(
                         signalValue = SignalValue.RED,
-                        id = Optional.of(transport.id),
-                        key = Optional.of(transport.section())
+                        id = transport.id,
+                        key = transport.section()
                     )
                 )
             }
@@ -107,9 +109,11 @@ class PlatformServiceImpl(
         val counter = AtomicInteger(0)
         do {
             delay(transport.timeStep)
-        } while (counter.incrementAndGet() < minimumHold || !areSectionsClear(transport, lineInstructions))
+        } while (counter.incrementAndGet() < minimumHold
+            || !sectionService.isClear(transport.section())
+            || !areSectionsClear(transport, lineInstructions))
 
-        dispatch(transport, lineInstructions, Optional.of(key))
+        dispatch(transport, lineInstructions, key)
     }
 
 
@@ -117,15 +121,15 @@ class PlatformServiceImpl(
         transport: Transport
     ): Unit = coroutineScope {
         val instructions = lineRepo.getLineInstructions(transport)
-        dispatch(transport, instructions, Optional.empty())
+        dispatch(transport, instructions, null)
     }
 
     private suspend fun dispatch(
         transport: Transport,
         instructions: LineInstructions,
-        key: Optional<Pair<String, String>>
+        key: Pair<String, String>?
     ) = coroutineScope {
-        val actualKey = key.orElse(platformKey(transport, instructions))
+        val actualKey = key ?: platformKey(transport, instructions)
         launch { transport.release(instructions) }
         launch { addToSection(actualKey, transport) }
         platforms.release(actualKey, transport)
@@ -137,19 +141,13 @@ class PlatformServiceImpl(
         val platformToKey = Pair("$line:${lineInstructions.direction}", "$line:${lineInstructions.to.id}")
 
         outer@ for (key in getPreviousSections(platformToKey)) {
-            if (!sectionService.isClear(key)) {
+            if (!sectionService.isClear(key, true)) {
                 response = false
                 break@outer
             }
         }
 
         return response
-    }
-
-    private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
-        val line = transport.line.name
-        val dir = instructions.direction
-        return Pair("$line:$dir", transport.section().first)
     }
 
     private suspend fun init(key: Pair<String, String>) = coroutineScope {
@@ -165,7 +163,7 @@ class PlatformServiceImpl(
         do {
             delay(transport.timeStep)
         } while (!platforms.atPlatform(key).isEmpty)
-        launch { sectionService.add(transport, holdChannels[transport.platformToKey().get()]!!) }
+        launch { sectionService.add(transport, holdChannels[transport.platformToKey()!!]!!) }
     }
 
     private suspend fun monitorPlatformHold(key: Pair<String, String>) = coroutineScope {
@@ -173,12 +171,12 @@ class PlatformServiceImpl(
         holdChannels[key] = channel
         do {
             val msg = channel.receive()
-            msg.platformToKey().ifPresent {
+            msg.platformToKey()?.let {
                 if (!platforms.atPlatform(it).isEmpty) {
+                    val transporter = platforms.atPlatform(it).get()
+                    diagnostics(null)
                     throw RuntimeException(
-                        "$it already has holding ${
-                            platforms.atPlatform(it).get().id
-                        }, arrived too quickly"
+                        "${msg.id} arrived too quickly $it , already holding ${transporter.id} "
                     )
                 }
             }
@@ -211,23 +209,25 @@ class PlatformServiceImpl(
                         }
 
                     SignalValue.GREEN -> {
-                        val sections = getPreviousSections(key).map { Pair(it, sectionService.isClear(it)) }
-
-                        sections.filter { it.second }.forEach { section ->
-                            launch {
-                                signalService.send(
-                                    section.first,
-                                    SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
-                                )
-                            }
-                        }
-
-                        sections.firstOrNull { !it.second }?.let {
+                        val sections = getPreviousSections(key).map { Pair(it, sectionService.isClearWithPriority(it)) }
+                        val priority = sections.sortedByDescending { it.second.second }.firstOrNull { !it.second.first }
+                        priority?.let {
                             launch {
                                 signalService.send(
                                     it.first,
                                     SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
                                 )
+                            }
+                        }
+
+                        if (priority == null) {
+                            sections.filter { it.second.first }.forEach { section ->
+                                launch {
+                                    signalService.send(
+                                        section.first,
+                                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
+                                    )
+                                }
                             }
                         }
                     }
@@ -237,6 +237,12 @@ class PlatformServiceImpl(
             }
 
         } while (true)
+    }
+
+    private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
+        val line = transport.line.name
+        val dir = instructions.direction
+        return Pair("$line:$dir", transport.section().first)
     }
 
     private fun getPreviousSections(platformKey: Pair<String, String>): List<Pair<String, String>> {
@@ -271,7 +277,11 @@ class PlatformServiceImpl(
 
             fun add(key: Pair<String, String>, transport: Transport) {
                 if (!platforms[key]!!.second.get().isEmpty) {
-                    throw RuntimeException("FATAL - $key ${transport.id}")
+                    throw RuntimeException(
+                        "FATAL - already holding ${
+                            platforms[key]!!.second.get().get().id
+                        } for $key next ${transport.id}"
+                    )
                 }
                 platforms[key]!!.second.set(Optional.of(transport))
             }
@@ -295,12 +305,12 @@ class PlatformServiceImpl(
 
         class Diagnostics {
 
-            fun dump(platforms: Platforms, transports: List<UUID>) {
+            fun dump(platforms: Platforms, transports: List<UUID>?) {
                 val items = mutableListOf<Transport.Companion.JournalRecord>()
 
                 platforms.getPlatformKeys().forEach { queue ->
                     val toAdd = platforms.atPlatform(queue)
-                        .filter { t -> transports.contains(t.id) }
+                        .filter { t -> transports == null || transports.contains(t.id) }
                         .map { m -> m.journal.getLog().sortedBy { l -> l.milliseconds }.takeLast(5) }
                     toAdd.ifPresent {
                         items.addAll(it)
@@ -309,7 +319,6 @@ class PlatformServiceImpl(
 
                 items.sortedBy { it.milliseconds }
                     .forEach { log.info(it.print()) }
-
             }
         }
     }

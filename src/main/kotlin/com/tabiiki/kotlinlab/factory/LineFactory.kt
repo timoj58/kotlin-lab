@@ -19,7 +19,7 @@ class LineFactory(
     }
 
     private val lines =
-        linesConfig.lines.map { Line(timeStep, it, transportConfig.get(), linesConfig.defaultLineCapacity!!) }
+        linesConfig.lines.map { Line(timeStep, it, transportConfig.get(), linesConfig.defaultLineCapacity) }
 
     fun get(id: String): Line = lines.find { it.id == id } ?: throw NoSuchElementException("Line missing")
     fun get(): List<String> = lines.map { it.id }

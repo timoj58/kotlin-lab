@@ -10,7 +10,7 @@ internal class JourneyRepoTest {
 
     @Test
     fun `journey time is greater than holding delay`() {
-        journeyTimeRepoImpl.addJourneyTime(Pair(Pair("A", "B"), 100))
+        journeyTimeRepoImpl.addJourneyTime(Triple(Pair("A", "B"), 100, 0.0))
         val train = line.transporters.first()
         train.addSection(Pair("1:A", "B"))
         //     assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isGreaterThan(0)
@@ -18,7 +18,7 @@ internal class JourneyRepoTest {
 
     @Test
     fun `journey time is less than holding delay`() {
-        journeyTimeRepoImpl.addJourneyTime(Pair(Pair("B", "C"), 10))
+        journeyTimeRepoImpl.addJourneyTime(Triple(Pair("B", "C"), 10, 0.0))
         val train = line.transporters.first()
         train.addSection(Pair("1:B", "C"))
         //     assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isLessThan(0)
@@ -35,7 +35,7 @@ internal class JourneyRepoTest {
 
     @Test
     fun `journey time is zero and therefore doesnt exist test`() {
-        journeyTimeRepoImpl.addJourneyTime(Pair(Pair("B", "C"), 0))
+        journeyTimeRepoImpl.addJourneyTime(Triple(Pair("B", "C"), 0, 0.0))
         val train = line.transporters.first()
         train.addSection(Pair("1:B", "C"))
         //    assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(0)

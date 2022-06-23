@@ -11,7 +11,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.Optional
+import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -40,15 +40,16 @@ interface ITransport {
     suspend fun signal(channel: Channel<SignalMessage>)
     fun section(): Pair<String, String>
     fun platformFromKey(): Pair<String, String>
-    fun platformToKey(): Optional<Pair<String, String>>
+    fun platformToKey(): Pair<String, String>?
     fun platformKey(): Pair<String, String>
     fun addSection(section: Pair<String, String>)
     fun lineDirection(): LineDirection
-    fun getJourneyTime(): Pair<Pair<String, String>, Int>
+    fun getJourneyTime(): Triple<Pair<String, String>, Int, Double>
     fun atPlatform(): Boolean
     fun isStationary(): Boolean
     fun getSectionStationCode(): String
     fun getCurrentInstruction(): Instruction
+    fun getPosition(): Double
 }
 
 data class Transport(
@@ -68,14 +69,15 @@ data class Transport(
     private var instruction = Instruction.STATIONARY
 
     private var journey: LineInstructions? = null
-    private var journeyTime = Pair(Pair("", ""), AtomicInteger(0))
+    private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
 
-    override fun getJourneyTime() = Pair(journeyTime.first, journeyTime.second.get())
+    override fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
     override fun getSectionStationCode(): String = section().first.substringAfter(":")
     override fun getCurrentInstruction(): Instruction = this.instruction
+    override fun getPosition(): Double = this.physics.displacement
 
     override fun platformKey(): Pair<String, String> =
         Pair("${line.name}:${this.lineDirection()}", section().first)
@@ -91,11 +93,11 @@ data class Transport(
         return Pair("$line:$dir", "$line:$stationId")
     }
 
-    override fun platformToKey(): Optional<Pair<String, String>> {
+    override fun platformToKey(): Pair<String, String>? {
         val line = line.name
-        val dir = journey?.direction ?: return Optional.empty()
+        val dir = journey?.direction ?: return null
 
-        return Optional.of(Pair("$line:$dir", "$line:${journey!!.to.id}"))
+        return Pair("$line:$dir", "$line:${journey!!.to.id}")
     }
 
     override fun addSection(section: Pair<String, String>) {
@@ -125,21 +127,26 @@ data class Transport(
         do {
             val msg = channel.receive()
             if (msg.timesStamp >= timeRegistered) {
-                if (previousMsg == null || msg.signalValue != previousMsg.signalValue && !msg.id.orElse(UUID.randomUUID())
-                        .equals(id)
-                ) {
-                    previousMsg = msg
+                if (previousMsg == null
+                    || msg.signalValue != previousMsg.signalValue
+                    && !(msg.id ?: UUID.randomUUID()).equals(id)) {
+                 /*   if(msg.signalValue == SignalValue.RED) println("RED $id ${section()} $instruction ${physics.displacement}")
+                    previousMsg?.let {
+                        if(it.signalValue == SignalValue.RED && msg.signalValue == SignalValue.GREEN)
+                             println("GREEN $id ${section()} $instruction ${physics.displacement}")
+                    } */
+
                     if (msg.signalValue == SignalValue.GREEN) journal.add(
                         JournalRecord(action = JournalActions.DEPART, key = this.section(), signal = msg.signalValue)
                     )
-
-                    // if(msg.signalValue == SignalValue.RED) println("received ${msg.signalValue}: $id ${section()} current $instruction and ${physics.displacement} vs ${physics.distance} time $journeyTime")
 
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
                         SignalValue.AMBER -> Instruction.LIMIT_20 // TODO this is not implemented properly
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
                     }.also { instruction = it }
+
+                    previousMsg = msg
                 }
             }
         } while (status.moving())
@@ -182,11 +189,9 @@ data class Transport(
         instruction = newInstruction
         do {
             delay(timeStep)
-            journeyTime.second.incrementAndGet()
+            if(physics.velocity > 0.0) journeyTime.second.incrementAndGet()
             physics.calcTimeStep(instruction)
-            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
-                Instruction.SCHEDULED_STOP
-
+            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction = Instruction.SCHEDULED_STOP
         } while (physics.displacement <= physics.distance)
 
         launch { stopJourney() }
@@ -197,8 +202,7 @@ data class Transport(
         status = Status.ACTIVE
 
         journey?.let {
-            physics.init(it.from, it.to)
-            journeyTime = Pair(Pair(it.from.id, it.to.id), AtomicInteger(0))
+            journeyTime = Triple(Pair("${line.name}:${it.from.id}", it.to.id), AtomicInteger(0), physics.init(it.from, it.to))
         }
     }
 
@@ -256,8 +260,9 @@ data class Transport(
                 velocity = 0.0
             }
 
-            fun init(from: Station, to: Station) {
+            fun init(from: Station, to: Station): Double {
                 distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
+                return distance
             }
 
             private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {

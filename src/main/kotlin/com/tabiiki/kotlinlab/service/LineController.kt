@@ -33,18 +33,15 @@ class LineControllerImpl(
         launch { conductor.start(line.map { it.name }.distinct().first(), line) }
 
         conductor.getFirstTransportersToDispatch(line).forEach {
-            delay(it.timeStep)
-            launch {
-                release(it, channel)
-            }
+            launch { release(it, channel) }
         }
         do {
             delay(startDelay)
             conductor.getNextTransportersToDispatch(line)
-                .filter { conductor.isClear(it) }
                 .forEach { transport ->
-                    delay(transport.timeStep)
-                    launch { hold(transport, channel) }
+                    if(conductor.isClear(transport)) {
+                        launch { hold(transport, channel) }
+                    }
                 }
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })

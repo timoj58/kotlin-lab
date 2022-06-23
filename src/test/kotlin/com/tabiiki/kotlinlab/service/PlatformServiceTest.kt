@@ -1,223 +1,146 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.configuration.LinesConfig
+import com.tabiiki.kotlinlab.configuration.StationsConfig
+import com.tabiiki.kotlinlab.configuration.TransportConfig
+import com.tabiiki.kotlinlab.configuration.TransportersConfig
+import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
+import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
-import com.tabiiki.kotlinlab.factory.SignalValue
-import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.JourneyRepo
+import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Status
+import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.repo.LineRepoImpl
-import com.tabiiki.kotlinlab.repo.StationRepo
-import com.tabiiki.kotlinlab.util.LineBuilder
+import com.tabiiki.kotlinlab.repo.StationRepoImpl
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 internal class PlatformServiceTest {
 
-
-    private val lineFactory = mock(LineFactory::class.java)
-    private var signalFactory: SignalFactory? = null
-    private var signalService: SignalServiceImpl? = null
-    private val stationRepo = mock(StationRepo::class.java)
-
-    private val transport = Transport(
-        config = LineBuilder().transportConfig,
-        timeStep = 10,
-        line = LineBuilder().getLine()
-    ).also {
-        it.addSection(Pair("1:A", "B"))
-    }
-
-    private val transport2 = Transport(
-        config = LineBuilder().transportConfig,
-        timeStep = 10,
-        line = LineBuilder().getLine()
-    ).also {
-        it.addSection(Pair("1:A", "B"))
-    }
-
-    private val lines = listOf(LineBuilder().getLine().also {
-        it.transporters[0].id = transport.id
-        it.transporters[1].id = transport2.id
-    })
-
-    @BeforeEach
-    fun init() {
-        `when`(lineFactory.get()).thenReturn(listOf("1"))
-        `when`(lineFactory.get("1")).thenReturn(LineBuilder().getLine())
-        `when`(lineFactory.timeStep).thenReturn(10L)
-
-        signalFactory = SignalFactory(lineFactory)
-        signalService = SignalServiceImpl(signalFactory!!)
-
-        `when`(stationRepo.get("A")).thenReturn(LineBuilder().stations[0])
-        `when`(stationRepo.get("B")).thenReturn(LineBuilder().stations[1])
-        `when`(stationRepo.get("C")).thenReturn(LineBuilder().stations[2])
-
-        `when`(
-            stationRepo.getNextStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("A", "B")
+    private val minimumHold = 45
+    private val timeStep = 5L
+    private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
+    private val linesAdapter = LinesAdapter(listOf("src/test/resources/network/test-line.yml"))
+    private val linesConfig = LinesConfig(linesAdapter)
+    private val transportersAdapter = TransportersAdapter(
+        listOf(
+            TransportConfig(
+                transportId = 1,
+                capacity = 1000,
+                weight = 1500,
+                topSpeed = 20,
+                power = 2300
             )
-        ).thenReturn(LineBuilder().stations[2])
-        `when`(
-            stationRepo.getNextStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("B", "C")
-            )
-        ).thenReturn(LineBuilder().stations[1])
-        `when`(
-            stationRepo.getNextStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("C", "B")
-            )
-        ).thenReturn(LineBuilder().stations[0])
-        `when`(
-            stationRepo.getNextStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("B", "A")
-            )
-        ).thenReturn(LineBuilder().stations[1])
+        )
+    )
+    private val transportConfig = TransportersConfig(transportersAdapter)
 
-        `when`(
-            stationRepo.getPreviousStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("1:A", "B")
-            )
-        ).thenReturn(LineBuilder().stations[1])
+    private val lineFactory = LineFactory(timeStep, transportConfig, linesConfig)
+    private val stationFactory = StationFactory(stationsConfig, linesConfig)
 
-        `when`(
-            stationRepo.getPreviousStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("1:B", "C")
-            )
-        ).thenReturn(LineBuilder().stations[0])
+    private val journeyRepo = JourneyRepoImpl()
+    private val stationRepo = StationRepoImpl(stationFactory)
+    private val lineRepo = LineRepoImpl(stationRepo)
+    private val signalFactory = SignalFactory(lineFactory)
+    private val signalService = SignalServiceImpl(signalFactory)
 
-        `when`(
-            stationRepo.getPreviousStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("1:C", "B")
-            )
-        ).thenReturn(LineBuilder().stations[1])
+    private val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
+    private val platformService = PlatformServiceImpl(minimumHold, signalService, sectionService, lineRepo, stationRepo)
 
-        `when`(
-            stationRepo.getPreviousStationOnLine(
-                listOf("A", "B", "C"),
-                Pair("1:B", "A")
-            )
-        ).thenReturn(LineBuilder().stations[2])
-
-    }
+    private val lines = lineFactory.get().map { lineFactory.get(it) }
 
     @Test
-    fun `train is first train added to section, so will be given a green light`() = runBlocking {
-        val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-        val platformService =
-            PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
+    fun `platform & section service test`() = runBlocking {
 
-        val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
-        val job = launch { platformService.release(transport) }
+        val jobs = mutableListOf<Job>()
+        val tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>> = ConcurrentHashMap()
+        val lineData = mutableListOf<Triple<String, Int, List<UUID>>>()
 
-        do {
-            delay(100)
-        } while (transport.isStationary())
-
-        assertThat(transport.isStationary()).isEqualTo(false)
-
-        job.cancelAndJoin()
-        start.cancelAndJoin()
-    }
-
-    @Test
-    fun `train is second train added to section, so will be given a red light`() = runBlocking {
-        val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-        val platformService =
-            PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
-
-        val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
-        delay(200)
-
-        val job = launch { platformService.release(transport) }
-        delay(100)
-        val job2 = launch { platformService.hold(transport2) }
-
-        do {
-            delay(100)
-        } while (!transport.isStationary())
-
-        assertThat(transport.isStationary() != transport2.isStationary()).isEqualTo(true)
-
-        job.cancelAndJoin()
-        job2.cancelAndJoin()
-        start.cancelAndJoin()
-    }
-
-    @Test
-    fun `train is second train added to section, so will be given a red light, and then get a green light`() =
-        runBlocking {
-            val sectionService = SectionServiceImpl(45, signalService!!, mock(JourneyRepo::class.java))
-            val platformService =
-                PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
-
-            val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
-            delay(200)
-            val job = launch { platformService.release(transport) }
-            delay(1000)
-            val job2 = launch { platformService.hold(transport2) }
-
-            do {
-                delay(100)
-            } while (!transport.atPlatform())
-
-            assertThat(transport.atPlatform()).isEqualTo(true)
-
-            do {
-                delay(100)
-            } while (transport2.isStationary())
-
-            assertThat(transport2.isStationary()).isEqualTo(false)
-
-            job.cancelAndJoin()
-            job2.cancelAndJoin()
-            start.cancelAndJoin()
+        lines.forEach { line ->
+            lineData.add(Triple(line.id, (line.stations.size * 2) - 2, line.transporters.map { it.id }))
         }
 
-    //TODO fix this.
-    @Disabled
-    @Test
-    fun `test that section to platform is set Red when a train is held at platform`() = runBlocking {
-        val journeyRepo = mock(JourneyRepo::class.java)
-        val sectionService = SectionServiceImpl(45, signalService!!, journeyRepo)
-        val platformService =
-            PlatformServiceImpl(45, signalService!!, sectionService, LineRepoImpl(stationRepo), stationRepo)
+        lines.flatMap { it.transporters }.forEach {
+            tracker[it.id] = mutableSetOf()
+        }
+        //INIT start
+        lines.groupBy { it.name }.values.forEach { line ->
+            val startJob = launch {
+                platformService.start(line.map { it.name }.distinct().first(), line)
+            }
+            jobs.add(startJob)
+        }
 
-        `when`(journeyRepo.getJourneyTime(Pair("1:A", "B"))).thenReturn(70)
+        lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten()
+            .distinctBy { it.section().first }.forEach {
+                tracker[it.id]!!.add(it.section())
+                val job = launch { platformService.release(it) }
+                jobs.add(job)
+            }
 
-        val start = launch { platformService.start(LineBuilder().getLine().name, lines) }
-        delay(200)
-        val job = launch { platformService.release(transport) }
-        delay(200)
-        val channelToListenTo = signalService!!.getChannel(Pair("1:A", "B"))
+        val releaseTime = System.currentTimeMillis()
 
-        var signalValue: SignalValue?
         do {
-            delay(transport.timeStep)
-            signalValue = channelToListenTo!!.receive().signalValue
+            delay(1000) //minimum start delay
+            lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }
+                .groupBy { it.section() }.values.flatten().distinctBy { it.section().first }
+                .forEach {
+                    if(platformService.isClear(it) && platformService.canLaunch(it)) {
+                        tracker[it.id]!!.add(it.section())
+                        val job = launch {
+                            platformService.hold(it)
+                        }
+                        jobs.add(job)
+                    }
+                }
+        } while (lines.flatMap { it.transporters }.any { it.status == Status.DEPOT }
+            && System.currentTimeMillis() < releaseTime + (1000 * 60))
+        //INIT end
+        assertThat(lines.flatMap { it.transporters }.any { it.status == Status.DEPOT }).isEqualTo(false)
+        //SIMULATE start
+        val startTime = System.currentTimeMillis()
 
-        } while (transport.section() != Pair("1:C", "B") && signalValue != SignalValue.RED)
+        do {
+            lines.flatMap { it.transporters }.forEach {
+                if (it.atPlatform())
+                    tracker[it.id]!!.add(it.section())
+            }
+            delay(timeStep)
+        } while (!completed(lineData, tracker)
+            && System.currentTimeMillis() < startTime + (1000 * 120)
+        )
+        //SIMULATE end
 
-        assertThat(signalValue).isEqualTo(SignalValue.RED)
+        //TEST
+        tracker.forEach { (t, u) ->
+            println("$t: ${u.size} vs ${lineData.first { it.third.contains(t) }.second}")
+        }
 
-        job.cancelAndJoin()
-        start.cancelAndJoin()
+        assertThat(completed(lineData, tracker)).isEqualTo(true)
 
+        jobs.forEach {
+            it.cancelAndJoin()
+        }
+    }
+
+    private fun completed(
+        lineData: List<Triple<String, Int, List<UUID>>>,
+        tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>>
+    ): Boolean {
+        val results = mutableListOf<Boolean>()
+        tracker.forEach { (t, u) ->
+            val sections = lineData.first { it.third.contains(t) }.second
+            results.add(sections == u.size)
+        }
+        return results.all { it }
     }
 
 }
