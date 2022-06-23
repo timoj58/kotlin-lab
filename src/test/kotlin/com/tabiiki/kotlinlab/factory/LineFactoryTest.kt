@@ -8,6 +8,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import javax.naming.ConfigurationException
@@ -18,6 +19,9 @@ internal class LineFactoryTest {
 
     @BeforeEach
     fun init() {
+        Mockito.`when`(linesConfig.defaultLineCapacity).thenReturn(
+           10
+        )
 
         Mockito.`when`(transportsConfig.get()).thenReturn(
             listOf(
