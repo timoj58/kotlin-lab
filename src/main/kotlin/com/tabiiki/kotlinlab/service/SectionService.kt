@@ -104,7 +104,6 @@ class SectionServiceImpl(
     }
 
     private suspend fun arrive(transport: Transport) = coroutineScope {
-        //println("arriving ${transport.id} to ${transport.getJourneyTime().first.second}")
         transport.journal.add(
             Transport.Companion.JournalRecord(
                 action = Transport.Companion.JournalActions.PLATFORM_HOLD,
@@ -158,7 +157,6 @@ class SectionServiceImpl(
                 if (queues[key]!!.second.size >= 2) throw RuntimeException("Only two transporters allowed in $key")
 
                 queues[key]!!.second.addLast(transport)
-                //println("releasing ${transport.id} to $key ${transport.section()}")
                 transport.journal.add(
                     Transport.Companion.JournalRecord(
                         action = Transport.Companion.JournalActions.RELEASE, key = key

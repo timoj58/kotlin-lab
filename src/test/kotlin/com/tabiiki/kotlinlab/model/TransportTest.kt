@@ -23,7 +23,7 @@ internal class TransportTest {
         config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
         line = LineBuilder().getLine(),
         timeStep = 10
-    ).also { it.addSection(Pair("1:1", "2")) }
+    ).also { it.addSection(Pair("1:A", "B")) }
 
     @ParameterizedTest
     @CsvSource("1:A,B,POSITIVE", "1:D,A,POSITIVE", "1:A,D,NEGATIVE", "1:B,A,NEGATIVE")
@@ -51,6 +51,11 @@ internal class TransportTest {
 
 
         assertThat(train.lineDirection()).isEqualTo(direction)
+    }
+
+    @Test
+    fun `test platform from key`(){
+        assertThat(train.platformFromKey()).isEqualTo(Pair("1:POSITIVE", "1:A"))
     }
 
     @Test
