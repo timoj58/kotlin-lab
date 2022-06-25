@@ -5,7 +5,6 @@ import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineInstructions
-import com.tabiiki.kotlinlab.repo.LineRepo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +24,11 @@ interface SectionService {
     fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int>
     fun initQueues(key: Pair<String, String>)
     fun diagnostics(transports: List<UUID>?)
-    fun areSectionsClear(transport: Transport, lineInstructions: LineInstructions): Boolean
+    fun areSectionsClear(
+        transport: Transport,
+        lineInstructions: LineInstructions,
+        sections: (Pair<String, String>) -> List<Pair<String, String>>
+    ): Boolean
 }
 
 @Service
@@ -33,7 +36,6 @@ class SectionServiceImpl(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
     private val journeyRepo: JourneyRepo,
-    private val lineRepo: LineRepo
 ) : SectionService {
 
     private val queues = Queues(minimumHold, journeyRepo)
@@ -107,12 +109,16 @@ class SectionServiceImpl(
         } while (true)
     }
 
-    override fun areSectionsClear(transport: Transport, lineInstructions: LineInstructions): Boolean {
+    override fun areSectionsClear(
+        transport: Transport,
+        lineInstructions: LineInstructions,
+        sections: (Pair<String, String>) -> List<Pair<String, String>>
+    ): Boolean {
         var isClear = true
         val line = transport.line.name
         val platformToKey = Pair("$line:${lineInstructions.direction}", "$line:${lineInstructions.to.id}")
 
-        outer@ for (key in lineRepo.getPreviousSections(platformToKey)) {
+        outer@ for (key in sections(platformToKey)) {
             if (!isClear(key, true)) {
                 isClear = false
                 break@outer

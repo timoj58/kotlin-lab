@@ -110,7 +110,7 @@ class PlatformServiceImpl(
             delay(transport.timeStep)
         } while (counter.incrementAndGet() < minimumHold
             || !sectionService.isClear(transport.section())
-            || !sectionService.areSectionsClear(transport, lineInstructions)
+            || !sectionService.areSectionsClear(transport, lineInstructions) { k -> lineRepo.getPreviousSections(k)}
         )
 
         dispatch(transport, lineInstructions, key)

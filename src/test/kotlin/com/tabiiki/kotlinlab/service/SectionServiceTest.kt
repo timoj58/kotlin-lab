@@ -20,10 +20,7 @@ class SectionServiceTest {
 
     private val signalService = mock(SignalService::class.java)
     private val journeyRepo = mock(JourneyRepo::class.java)
-    private val lineRepo = mock(LineRepo::class.java)
-
-
-    private val sectionService = SectionServiceImpl(45, signalService, journeyRepo, lineRepo)
+    private val sectionService = SectionServiceImpl(45, signalService, journeyRepo)
 
     private val transport = Transport(
         config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),

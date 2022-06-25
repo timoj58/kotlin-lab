@@ -52,7 +52,7 @@ internal class PlatformServiceTest {
     private val signalFactory = SignalFactory(lineFactory)
     private val signalService = SignalServiceImpl(signalFactory)
 
-    private val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo, lineRepo)
+    private val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
     private val platformService = PlatformServiceImpl(minimumHold, signalService, sectionService, lineRepo, stationRepo)
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
