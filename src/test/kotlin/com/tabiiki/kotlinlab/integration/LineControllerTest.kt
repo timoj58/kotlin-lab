@@ -37,7 +37,7 @@ class LineControllerTest(
 
     suspend fun test(lineType: String, lineName: String, timeout: Int) = runBlocking {
         val signalService = SignalServiceImpl(signalFactory)
-        val sectionService = SectionServiceImpl(45, signalService, journeyRepo)
+        val sectionService = SectionServiceImpl(45, signalService, journeyRepo, LineRepoImpl(stationRepo))
 
         val lineService =
             PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo)

@@ -8,7 +8,6 @@ import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import org.springframework.context.annotation.Configuration
 import java.io.File
 import java.nio.file.Files
-import java.util.Optional
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 data class LineConfig(

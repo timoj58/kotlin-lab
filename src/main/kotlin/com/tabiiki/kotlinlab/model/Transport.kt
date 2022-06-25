@@ -11,7 +11,6 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -129,7 +128,8 @@ data class Transport(
             if (msg.timesStamp >= timeRegistered) {
                 if (previousMsg == null
                     || msg.signalValue != previousMsg.signalValue
-                    && !(msg.id ?: UUID.randomUUID()).equals(id)) {
+                    && !(msg.id ?: UUID.randomUUID()).equals(id)
+                ) {
 
                     if (msg.signalValue == SignalValue.GREEN) journal.add(
                         JournalRecord(action = JournalActions.DEPART, key = this.section(), signal = msg.signalValue)
@@ -160,7 +160,6 @@ data class Transport(
 
             if (fromIdx > toIdx) LineDirection.NEGATIVE else LineDirection.POSITIVE
         } else {
-
             if (fromCount > 1) {
                 toIdx = line.stations.indexOf(section().second)
                 fromIdx = getIndex(firstStation, toIdx)
@@ -184,9 +183,10 @@ data class Transport(
         instruction = newInstruction
         do {
             delay(timeStep)
-            if(physics.velocity > 0.0) journeyTime.second.incrementAndGet()
+            if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
             physics.calcTimeStep(instruction)
-            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction = Instruction.SCHEDULED_STOP
+            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
+                Instruction.SCHEDULED_STOP
         } while (physics.displacement <= physics.distance)
 
         launch { stopJourney() }
@@ -196,14 +196,15 @@ data class Transport(
         journey = instruction
         status = Status.ACTIVE
 
-        journey?.let {
-            journeyTime = Triple(Pair("${line.name}:${it.from.id}", it.to.id), AtomicInteger(0), physics.init(it.from, it.to))
+        journey!!.let {
+            journeyTime =
+                Triple(Pair("${line.name}:${it.from.id}", it.to.id), AtomicInteger(0), physics.init(it.from, it.to))
         }
     }
 
     private suspend fun stopJourney() = coroutineScope {
         physics.reset()
-        journey?.let {
+        journey!!.let {
             sectionData = Pair(
                 Pair("${line.name}:${it.from.id}", it.to.id),
                 Pair("${line.name}:${it.to.id}", it.next.id)
@@ -263,9 +264,9 @@ data class Transport(
             private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {
                 return when (instruction) {
                     Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
-                  //  Instruction.LIMIT_10 -> percentage * (power.toDouble() / 1500.0)
-                  //  Instruction.LIMIT_20 -> percentage * (power.toDouble() / 1000.0)
-                  //  Instruction.LIMIT_30 -> percentage * (power.toDouble() / 500.0)
+                    //  Instruction.LIMIT_10 -> percentage * (power.toDouble() / 1500.0)
+                    //  Instruction.LIMIT_20 -> percentage * (power.toDouble() / 1000.0)
+                    //  Instruction.LIMIT_30 -> percentage * (power.toDouble() / 500.0)
                     Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 1000.0) * -1
                     Instruction.EMERGENCY_STOP -> power.toDouble() * -1
                     else -> 0.0
@@ -301,9 +302,9 @@ data class Transport(
 
                 return when (instruction) {
                     Instruction.THROTTLE_ON -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
-                  //  Instruction.LIMIT_10 -> floor(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
-                  //  Instruction.LIMIT_20 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform)
-                  //  Instruction.LIMIT_30 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform) - 1
+                    //  Instruction.LIMIT_10 -> floor(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
+                    //  Instruction.LIMIT_20 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform)
+                    //  Instruction.LIMIT_30 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform) - 1
                     else -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
                 }
             }

@@ -39,7 +39,7 @@ class LineControllerImpl(
             delay(startDelay)
             conductor.getNextTransportersToDispatch(line)
                 .forEach { transport ->
-                    if(conductor.isClear(transport)) {
+                    if (conductor.isClear(transport)) {
                         launch { hold(transport, channel) }
                     }
                 }

@@ -16,7 +16,8 @@ class JourneyRepoImpl : JourneyRepo {
         if (!journeyTimes.containsKey(journeyTime.first)) journeyTimes[journeyTime.first] = Triple(0, 0, 0.0)
         if (journeyTime.second != 0) {
             val stats = journeyTimes[journeyTime.first]
-            journeyTimes[journeyTime.first] = Triple(stats!!.first + 1, stats.second + journeyTime.second, journeyTime.third)
+            journeyTimes[journeyTime.first] =
+                Triple(stats!!.first + 1, stats.second + journeyTime.second, journeyTime.third)
         }
     }
 

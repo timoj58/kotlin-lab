@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
@@ -111,11 +110,11 @@ class PlatformServiceImpl(
             delay(transport.timeStep)
         } while (counter.incrementAndGet() < minimumHold
             || !sectionService.isClear(transport.section())
-            || !areSectionsClear(transport, lineInstructions))
+            || !sectionService.areSectionsClear(transport, lineInstructions)
+        )
 
         dispatch(transport, lineInstructions, key)
     }
-
 
     override suspend fun release(
         transport: Transport
@@ -133,21 +132,6 @@ class PlatformServiceImpl(
         launch { transport.release(instructions) }
         launch { addToSection(actualKey, transport) }
         platforms.release(actualKey, transport)
-    }
-
-    private fun areSectionsClear(transport: Transport, lineInstructions: LineInstructions): Boolean {
-        var response = true
-        val line = transport.line.name
-        val platformToKey = Pair("$line:${lineInstructions.direction}", "$line:${lineInstructions.to.id}")
-
-        outer@ for (key in getPreviousSections(platformToKey)) {
-            if (!sectionService.isClear(key, true)) {
-                response = false
-                break@outer
-            }
-        }
-
-        return response
     }
 
     private suspend fun init(key: Pair<String, String>) = coroutineScope {
@@ -199,7 +183,7 @@ class PlatformServiceImpl(
                 previousSignal = signal
                 when (signal.signalValue) {
                     SignalValue.RED ->
-                        getPreviousSections(key).forEach {
+                        lineRepo.getPreviousSections(key).forEach {
                             launch {
                                 signalService.send(
                                     it,
@@ -209,7 +193,8 @@ class PlatformServiceImpl(
                         }
 
                     SignalValue.GREEN -> {
-                        val sections = getPreviousSections(key).map { Pair(it, sectionService.isClearWithPriority(it)) }
+                        val sections =
+                            lineRepo.getPreviousSections(key).map { Pair(it, sectionService.isClearWithPriority(it)) }
                         val priority = sections.sortedByDescending { it.second.second }.firstOrNull { !it.second.first }
                         priority?.let {
                             launch {
@@ -231,36 +216,21 @@ class PlatformServiceImpl(
                             }
                         }
                     }
-
-                    else -> {}
                 }
             }
 
         } while (true)
     }
 
-    private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
-        val line = transport.line.name
-        val dir = instructions.direction
-        return Pair("$line:$dir", transport.section().first)
-    }
-
-    private fun getPreviousSections(platformKey: Pair<String, String>): List<Pair<String, String>> {
-        val line = platformKey.first.substringBefore(":")
-        val direction = platformKey.first.substringAfter(":")
-        val stationTo = platformKey.second.substringAfter(":")
-        val stationsFrom = stationRepo.getPreviousStationsOnLine(
-            lineRepo.getLineStations(line),
-            stationTo,
-            LineDirection.valueOf(direction)
-        )
-
-        return stationsFrom.map { Pair("$line:${it.id}", stationTo) }.distinct()
-    }
-
     companion object {
         private val log = LoggerFactory.getLogger(this.javaClass)
         private val holdChannels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> = ConcurrentHashMap()
+
+        private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
+            val line = transport.line.name
+            val dir = instructions.direction
+            return Pair("$line:$dir", transport.section().first)
+        }
 
         class Platforms {
             private val platforms: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SignalMessage>, AtomicReference<Optional<Transport>>>> =

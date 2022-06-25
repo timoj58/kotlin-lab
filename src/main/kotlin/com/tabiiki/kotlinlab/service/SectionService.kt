@@ -4,6 +4,8 @@ import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
+import com.tabiiki.kotlinlab.repo.LineInstructions
+import com.tabiiki.kotlinlab.repo.LineRepo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -23,13 +25,15 @@ interface SectionService {
     fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int>
     fun initQueues(key: Pair<String, String>)
     fun diagnostics(transports: List<UUID>?)
+    fun areSectionsClear(transport: Transport, lineInstructions: LineInstructions): Boolean
 }
 
 @Service
 class SectionServiceImpl(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
-    private val journeyRepo: JourneyRepo
+    private val journeyRepo: JourneyRepo,
+    private val lineRepo: LineRepo
 ) : SectionService {
 
     private val queues = Queues(minimumHold, journeyRepo)
@@ -103,6 +107,21 @@ class SectionServiceImpl(
         } while (true)
     }
 
+    override fun areSectionsClear(transport: Transport, lineInstructions: LineInstructions): Boolean {
+        var isClear = true
+        val line = transport.line.name
+        val platformToKey = Pair("$line:${lineInstructions.direction}", "$line:${lineInstructions.to.id}")
+
+        outer@ for (key in lineRepo.getPreviousSections(platformToKey)) {
+            if (!isClear(key, true)) {
+                isClear = false
+                break@outer
+            }
+        }
+        return isClear
+    }
+
+
     private suspend fun arrive(transport: Transport) = coroutineScope {
         transport.journal.add(
             Transport.Companion.JournalRecord(
@@ -130,25 +149,38 @@ class SectionServiceImpl(
             fun initQueues(key: Pair<String, String>) {
                 queues[key] = Pair(Channel(), ArrayDeque())
             }
+
             //TODO need to refactor this..make it cleaner
             fun isClear(section: Pair<String, String>, incoming: Boolean): Pair<Boolean, Int> =
                 Pair(
                     queues[section]!!.second.isEmpty()
                             || (queues[section]!!.second.size < 2
                             && (
-                            (!incoming && checkDistanceTravelled(section, queues[section]!!.second.last().getPosition(), incoming)
-                                    && !queues[section]!!.second.last().isStationary())
-                            || (incoming && checkDistanceTravelled(section, queues[section]!!.second.first().getPosition(), incoming))
+                            (!incoming && checkDistanceTravelled(
+                                section,
+                                queues[section]!!.second.last().getPosition(),
+                                incoming
                             )
-                            && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold)
-                    ,queues[section]!!.second.lastOrNull()?.getJourneyTime()?.second ?: 0
+                                    && !queues[section]!!.second.last().isStationary())
+                                    || (incoming && checkDistanceTravelled(
+                                section,
+                                queues[section]!!.second.first().getPosition(),
+                                incoming
+                            ))
+                            )
+                            && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold),
+                    queues[section]!!.second.lastOrNull()?.getJourneyTime()?.second ?: 0
                 )
 
-            private fun checkDistanceTravelled(section: Pair<String, String>, currentPosition: Double, incoming: Boolean): Boolean {
+            private fun checkDistanceTravelled(
+                section: Pair<String, String>,
+                currentPosition: Double,
+                incoming: Boolean
+            ): Boolean {
                 val journey = journeyRepo.getJourneyTime(section, 0)
-                if(journey.second == 0.0 && !incoming) return true
+                if (journey.second == 0.0 && !incoming) return true
                 val predictedDistance = (journey.second / journey.first) * minimumHold
-                return if(!incoming) currentPosition > predictedDistance else currentPosition < predictedDistance
+                return if (!incoming) currentPosition > predictedDistance else currentPosition < predictedDistance
             }
 
             fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()

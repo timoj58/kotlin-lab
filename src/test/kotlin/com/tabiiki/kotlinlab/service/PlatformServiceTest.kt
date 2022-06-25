@@ -52,7 +52,7 @@ internal class PlatformServiceTest {
     private val signalFactory = SignalFactory(lineFactory)
     private val signalService = SignalServiceImpl(signalFactory)
 
-    private val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
+    private val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo, lineRepo)
     private val platformService = PlatformServiceImpl(minimumHold, signalService, sectionService, lineRepo, stationRepo)
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
@@ -93,7 +93,7 @@ internal class PlatformServiceTest {
             lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }
                 .groupBy { it.section() }.values.flatten().distinctBy { it.section().first }
                 .forEach {
-                    if(platformService.isClear(it) && platformService.canLaunch(it)) {
+                    if (platformService.isClear(it) && platformService.canLaunch(it)) {
                         tracker[it.id]!!.add(it.section())
                         val job = launch {
                             platformService.hold(it)

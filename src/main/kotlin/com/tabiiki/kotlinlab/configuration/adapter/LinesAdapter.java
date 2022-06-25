@@ -20,7 +20,7 @@ public class LinesAdapter {
     private List<String> tram;
 
     public LinesAdapter(
-            List<String> underground){
+            List<String> underground) {
         this.underground = underground;
         this.tram = List.of();
         this.overground = List.of();
@@ -29,7 +29,7 @@ public class LinesAdapter {
         this.dockland = List.of();
     }
 
-    public LinesAdapter(){
+    public LinesAdapter() {
 
     }
 

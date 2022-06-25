@@ -11,8 +11,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -49,13 +51,48 @@ internal class TransportTest {
             timeStep = 10
         ).also { it.addSection(Pair(from, to)) }
 
-
         assertThat(train.lineDirection()).isEqualTo(direction)
     }
 
+    @ParameterizedTest
+    @CsvSource("1:A,B, POSITIVE", "1:B,A,NEGATIVE")
+    fun `line direction test`(from: String, to: String, lineDirection: LineDirection){
+        train.addSection(Pair(from, to))
+       assertThat(train.lineDirection()).isEqualTo(lineDirection)
+    }
+
     @Test
-    fun `test platform from key`(){
+    fun `test platform from key`() {
         assertThat(train.platformFromKey()).isEqualTo(Pair("1:POSITIVE", "1:A"))
+    }
+
+    @Test
+    fun `test platform from and to with journey`() = runBlocking {
+        val job = launch {
+            train.release(
+                LineInstructions(
+                    from = LineBuilder().stations[0],
+                    to = LineBuilder().stations[1],
+                    next = LineBuilder().stations[2],
+                    direction = LineDirection.POSITIVE
+                )
+            )
+        }
+
+        val channel = Channel<SignalMessage>()
+
+        val job2 = launch { train.signal(channel) }
+        delay(100)
+        channel.send(SignalMessage(signalValue = SignalValue.GREEN))
+        do {
+            delay(100)
+        } while (!train.atPlatform())
+
+        assertThat(train.platformFromKey()).isEqualTo(Pair("1:POSITIVE", "1:A"))
+        assertThat(train.platformToKey()).isEqualTo(Pair("1:POSITIVE", "1:B"))
+
+        job.cancelAndJoin()
+        job2.cancelAndJoin()
     }
 
     @Test
@@ -69,9 +106,18 @@ internal class TransportTest {
         assertThat(train.isStationary()).isEqualTo(true)
     }
 
-    @Test
-    fun `not at platform test`() {
+    @ParameterizedTest
+    @CsvSource("ACTIVE", "DEPOT")
+    fun `not at platform test`(status: Status) {
+        train.status = status
         assertThat(train.atPlatform()).isEqualTo(false)
+    }
+
+    @Test
+    fun `add section exception test`() {
+        Assertions.assertThrows(AssertionError::class.java) {
+            train.addSection(Pair("A", "1:B"))
+        }
     }
 
     @ParameterizedTest

@@ -12,7 +12,7 @@ interface LineRepo {
     fun getLineInstructions(transport: Transport): LineInstructions
     fun getLineStations(transport: Transport): List<String>
     fun getLineStations(line: String): List<Line>
-
+    fun getPreviousSections(platformKey: Pair<String, String>): List<Pair<String, String>>
 }
 
 enum class LineDirection {
@@ -53,6 +53,19 @@ class LineRepoImpl(private val stationRepo: StationRepo) : LineRepo {
             lineStations[transport.id] =
                 lineDetails[transport.line.name]!!.first { l -> l.transporters.any { it.id == transport.id } }.stations
         return lineStations[transport.id]!!
+    }
+
+    override fun getPreviousSections(platformKey: Pair<String, String>): List<Pair<String, String>> {
+        val line = platformKey.first.substringBefore(":")
+        val direction = platformKey.first.substringAfter(":")
+        val stationTo = platformKey.second.substringAfter(":")
+        val stationsFrom = stationRepo.getPreviousStationsOnLine(
+            getLineStations(line),
+            stationTo,
+            LineDirection.valueOf(direction)
+        )
+
+        return stationsFrom.map { Pair("$line:${it.id}", stationTo) }.distinct()
     }
 
     override fun getLineStations(line: String): List<Line> = lineDetails[line]!!
