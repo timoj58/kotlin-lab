@@ -108,7 +108,7 @@ data class Transport(
         val previousStatus = AtomicReference(Status.DEPOT)
 
         do {
-            if (previousStatus.get() != Status.PLATFORM) channel.send(this)
+            if (previousStatus.get() == Status.ACTIVE) channel.send(this)
             previousStatus.set(status)
             delay(timeStep)
         } while (true)
@@ -220,7 +220,7 @@ data class Transport(
     }
 
     companion object {
-        enum class JournalActions { PLATFORM_HOLD, RELEASE, READY_TO_DEPART, DEPART, ARRIVE }
+        enum class JournalActions { PLATFORM_HOLD, READY_TO_DEPART, RELEASE, DEPART, ARRIVE }
         data class JournalRecord(
             var id: UUID? = null,
             val action: JournalActions,

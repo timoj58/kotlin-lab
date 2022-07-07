@@ -48,7 +48,7 @@ class PlatformServiceImpl(
     }
 
     override fun isClear(transport: Transport): Boolean =
-        platforms.isClear(transport.platformKey()) && sectionService.isClear(transport.section())
+        platforms.isClear(transport.platformKey()) && sectionService.isClear(transport)
 
     override fun canLaunch(transport: Transport): Boolean {
         if (lineRepo.getLineStations(transport).size == 2) return true
@@ -90,6 +90,14 @@ class PlatformServiceImpl(
     ): Unit = coroutineScope {
         val lineInstructions = lineRepo.getLineInstructions(transport)
         val key = platformKey(transport, lineInstructions)
+
+        transport.journal.add(
+            Transport.Companion.JournalRecord(
+                action = Transport.Companion.JournalActions.PLATFORM_HOLD,
+                key = key,
+                signal = SignalValue.RED
+            )
+        )
 
         platforms.add(key, transport)
         //TODO this fixes the city line for now, and Romford.  3 or less
@@ -156,11 +164,11 @@ class PlatformServiceImpl(
         do {
             val msg = channel.receive()
             msg.platformToKey()?.let {
-                if (!platforms.atPlatform(it).isEmpty) {
-                    val transporter = platforms.atPlatform(it).get()
+                val atPlatform = platforms.atPlatform(it)
+                if (!atPlatform.isEmpty) {
                     diagnostics(null)
                     throw RuntimeException(
-                        "${msg.id} arrived too quickly $it , already holding ${transporter.id} "
+                        "${msg.id} arrived too quickly $it , already holding ${atPlatform.get().id} "
                     )
                 }
             }
@@ -281,13 +289,13 @@ class PlatformServiceImpl(
                 platforms.getPlatformKeys().forEach { queue ->
                     val toAdd = platforms.atPlatform(queue)
                         .filter { t -> transports == null || transports.contains(t.id) }
-                        .map { m -> m.journal.getLog().sortedBy { l -> l.milliseconds }.takeLast(5) }
+                        .map { m -> m.journal.getLog().sortedByDescending { l -> l.milliseconds }.take(5) }
                     toAdd.ifPresent {
                         items.addAll(it)
                     }
                 }
 
-                items.sortedBy { it.milliseconds }
+                items.sortedByDescending { it.milliseconds }
                     .forEach { log.info(it.print()) }
             }
         }

@@ -21,6 +21,7 @@ interface SectionService {
     suspend fun add(transport: Transport, channel: Channel<Transport>)
     suspend fun init(line: String)
     fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean
+    fun isClear(transport: Transport, incoming: Boolean = false): Boolean
     fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int>
     fun initQueues(key: Pair<String, String>)
     fun diagnostics(transports: List<UUID>?)
@@ -34,6 +35,7 @@ interface SectionService {
 @Service
 class SectionServiceImpl(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
+    private val switchService: SwitchService,
     private val signalService: SignalService,
     private val journeyRepo: JourneyRepo,
 ) : SectionService {
@@ -47,11 +49,15 @@ class SectionServiceImpl(
 
         holdChannels[transport.id] = Pair(AtomicBoolean(false), channel)
         queues.release(transport.section(), transport)
+
         jobs[transport.id] = launch {
             transport.track(queues.getChannel(transport.section()))
         }
 
-        launch { transport.signal(signalService.getChannel(transport.section())!!) }
+        val job = launch { transport.signal(signalService.getChannel(transport.section())!!) }
+
+        if(switchService.isSwitchSection(transport))
+            launch { switchService.switch(transport) { details -> launch { processSwitch(details.first, details.second, job) } } }
     }
 
     override suspend fun init(line: String): Unit = coroutineScope {
@@ -61,9 +67,11 @@ class SectionServiceImpl(
         }
     }
 
-    override fun isClear(section: Pair<String, String>, incoming: Boolean): Boolean =
-        queues.isClear(section, incoming).first
-
+    //TODO this must check switch sections regardless of line.....
+    override fun isClear(section: Pair<String, String>, incoming: Boolean): Boolean =  queues.isClear(section, incoming).first
+    //TODO this must test switch sections for transport
+    override fun isClear(transport: Transport, incoming: Boolean): Boolean =   queues.isClear(transport.section(), incoming).first
+    //TODO this must check switch sections regardless of line.....
     override fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int> =
         queues.isClear(section, true)
 
@@ -109,6 +117,7 @@ class SectionServiceImpl(
         } while (true)
     }
 
+    //TODO is switch also clear
     override fun areSectionsClear(
         transport: Transport,
         lineInstructions: LineInstructions,
@@ -119,7 +128,7 @@ class SectionServiceImpl(
         val platformToKey = Pair("$line:${lineInstructions.direction}", "$line:${lineInstructions.to.id}")
 
         outer@ for (key in sections(platformToKey)) {
-            if (!isClear(key, true)) {
+            if (!queues.isClear(key, true).first) {
                 isClear = false
                 break@outer
             }
@@ -129,15 +138,23 @@ class SectionServiceImpl(
 
 
     private suspend fun arrive(transport: Transport) = coroutineScope {
-        transport.journal.add(
-            Transport.Companion.JournalRecord(
-                action = Transport.Companion.JournalActions.PLATFORM_HOLD,
-                key = transport.platformToKey()!!,
-                signal = SignalValue.RED
-            )
-        )
         journeyRepo.addJourneyTime(transport.getJourneyTime())
         holdChannels[transport.id]!!.second.send(transport)
+    }
+
+    //TODO test this.  idea is to cancel the current queue, stop job, and then set it in the new switch section.
+    private suspend fun processSwitch(transport: Transport, section: Pair<String, String>,job: Job) = coroutineScope {
+        queues.getQueue(section).removeFirstOrNull()?.let {
+            jobs[it.id]!!.cancelAndJoin()
+        }
+        job.cancelAndJoin()
+        //likely need to delay this. TODO review.
+        queues.release(transport.section(), transport)
+        jobs[transport.id] = launch {
+            transport.track(queues.getChannel(transport.section()))
+        }
+
+        launch { transport.signal(signalService.getChannel(transport.section())!!) }
     }
 
     companion object {
@@ -157,6 +174,7 @@ class SectionServiceImpl(
             }
 
             //TODO need to refactor this..make it cleaner
+            //TODO this should take into account the switch sections...
             fun isClear(section: Pair<String, String>, incoming: Boolean): Pair<Boolean, Int> =
                 Pair(
                     queues[section]!!.second.isEmpty()
@@ -219,12 +237,12 @@ class SectionServiceImpl(
                 queues.getQueueKeys().forEach { queue ->
                     val toAdd = queues.getQueue(queue)
                         .filter { t -> transports == null || transports.contains(t.id) }
-                        .map { m -> m.journal.getLog().sortedBy { l -> l.milliseconds }.takeLast(5) }
+                        .map { m -> m.journal.getLog().sortedByDescending { l -> l.milliseconds }.take(5) }
                         .flatten()
                     items.addAll(toAdd)
                 }
 
-                items.sortedBy { it.milliseconds }
+                items.sortedByDescending { it.milliseconds }
                     .forEach { log.info(it.print()) }
             }
         }

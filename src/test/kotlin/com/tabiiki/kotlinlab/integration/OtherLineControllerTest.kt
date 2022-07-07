@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.StationService
+import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -25,16 +26,17 @@ class OtherLineControllerTest @Autowired constructor(
     stationService: StationService,
     stationRepo: StationRepo,
     signalFactory: SignalFactory,
-    journeyRepo: JourneyRepo
+    journeyRepo: JourneyRepo,
+    switchService: SwitchService
 ) {
     val lineControllerTest = LineControllerTest(
-        startDelay, timeStep, minimumHold, transportersConfig, stationService, stationRepo, signalFactory, journeyRepo
+        startDelay, timeStep, minimumHold, transportersConfig, stationService, stationRepo, signalFactory, journeyRepo, switchService
     )
 
     @ParameterizedTest
     @CsvSource(
-        //"tram,tram",
-        //"dockland,dlr", //TODO some are getting jammed around 628.  good data now to test with.  commented out to push to git.
+        "tram,tram",
+        "dockland,dlr",
         "river,rb1",
         "river,rb2",
         "river,rb4",

@@ -28,7 +28,7 @@ internal class PlatformServiceTest {
     private val minimumHold = 45
     private val timeStep = 5L
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
-    private val linesAdapter = LinesAdapter(listOf("src/test/resources/network/test-line.yml"))
+    private val linesAdapter = LinesAdapter(listOf("src/test/resources/network/test-line2.yml"))
     private val linesConfig = LinesConfig(linesAdapter)
     private val transportersAdapter = TransportersAdapter(
         listOf(
@@ -51,8 +51,9 @@ internal class PlatformServiceTest {
     private val lineRepo = LineRepoImpl(stationRepo)
     private val signalFactory = SignalFactory(lineFactory)
     private val signalService = SignalServiceImpl(signalFactory)
+    private val switchService = SwitchServiceImpl(lineFactory)
 
-    private val sectionService = SectionServiceImpl(minimumHold, signalService, journeyRepo)
+    private val sectionService = SectionServiceImpl(minimumHold, switchService, signalService, journeyRepo)
     private val platformService = PlatformServiceImpl(minimumHold, signalService, sectionService, lineRepo, stationRepo)
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
@@ -115,7 +116,7 @@ internal class PlatformServiceTest {
             }
             delay(timeStep)
         } while (!completed(lineData, tracker)
-            && System.currentTimeMillis() < startTime + (1000 * 120)
+            && System.currentTimeMillis() < startTime + (1000 * 60)
         )
         //SIMULATE end
 
@@ -123,6 +124,8 @@ internal class PlatformServiceTest {
         tracker.forEach { (t, u) ->
             println("$t: ${u.size} vs ${lineData.first { it.third.contains(t) }.second}")
         }
+
+        platformService.diagnostics(null)
 
         assertThat(completed(lineData, tracker)).isEqualTo(true)
 
@@ -142,5 +145,4 @@ internal class PlatformServiceTest {
         }
         return results.all { it }
     }
-
 }

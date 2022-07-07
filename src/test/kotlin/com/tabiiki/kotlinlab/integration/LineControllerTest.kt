@@ -16,6 +16,7 @@ import com.tabiiki.kotlinlab.service.SectionServiceImpl
 import com.tabiiki.kotlinlab.service.SignalServiceImpl
 import com.tabiiki.kotlinlab.service.StationMessage
 import com.tabiiki.kotlinlab.service.StationService
+import com.tabiiki.kotlinlab.service.SwitchService
 import com.tabiiki.kotlinlab.util.IntegrationControl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -30,14 +31,15 @@ class LineControllerTest(
     private val stationService: StationService,
     private val stationRepo: StationRepo,
     private val signalFactory: SignalFactory,
-    private val journeyRepo: JourneyRepo
+    private val journeyRepo: JourneyRepo,
+    private val switchService: SwitchService
 ) {
     private val integrationControl = IntegrationControl()
 
 
     suspend fun test(lineType: String, lineName: String, timeout: Int) = runBlocking {
         val signalService = SignalServiceImpl(signalFactory)
-        val sectionService = SectionServiceImpl(45, signalService, journeyRepo)
+        val sectionService = SectionServiceImpl(45, switchService,  signalService, journeyRepo)
 
         val lineService =
             PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo)
@@ -67,7 +69,7 @@ class LineControllerTest(
 
         val controller = LineControllerImpl(
             startDelay = startDelay,
-            conductor = lineConductor
+            conductor = lineConductor,
         )
 
         controller.setStationChannels(
@@ -82,7 +84,7 @@ class LineControllerTest(
         val job3 = launch { stationService.monitor(listener) }
 
         val running = async {
-            integrationControl.status(listener, listOf(job3, job), timeout) { t -> lineConductor.diagnostics(t) }
+            integrationControl.status(listener, listOf(job3, job), timeout) { t -> controller.diagnostics(t) }
         }
     }
 

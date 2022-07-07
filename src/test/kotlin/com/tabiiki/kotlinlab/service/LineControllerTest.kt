@@ -24,7 +24,7 @@ internal class LineControllerTest {
         Assertions.assertThrows(ConfigurationException::class.java) {
             LineControllerImpl(
                 100,
-                mock(LineConductor::class.java),
+                mock(LineConductor::class.java)
             )
         }
     }

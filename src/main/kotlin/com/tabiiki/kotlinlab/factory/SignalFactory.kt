@@ -59,7 +59,7 @@ data class Signal(
 
 @Repository
 class SignalFactory(
-    lineFactory: LineFactory
+    private val lineFactory: LineFactory
 ) {
     private var signals = mutableMapOf<Pair<String, String>, Signal>()
 
@@ -86,6 +86,7 @@ class SignalFactory(
             val id = line.name
             pairs.addAll(line.stations.map { Pair("$id:${LineDirection.POSITIVE}", "$id:$it") })
             pairs.addAll(line.stations.map { Pair("$id:${LineDirection.NEGATIVE}", "$id:$it") })
+            pairs.addAll(line.stations.filter { lineFactory.isSwitchSection(id, Pair("",  it)) }.map { Pair("$id:${LineDirection.TERMINAL}", "$id:$it") })
         }
         return pairs.toSet()
     }
@@ -93,9 +94,30 @@ class SignalFactory(
     private fun getLineSections(line: Line): Set<Pair<String, String>> {
         val pairs = mutableSetOf<Pair<String, String>>()
         for (station in 0..line.stations.size - 2 step 1) {
-            pairs.add(Pair("${line.name}:${line.stations[station]}", line.stations[station + 1]))
-            pairs.add(Pair("${line.name}:${line.stations.reversed()[station]}", line.stations.reversed()[station + 1]))
+            val positive = line.stations[station]
+            val positiveNext = line.stations[station + 1]
+            val negative = line.stations.reversed()[station]
+            val negativeNext = line.stations.reversed()[station + 1]
+
+            val positiveSection = Pair("${line.name}:$positive", positiveNext)
+            val negativeSection = Pair("${line.name}:$negative", negativeNext)
+
+            pairs.add(positiveSection)
+            pairs.add(negativeSection)
         }
+        val first = line.stations.first()
+        if(lineFactory.isSwitchSection(line.name, Pair("", first))){
+            pairs.add(Pair("${line.name}:$first"+"|", first))
+            pairs.add(Pair("${line.name}:$first", "$first|"))
+        }
+
+        val last = line.stations.last()
+        if(lineFactory.isSwitchSection(line.name, Pair("", last))){
+            pairs.add(Pair("${line.name}:$last"+"|", last))
+            pairs.add(Pair("${line.name}:$last", "$last|"))
+        }
+
         return pairs.toSet()
     }
+
 }

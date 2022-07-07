@@ -5,8 +5,8 @@ import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.StationService
+import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,7 +15,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
-@Disabled
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ActiveProfiles("test-underground")
 @SpringBootTest
@@ -27,10 +26,11 @@ class UndergroundLineControllerTest @Autowired constructor(
     stationService: StationService,
     stationRepo: StationRepo,
     signalFactory: SignalFactory,
-    journeyRepo: JourneyRepo
+    journeyRepo: JourneyRepo,
+    switchService: SwitchService
 ) {
     val lineControllerTest = LineControllerTest(
-        startDelay, timeStep, minimumHold, transportersConfig, stationService, stationRepo, signalFactory, journeyRepo
+        startDelay, timeStep, minimumHold, transportersConfig, stationService, stationRepo, signalFactory, journeyRepo, switchService
     )
 
     @ParameterizedTest

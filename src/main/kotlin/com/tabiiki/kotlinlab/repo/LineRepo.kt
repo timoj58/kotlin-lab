@@ -16,7 +16,7 @@ interface LineRepo {
 }
 
 enum class LineDirection {
-    POSITIVE, NEGATIVE
+    POSITIVE, NEGATIVE, TERMINAL
 }
 
 data class LineInstructions(

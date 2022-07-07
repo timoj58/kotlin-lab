@@ -35,10 +35,22 @@ class LineBuilder {
         timeStep = 10,
         config = LineConfig(
             id = "2",
-            name = "2",
+            name = "1",
             transportId = 1,
             lineCapacity = 6,
             stations = listOf("A", "B", "C", "D"),
+            depots = listOf("A", "D")
+        ), listOf(transportConfig)
+    )
+
+    fun getLine3() = Line(
+        timeStep = 10,
+        config = LineConfig(
+            id = "2",
+            name = "1",
+            transportId = 1,
+            lineCapacity = 6,
+            stations = listOf("A", "B", "D"),
             depots = listOf("A", "D")
         ), listOf(transportConfig)
     )
@@ -64,6 +76,30 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("E", "B", "A", "C", "D", "A"),
             depots = listOf("A", "D")
+        ), listOf(transportConfig)
+    )
+
+    fun getSwitchLine1() = Line(
+        timeStep = 10,
+        config = LineConfig(
+            id = "1",
+            name = "3",
+            transportId = 1,
+            lineCapacity = 6,
+            stations = listOf("A", "B", "C", "D"),
+            depots = listOf("A", "D")
+        ), listOf(transportConfig)
+    )
+
+    fun getSwitchLine2()  = Line(
+        timeStep = 10,
+        config = LineConfig(
+            id = "2",
+            name = "3",
+            transportId = 1,
+            lineCapacity = 6,
+            stations = listOf("B", "C", "D"),
+            depots = listOf("B", "D")
         ), listOf(transportConfig)
     )
 
