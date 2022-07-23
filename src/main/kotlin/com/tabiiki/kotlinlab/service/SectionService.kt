@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.monitor.SectionMonitor
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import kotlinx.coroutines.Job
@@ -17,7 +18,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 interface SectionService {
-    suspend fun add(transport: Transport, channel: Channel<Transport>)
+    suspend fun accept(transport: Transport, channel: Channel<Transport>)
     suspend fun init(line: String)
     fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean
     fun isClear(transport: Transport, incoming: Boolean = false): Boolean
@@ -42,8 +43,9 @@ class SectionServiceImpl(
 
     private val queues = Queues(minimumHold, journeyRepo)
     private val diagnostics = Diagnostics()
+    private val sectionMonitor = SectionMonitor()
 
-    override suspend fun add(transport: Transport, channel: Channel<Transport>): Unit = coroutineScope {
+    override suspend fun accept(transport: Transport, channel: Channel<Transport>): Unit = coroutineScope {
         if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id })
             throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
 
@@ -60,7 +62,15 @@ class SectionServiceImpl(
     override suspend fun init(line: String): Unit = coroutineScope {
         queues.getQueueKeys().filter { it.first.contains(line) }.forEach {
             launch { signalService.init(it) }
-            launch { monitor(it) }
+            launch {
+                sectionMonitor.monitor(it, queues.getChannel(it)) { k ->
+                    queues.getQueue(k).removeFirstOrNull()?.let {
+                        launch {
+                            jobs[it.id]!!.cancelAndJoin()
+                            arrive(it)}
+                    }
+                }
+            }
         }
     }
 
@@ -76,30 +86,9 @@ class SectionServiceImpl(
     override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean =
         switchService.isSwitchPlatform(transport, section, destination)
 
-    override fun initQueues(key: Pair<String, String>) {
-        queues.initQueues(key)
-    }
+    override fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
 
-    override fun diagnostics(transports: List<UUID>?) {
-        diagnostics.dump(queues, transports)
-    }
-
-    private suspend fun monitor(key: Pair<String, String>) = coroutineScope {
-        val channel = queues.getChannel(key)
-        do {
-            val msg = channel.receive()
-            when (msg.atPlatform()) {
-                true -> {
-                    queues.getQueue(key).removeFirstOrNull()?.let {
-                        jobs[it.id]!!.cancelAndJoin()
-                        launch { arrive(it) }
-                    }
-                }
-                else -> {}
-            }
-
-        } while (true)
-    }
+    override fun diagnostics(transports: List<UUID>?) = diagnostics.dump(queues, transports)
 
     override fun areSectionsClear(
         transport: Transport,

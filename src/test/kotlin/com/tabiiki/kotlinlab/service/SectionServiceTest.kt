@@ -35,10 +35,10 @@ class SectionServiceTest {
 
         launch { sectionService.initQueues(transport.section()) }
         delay(100)
-        val job = launch { sectionService.add(transport, Channel()) }
+        val job = launch { sectionService.accept(transport, Channel()) }
         delay(100)
         try {
-            sectionService.add(transport, Channel())
+            sectionService.accept(transport, Channel())
         } catch (e: RuntimeException) {
             assertThat(true).isEqualTo(true)
         }
