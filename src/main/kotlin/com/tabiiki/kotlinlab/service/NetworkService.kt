@@ -22,7 +22,6 @@ class NetworkServiceImpl(
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 
     init {
-
         lineController.setStationChannels(
             listOf(lines).flatten().flatMap { it.stations }.distinct()
                 .associateWith { stationService.getChannel(it) }
@@ -37,8 +36,7 @@ class NetworkServiceImpl(
         launch { stationService.monitor(listener) }
     }
 
-    override fun diagnostics(transports: List<UUID>) {
-        lineController.diagnostics(transports)
-    }
+    override fun diagnostics(transports: List<UUID>) = lineController.diagnostics(transports)
+
 
 }

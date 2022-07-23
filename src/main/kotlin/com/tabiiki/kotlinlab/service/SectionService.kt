@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Consumer
 
 interface SectionService {
     suspend fun accept(transport: Transport, channel: Channel<Transport>)
@@ -50,26 +51,15 @@ class SectionServiceImpl(
             throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
 
         holdChannels[transport.id] = channel
-        queues.release(transport.section(), transport)
-
-        jobs[transport.id] = launch {
-            transport.track(queues.getChannel(transport.section()))
-        }
-
-        launch { release(transport) }
+        prepareRelease(transport) { t -> launch { release(t) } }
     }
 
     override suspend fun init(line: String): Unit = coroutineScope {
         queues.getQueueKeys().filter { it.first.contains(line) }.forEach {
             launch { signalService.init(it) }
             launch {
-                sectionMonitor.monitor(it, queues.getChannel(it)) { k ->
-                    queues.getQueue(k).removeFirstOrNull()?.let {
-                        launch {
-                            jobs[it.id]!!.cancelAndJoin()
-                            arrive(it)}
-                    }
-                }
+                sectionMonitor.monitor(it, queues.getChannel(it))
+                { k -> queues.getQueue(k).removeFirstOrNull()?.let { launch { arrive(it) } } }
             }
         }
     }
@@ -109,6 +99,7 @@ class SectionServiceImpl(
     }
 
     private suspend fun arrive(transport: Transport) = coroutineScope {
+        jobs[transport.id]!!.cancelAndJoin()
         journeyRepo.addJourneyTime(transport.getJourneyTime())
         holdChannels[transport.id]!!.send(transport)
     }
@@ -119,13 +110,7 @@ class SectionServiceImpl(
         if (switchService.isSwitchSection(transport))
             launch {
                 switchService.switch(transport) { details ->
-                    launch {
-                        processSwitch(
-                            details.first,
-                            details.second,
-                            job
-                        )
-                    }
+                    launch { processSwitch(details.first, details.second, job) }
                 }
             }
 
@@ -146,12 +131,14 @@ class SectionServiceImpl(
             jobs[it.id]!!.cancelAndJoin()
         }
         job.cancelAndJoin()
-        queues.release(transport.section(), transport)
-        jobs[transport.id] = launch {
-            transport.track(queues.getChannel(transport.section()))
-        }
+        prepareRelease(transport) { t -> launch { transport.signal(signalService.getChannel(t.section())!!) } }
 
-        launch { transport.signal(signalService.getChannel(transport.section())!!) }
+    }
+
+    private suspend fun prepareRelease(transport: Transport, releaseConsumer: Consumer<Transport>) = coroutineScope {
+        queues.release(transport.section(), transport)
+        jobs[transport.id] = launch { transport.track(queues.getChannel(transport.section())) }
+        releaseConsumer.accept(transport)
     }
 
     companion object {
@@ -168,29 +155,32 @@ class SectionServiceImpl(
             fun initQueues(key: Pair<String, String>) {
                 queues[key] = Pair(Channel(), ArrayDeque())
             }
-
-            //TODO need to refactor this..make it cleaner
-            //TODO this should take into account the switch sections...
             fun isClear(section: Pair<String, String>, incoming: Boolean): Pair<Boolean, Int> =
                 Pair(
                     queues[section]!!.second.isEmpty()
-                            || (queues[section]!!.second.size < 2
-                            && (
-                            (!incoming && checkDistanceTravelled(
-                                section,
-                                queues[section]!!.second.last().getPosition(),
-                                incoming
-                            )
-                                    && !queues[section]!!.second.last().isStationary())
-                                    || (incoming && checkDistanceTravelled(
-                                section,
-                                queues[section]!!.second.first().getPosition(),
-                                incoming
-                            ))
-                            )
-                            && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold),
-                    queues[section]!!.second.lastOrNull()?.getJourneyTime()?.second ?: 0
+                            || (
+                            queues[section]!!.second.size < 2 //only 1 transporter per section currently.
+                                    && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold
+                                    && ((!incoming && defaultCheck(section)) || (incoming && incomingCheck(section)))),
+                            journeyTimeInSection(section))
+
+            private fun defaultCheck(section: Pair<String, String>) =
+                checkDistanceTravelled(
+                    section,
+                    queues[section]!!.second.last().getPosition(),
+                    false
+                ) && !queues[section]!!.second.last().isStationary()
+
+
+            private fun incomingCheck(section: Pair<String, String>) =
+                checkDistanceTravelled(
+                    section,
+                    queues[section]!!.second.first().getPosition(),
+                    true
                 )
+
+            private fun journeyTimeInSection(section: Pair<String, String>) =
+                queues[section]!!.second.lastOrNull()?.getJourneyTime()?.second ?: 0
 
             private fun checkDistanceTravelled(
                 section: Pair<String, String>,
@@ -238,8 +228,7 @@ class SectionServiceImpl(
                     items.addAll(toAdd)
                 }
 
-                items.sortedByDescending { it.milliseconds }
-                    .forEach { log.info(it.print()) }
+                items.sortedByDescending { it.milliseconds }.forEach { log.info(it.print()) }
             }
         }
     }

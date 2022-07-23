@@ -36,28 +36,21 @@ class SignalServiceImpl(
     }
 
     override fun getPlatformSignals(): List<Pair<String, String>> =
-        signalFactory.get().filter {
-            it.type == SignalType.PLATFORM
-        }.map { it.section }
+        signalFactory.get().filter { it.type == SignalType.PLATFORM }.map { it.section }
 
     override fun getSectionSignals(): List<Pair<String, String>> =
-        signalFactory.get().filter {
-            it.type == SignalType.SECTION
-        }.map { it.section }
+        signalFactory.get().filter { it.type == SignalType.SECTION }.map { it.section }
 
     override fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channels.getChannel(key)
-
     override suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
-
-    override suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) {
+    override suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) =
         channels.send(key, signalMessage)
-    }
 
-    override fun diagnostics() {
+
+    override fun diagnostics() =
         signalFactory.get().filter { it.section.first.contains("Tram") }.forEach {
             log.info("signal ${it.section} : ${it.status}")
         }
-    }
 
     companion object {
         private val log = LoggerFactory.getLogger(this.javaClass)
@@ -78,14 +71,11 @@ class SignalServiceImpl(
                 return channelsOut[key]!!
             }
 
-            suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) {
+            suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) =
                 channelsIn[key]?.send(signalMessage) ?: throw RuntimeException("bad channel $key")
-            }
 
             suspend fun receive(key: Pair<String, String>): SignalMessage? = channelsOut[key]?.receive()
             fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channelsOut[key]
-
         }
-
     }
 }

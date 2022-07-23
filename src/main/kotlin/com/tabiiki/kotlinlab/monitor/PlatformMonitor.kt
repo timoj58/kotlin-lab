@@ -127,7 +127,6 @@ class PlatformMonitor(
                     )
                 }
             }
-
         }
 
     companion object {
@@ -146,9 +145,7 @@ class PlatformMonitor(
                 platforms[key] = AtomicReference(Optional.empty())
             }
 
-            fun isClear(key: Pair<String, String>): Boolean =
-                platforms[key]?.get()?.isEmpty ?: true
-
+            fun isClear(key: Pair<String, String>): Boolean = platforms[key]?.get()?.isEmpty ?: true
             fun getPlatformKeys(): List<Pair<String, String>> = platforms.keys().toList()
 
             fun accept(key: Pair<String, String>, transport: Transport) {
@@ -170,10 +167,7 @@ class PlatformMonitor(
                     )
                 )
             }
-
             fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms[key]!!.get()
         }
-
     }
-
 }

@@ -35,10 +35,7 @@ class StationServiceImpl(
     //TODO change this.  no longer suitable for what is required.  perhaps delete for now.
     private val channels = stationRepo.get().map { it.id }.associateWith { Channel<Transport>() }
 
-    override fun getChannel(id: String): Channel<Transport> {
-        return channels[id]!!
-    }
-
+    override fun getChannel(id: String): Channel<Transport> = channels[id]!!
     override suspend fun monitor(listener: Channel<StationMessage>) = coroutineScope {
         channels.forEach { (k, v) ->
             launch { monitor(k, v, listener) }

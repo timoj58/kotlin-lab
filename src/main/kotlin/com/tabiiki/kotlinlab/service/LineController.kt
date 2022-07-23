@@ -47,17 +47,12 @@ class LineControllerImpl(
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
     }
 
-    override fun getStationChannels(): Map<String, Channel<Transport>> {
-        return stationChannels
-    }
-
+    override fun getStationChannels(): Map<String, Channel<Transport>> =  stationChannels
     override fun setStationChannels(channels: Map<String, Channel<Transport>>) {
         stationChannels = channels
     }
+    override fun diagnostics(transports: List<UUID>) = conductor.diagnostics(transports)
 
-    override fun diagnostics(transports: List<UUID>) {
-        conductor.diagnostics(transports)
-    }
 
     private suspend fun release(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { conductor.release(transport) }

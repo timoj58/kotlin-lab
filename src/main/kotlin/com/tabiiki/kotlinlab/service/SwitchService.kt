@@ -40,9 +40,9 @@ class SwitchServiceImpl(
         val firstStation = transport.line.stations.first()
         val lastStation = transport.line.stations.last()
 
-        val station = if (destination) section.second else section.first.substringAfter(":")
-
-        return listOf(firstStation, lastStation).contains(station)
+        return listOf(firstStation, lastStation).contains(
+            if (destination) section.second else section.first.substringAfter(":")
+        )
     }
 
     override suspend fun switch(

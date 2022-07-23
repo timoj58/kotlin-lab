@@ -40,16 +40,17 @@ class PlatformServiceImpl(
 
     init {
         signalService.getSectionSignals().forEach { sectionService.initQueues(it) }
-        signalService.getPlatformSignals().forEach {
-            platformMonitor.init(it)
-        }
+        signalService.getPlatformSignals().forEach { platformMonitor.init(it) }
     }
 
     override fun isClear(transport: Transport): Boolean {
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val platformClear = if (switchPlatform)
             platformMonitor.isClear(
-                Pair("${transport.line.name}:${LineDirection.TERMINAL}", transport.platformKey().second)
+                Pair(
+                    "${transport.line.name}:${LineDirection.TERMINAL}",
+                    transport.platformKey().second
+                )
             )
         else platformMonitor.isClear(transport.platformKey())
 
@@ -212,9 +213,7 @@ class PlatformServiceImpl(
                     }
                 }
 
-                items.sortedByDescending { it.milliseconds }
-                    .forEach { log.info(it.print()) }
-
+                items.sortedByDescending { it.milliseconds }.forEach { log.info(it.print()) }
             }
         }
     }

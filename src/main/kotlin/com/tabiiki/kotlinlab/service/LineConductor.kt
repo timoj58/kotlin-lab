@@ -50,8 +50,5 @@ class LineConductorImpl(
     override fun isClear(transport: Transport): Boolean =
         platformService.isClear(transport) && platformService.canLaunch(transport)
 
-    override fun diagnostics(transports: List<UUID>) {
-        platformService.diagnostics(transports)
-    }
-
+    override fun diagnostics(transports: List<UUID>) = platformService.diagnostics(transports)
 }
