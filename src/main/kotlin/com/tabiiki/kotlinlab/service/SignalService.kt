@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.factory.SignalType
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 
@@ -54,11 +55,13 @@ class SignalServiceImpl(
 
     override fun diagnostics() {
         signalFactory.get().filter { it.section.first.contains("Tram") }.forEach {
-            println("signal ${it.section} : ${it.status}")
+            log.info("signal ${it.section} : ${it.status}")
         }
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(this.javaClass)
+
         class Channels {
             private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
                 ConcurrentHashMap()
@@ -76,10 +79,7 @@ class SignalServiceImpl(
             }
 
             suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) {
-                if (!channelsIn.containsKey(key)) {
-                    throw RuntimeException("bad channel $key")
-                }
-                channelsIn[key]!!.send(signalMessage)
+                channelsIn[key]?.send(signalMessage) ?: throw RuntimeException("bad channel $key")
             }
 
             suspend fun receive(key: Pair<String, String>): SignalMessage? = channelsOut[key]?.receive()

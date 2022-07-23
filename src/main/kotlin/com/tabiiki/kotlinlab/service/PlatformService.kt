@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.monitor.PlatformMonitor
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.repo.LineRepo
@@ -36,10 +37,11 @@ class PlatformServiceImpl(
     private val signalService: SignalService,
     private val sectionService: SectionService,
     private val lineRepo: LineRepo,
-    private val stationRepo: StationRepo
+    private val stationRepo: StationRepo,
 ) : PlatformService {
     private val platforms = Platforms()
     private val diagnostics = Diagnostics()
+    private val platformMonitor = PlatformMonitor(sectionService, signalService, lineRepo)
 
     init {
         signalService.getSectionSignals().forEach { sectionService.initQueues(it) }
@@ -80,8 +82,8 @@ class PlatformServiceImpl(
     }
 
     override fun diagnostics(transports: List<UUID>?) {
-        diagnostics.dump(platforms, transports)
-        sectionService.diagnostics(transports)
+     //   diagnostics.dump(platforms, transports)
+     //   sectionService.diagnostics(transports)
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
@@ -177,8 +179,7 @@ class PlatformServiceImpl(
 
     private suspend fun init(key: Pair<String, String>) = coroutineScope {
         launch { signalService.init(key) }
-        launch { monitorPlatformChannel(key) }
-        launch { monitorPlatformSignal(key) }
+        launch { platformMonitor.monitorPlatform(key) }
     }
 
     private suspend fun addToSection(
@@ -199,9 +200,6 @@ class PlatformServiceImpl(
         do {
             val msg = channel.receive()
             platformToKey(msg).let {
-                if (it.first.contains(LineDirection.TERMINAL.toString())) {
-                    val a = 0
-                }
                 val atPlatform = platforms.atPlatform(it)
                 if (!atPlatform.isEmpty) {
                     diagnostics(null)
@@ -214,84 +212,9 @@ class PlatformServiceImpl(
         } while (true)
     }
 
-    private suspend fun monitorPlatformSignal(key: Pair<String, String>) = coroutineScope {
-        do {
-            signalService.receive(key)?.let { platforms.sendToPlatform(key, it) }
-        } while (true)
-    }
-
-    private suspend fun monitorPlatformChannel(key: Pair<String, String>) = coroutineScope {
-        val channel = platforms.getChannel(key)
-        var previousSignal: SignalMessage? = null
-        val isTerminal = key.first.contains(LineDirection.TERMINAL.toString())
-        val terminalSection = terminalSection(key)
-        do {
-            val signal = channel.receive()
-            if (previousSignal == null || signal != previousSignal) {
-                previousSignal = signal
-                var signals = mutableListOf<Pair<String, String>>()
-
-                when (signal.signalValue) {
-                    SignalValue.RED -> {
-                        val sections = if (isTerminal) listOf(terminalSection) else lineRepo.getPreviousSections(key)
-                        sections.forEach {
-                            launch {
-                                signals.add(it)
-                                signalService.send(
-                                    it,
-                                    SignalMessage(signalValue = SignalValue.RED, key = signal.key, id = signal.id)
-                                )
-                            }
-                        }
-                    }
-                    SignalValue.GREEN -> {
-                        val sections = if (isTerminal) listOf(
-                            Pair(
-                                terminalSection,
-                                sectionService.isClearWithPriority(terminalSection)
-                            )
-                        )
-                        else lineRepo.getPreviousSections(key).map { Pair(it, sectionService.isClearWithPriority(it)) }
-                        val priority = sections.filter { it.second.second != 0 }.sortedByDescending { it.second.second }
-                            .firstOrNull { !it.second.first }
-
-                        priority?.let {
-                            launch {
-                                signals.add(it.first)
-                                signalService.send(
-                                    it.first,
-                                    SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
-                                )
-                            }
-                        }
-
-                        sections.filter { priority == null || it.second.first }.forEach { section ->
-                            launch {
-                                signals.add(section.first)
-                                signalService.send(
-                                    section.first,
-                                    SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
-                                )
-                            }
-                        }
-                    }
-                }
-                platformSignalDiagnostics.add(Triple(signal, key, signals))
-            }
-
-        } while (true)
-    }
-
     companion object {
         private val log = LoggerFactory.getLogger(this.javaClass)
         private val holdChannels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> = ConcurrentHashMap()
-        private val platformSignalDiagnostics =
-            mutableListOf<Triple<SignalMessage, Pair<String, String>, List<Pair<String, String>>>>()
-
-        private fun terminalSection(key: Pair<String, String>) = Pair(
-            "${key.first.substringBefore(":")}:${key.second.substringAfter(":")}",
-            "${key.second.substringAfter(":")}|"
-        )
 
         private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
             val line = transport.line.name
@@ -303,54 +226,43 @@ class PlatformServiceImpl(
             Pair("${transport.line.name}:${LineDirection.TERMINAL}", key.second.substringBefore("|"))
 
         class Platforms {
-            private val platforms: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SignalMessage>, AtomicReference<Optional<Transport>>>> =
+            private val platforms: ConcurrentHashMap<Pair<String, String>, AtomicReference<Optional<Transport>>> =
                 ConcurrentHashMap()
 
             fun init(key: Pair<String, String>) {
-                platforms[key] = Pair(Channel(), AtomicReference(Optional.empty()))
+                platforms[key] = AtomicReference(Optional.empty())
             }
 
             fun isClear(key: Pair<String, String>): Boolean =
-                platforms[key]?.second?.get()?.isEmpty ?: true
+                platforms[key]?.get()?.isEmpty ?: true
 
             fun getPlatformKeys(): List<Pair<String, String>> = platforms.keys().toList()
 
             fun add(key: Pair<String, String>, transport: Transport) {
-                if (!platforms[key]!!.second.get().isEmpty) {
+                if (!platforms[key]!!.get().isEmpty) {
                     throw RuntimeException(
                         "FATAL - already holding ${
-                            platforms[key]!!.second.get().get().id
+                            platforms[key]!!.get().get().id
                         } for $key next ${transport.id}"
                     )
                 }
-                platforms[key]!!.second.set(Optional.of(transport))
+                platforms[key]!!.set(Optional.of(transport))
             }
 
             fun release(key: Pair<String, String>, transport: Transport) {
-                platforms[key]!!.second.set(Optional.empty())
+                platforms[key]!!.set(Optional.empty())
                 transport.journal.add(
                     Transport.Companion.JournalRecord(
                         action = Transport.Companion.JournalActions.READY_TO_DEPART, key = key, signal = SignalValue.RED
                     )
                 )
             }
-
-            suspend fun sendToPlatform(key: Pair<String, String>, signalMessage: SignalMessage) {
-                platforms[key]!!.first.send(signalMessage)
-            }
-
-            fun getChannel(key: Pair<String, String>): Channel<SignalMessage> = platforms[key]!!.first
-            fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms[key]!!.second.get()
+            fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms[key]!!.get()
         }
 
         class Diagnostics {
 
             fun dump(platforms: Platforms, transports: List<UUID>?) {
-
-                //  platformSignalDiagnostics.forEach {
-                //      println("platform signal ${it.second} -> ${it.first} - ${it.third}")
-                //  }
-
                 val items = mutableListOf<Transport.Companion.JournalRecord>()
 
                 platforms.getPlatformKeys().forEach { queue ->
@@ -369,6 +281,7 @@ class PlatformServiceImpl(
 
                 items.sortedByDescending { it.milliseconds }
                     .forEach { log.info(it.print()) }
+
             }
         }
     }
