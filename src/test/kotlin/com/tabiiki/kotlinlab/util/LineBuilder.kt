@@ -91,7 +91,7 @@ class LineBuilder {
         ), listOf(transportConfig)
     )
 
-    fun getSwitchLine2()  = Line(
+    fun getSwitchLine2() = Line(
         timeStep = 10,
         config = LineConfig(
             id = "2",

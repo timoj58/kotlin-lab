@@ -30,7 +30,15 @@ class OvergroundLineControllerTest @Autowired constructor(
     switchService: SwitchService
 ) {
     val lineControllerTest = LineControllerTest(
-        startDelay, timeStep, minimumHold, transportersConfig, stationService, stationRepo, signalFactory, journeyRepo, switchService
+        startDelay,
+        timeStep,
+        minimumHold,
+        transportersConfig,
+        stationService,
+        stationRepo,
+        signalFactory,
+        journeyRepo,
+        switchService
     )
 
     @ParameterizedTest

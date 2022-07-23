@@ -51,8 +51,16 @@ class StationRepoImpl(
             val lastIdx = line.stations.lastIndexOf(stationTo)
             if (firstIdx == -1) continue@outer
             if (firstIdx == lastIdx) {
+                if (direction == LineDirection.TERMINAL && !listOf(
+                        0,
+                        line.stations.size - 1
+                    ).contains(firstIdx)
+                ) continue@outer
                 stations.addAll(addStations(firstIdx, direction, line.stations))
             } else {
+                if (direction == LineDirection.TERMINAL && !listOf(0, line.stations.size - 1).contains(firstIdx)
+                    || !listOf(0, line.stations.size - 1).contains(lastIdx)
+                ) continue@outer
                 stations.addAll(addStations(firstIdx, direction, line.stations))
                 stations.addAll(addStations(lastIdx, direction, line.stations))
             }
@@ -85,6 +93,8 @@ class StationRepoImpl(
                 when (direction) {
                     LineDirection.POSITIVE -> result.add(get(stations[index - 1]))
                     LineDirection.NEGATIVE -> result.add(get(stations[index + 1]))
+                    //Terminals should always error, as they will be captured in 0 / max condition
+                    LineDirection.TERMINAL -> throw RuntimeException("previous station for terminal")
                 }
         }
         return result

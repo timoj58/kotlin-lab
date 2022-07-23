@@ -41,10 +41,9 @@ internal class LineConductorTest {
 
         assertThat(transporters.filter { it.section() == Pair("1:A", "B") }.size).isEqualTo(1)
         assertThat(transporters.filter { it.section() == Pair("1:C", "B") }.size).isEqualTo(1)
-        assertThat(transporters.filter { it.section() == Pair("2:D", "C") }.size).isEqualTo(1)
-        assertThat(transporters.filter { it.section() == Pair("2:A", "B") }.size).isEqualTo(1)
+        assertThat(transporters.filter { it.section() == Pair("1:D", "C") }.size).isEqualTo(1)
 
-        assertThat(transporters.size).isEqualTo(4) //no longer sharing lines.  to change this when we do
+        assertThat(transporters.size).isEqualTo(3)
 
     }
 

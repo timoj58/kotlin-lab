@@ -1,6 +1,6 @@
 lines:
   - id: TRAM01
-    transport-id: 2
+    transport-id: 6
     line-capacity: 6
     name: Tram
     stations:
@@ -36,7 +36,7 @@ lines:
       - 638
 
   - id: TRAM02
-    transport-id: 2
+    transport-id: 6
     line-capacity: 6
     name: Tram
     stations:
@@ -68,7 +68,7 @@ lines:
       - 638
 
   - id: TRAM03
-    transport-id: 2
+    transport-id: 6
     line-capacity: 6
     name: Tram
     stations:

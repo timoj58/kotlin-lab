@@ -56,9 +56,9 @@ internal class TransportTest {
 
     @ParameterizedTest
     @CsvSource("1:A,B, POSITIVE", "1:B,A,NEGATIVE")
-    fun `line direction test`(from: String, to: String, lineDirection: LineDirection){
+    fun `line direction test`(from: String, to: String, lineDirection: LineDirection) {
         train.addSection(Pair(from, to))
-       assertThat(train.lineDirection()).isEqualTo(lineDirection)
+        assertThat(train.lineDirection()).isEqualTo(lineDirection)
     }
 
     @Test

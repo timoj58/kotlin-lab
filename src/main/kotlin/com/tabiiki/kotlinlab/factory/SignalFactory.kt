@@ -86,7 +86,8 @@ class SignalFactory(
             val id = line.name
             pairs.addAll(line.stations.map { Pair("$id:${LineDirection.POSITIVE}", "$id:$it") })
             pairs.addAll(line.stations.map { Pair("$id:${LineDirection.NEGATIVE}", "$id:$it") })
-            pairs.addAll(line.stations.filter { lineFactory.isSwitchSection(id, Pair("",  it)) }.map { Pair("$id:${LineDirection.TERMINAL}", "$id:$it") })
+            pairs.addAll(line.stations.filter { lineFactory.isSwitchStation(id, it) }
+                .map { Pair("$id:${LineDirection.TERMINAL}", "$id:$it") })
         }
         return pairs.toSet()
     }
@@ -106,14 +107,14 @@ class SignalFactory(
             pairs.add(negativeSection)
         }
         val first = line.stations.first()
-        if(lineFactory.isSwitchSection(line.name, Pair("", first))){
-            pairs.add(Pair("${line.name}:$first"+"|", first))
+        if (lineFactory.isSwitchStation(line.name, first)) {
+            pairs.add(Pair("${line.name}:$first" + "|", first))
             pairs.add(Pair("${line.name}:$first", "$first|"))
         }
 
         val last = line.stations.last()
-        if(lineFactory.isSwitchSection(line.name, Pair("", last))){
-            pairs.add(Pair("${line.name}:$last"+"|", last))
+        if (lineFactory.isSwitchStation(line.name, last)) {
+            pairs.add(Pair("${line.name}:$last" + "|", last))
             pairs.add(Pair("${line.name}:$last", "$last|"))
         }
 

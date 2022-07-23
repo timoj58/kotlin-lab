@@ -39,9 +39,10 @@ interface ITransport {
     suspend fun signal(channel: Channel<SignalMessage>)
     fun section(): Pair<String, String>
     fun platformFromKey(): Pair<String, String>
-    fun platformToKey(): Pair<String, String>?
+    fun platformToKey(terminal: Boolean = false): Pair<String, String>?
     fun platformKey(): Pair<String, String>
     fun addSection(section: Pair<String, String>)
+    fun addSwitchSection(section: Pair<String, String>)
     fun lineDirection(): LineDirection
     fun getJourneyTime(): Triple<Pair<String, String>, Int, Double>
     fun atPlatform(): Boolean
@@ -67,6 +68,7 @@ data class Transport(
     var status = Status.DEPOT
     private var instruction = Instruction.STATIONARY
 
+    var actualSection: Pair<String, String>? = null
     private var journey: LineInstructions? = null
     private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
@@ -79,7 +81,7 @@ data class Transport(
     override fun getPosition(): Double = this.physics.displacement
 
     override fun platformKey(): Pair<String, String> =
-        Pair("${line.name}:${this.lineDirection()}", section().first)
+        Pair("${line.name}:${this.lineDirection()}", section().first.substringBefore("|"))
 
     override fun section(): Pair<String, String> =
         sectionData.second ?: sectionData.first!!
@@ -92,16 +94,23 @@ data class Transport(
         return Pair("$line:$dir", "$line:$stationId")
     }
 
-    override fun platformToKey(): Pair<String, String>? {
+    override fun platformToKey(terminal: Boolean): Pair<String, String>? {
         val line = line.name
-        val dir = journey?.direction ?: return null
+        var dir = journey?.direction ?: return null
+        if (terminal) dir = LineDirection.TERMINAL
 
         return Pair("$line:$dir", "$line:${journey!!.to.id}")
+        // return Pair("$line:$dir", "$line:${section().second}")
     }
 
     override fun addSection(section: Pair<String, String>) {
-        assert(section.first.contains(":"))
+        assert(section.first.contains(":")) { "section is wrong $section" }
         sectionData = Pair(section, null)
+    }
+
+    override fun addSwitchSection(section: Pair<String, String>) {
+        actualSection = section()
+        addSection(section)
     }
 
     override suspend fun track(channel: SendChannel<Transport>) {
@@ -148,6 +157,8 @@ data class Transport(
     }
 
     override fun lineDirection(): LineDirection {
+        if (actualSection != null) return LineDirection.TERMINAL
+
         val firstStation = getSectionStationCode()
         val fromCount = line.stations.count { it == firstStation }
         val toCount = line.stations.count { it == section().second }
@@ -204,6 +215,7 @@ data class Transport(
 
     private suspend fun stopJourney() = coroutineScope {
         physics.reset()
+        actualSection = null
         journey!!.let {
             sectionData = Pair(
                 Pair("${line.name}:${it.from.id}", it.to.id),

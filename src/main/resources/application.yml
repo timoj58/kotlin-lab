@@ -35,6 +35,11 @@ network:
         weight: 1000
         top-speed: 15
         power: 1500
+      - transport-id: 6
+        capacity: 75
+        weight: 200
+        top-speed: 35
+        power: 75
   lines:
     default-line-capacity:
     underground:

@@ -29,13 +29,18 @@ class LineFactory(
 
     fun get(id: String): Line = lines.find { it.id == id } ?: throw NoSuchElementException("Line missing")
     fun get(): List<String> = lines.map { it.id }
-    fun getNetwork(id: String): LineNetwork? =  lineNetworks[id]
+    fun getNetwork(id: String): LineNetwork? = lineNetworks[id]
 
-    fun isSwitchSection(lineId: String, section: Pair<String, String>): Boolean{
+    fun isSwitchStation(lineId: String, station: String): Boolean {
         val network = getNetwork(lineId) ?: return false
-        return network.getNodes().any{
-            (it.station == section.second || it.station == section.first)
+        return network.getNodes().any {
+            (it.station == station)
                     && it.linked.contains("*")
-                    && it.linked.size > 1}
+                    && it.linked.size > 1
+        }
+
     }
+
+    fun isSwitchSection(lineId: String, section: Pair<String, String>): Pair<Boolean, Boolean> =
+        Pair(isSwitchStation(lineId, section.first), isSwitchStation(lineId, section.second))
 }

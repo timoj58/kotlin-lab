@@ -13,7 +13,7 @@ data class LineNetwork(private val lines: List<Line>) {
         }
 
         lines.map { it.stations.subList(1, it.stations.lastIndex) }.flatten().distinct().forEach {
-            if(!network.any { n -> n.station == it })
+            if (!network.any { n -> n.station == it })
                 network.add(NetworkNode(it, mutableSetOf()))
         }
 

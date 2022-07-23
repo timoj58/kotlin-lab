@@ -1,7 +1,7 @@
 lines:
   - id: CITY01
     transport-id: 4
-    line-capacity: 4
+    line-capacity: 2
     name: Waterloo & City
     stations:
       - 26

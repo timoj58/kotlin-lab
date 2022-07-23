@@ -3,7 +3,6 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -21,7 +20,7 @@ class SectionServiceTest {
     private val signalService = mock(SignalService::class.java)
     private val journeyRepo = mock(JourneyRepo::class.java)
     private val switchService = mock(SwitchService::class.java)
-    private val sectionService = SectionServiceImpl(45,switchService, signalService, journeyRepo)
+    private val sectionService = SectionServiceImpl(45, switchService, signalService, journeyRepo)
 
     private val transport = Transport(
         config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),

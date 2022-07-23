@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Line
-import com.tabiiki.kotlinlab.model.LineNetwork
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.channels.Channel
@@ -11,7 +10,6 @@ import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import javax.naming.ConfigurationException
 
 interface LineController {

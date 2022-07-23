@@ -32,6 +32,7 @@ class StationServiceImpl(
     stationRepo: StationRepo
 ) : StationService {
 
+    //TODO change this.  no longer suitable for what is required.  perhaps delete for now.
     private val channels = stationRepo.get().map { it.id }.associateWith { Channel<Transport>() }
 
     override fun getChannel(id: String): Channel<Transport> {

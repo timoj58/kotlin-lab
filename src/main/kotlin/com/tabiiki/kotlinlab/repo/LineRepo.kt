@@ -69,7 +69,7 @@ class LineRepoImpl(private val stationRepo: StationRepo) : LineRepo {
     }
 
     override fun getLineStations(line: String): List<Line> {
-        if(!lineDetails.containsKey(line)) throw RuntimeException("missing $line")
+        if (!lineDetails.containsKey(line)) throw RuntimeException("missing $line")
         return lineDetails[line]!!
     }
 
