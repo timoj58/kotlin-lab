@@ -14,7 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
-//@Disabled //TODO this fails locally as well.  seems to be around context.  to test further when running as suite
+@Disabled //TODO this fails locally as well.  seems to be around context.  to test further when running as suite
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("test")
 @SpringBootTest
