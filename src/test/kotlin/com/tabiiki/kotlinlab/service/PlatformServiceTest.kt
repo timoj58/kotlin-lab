@@ -25,8 +25,8 @@ import org.springframework.test.annotation.DirtiesContext
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-@Disabled
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+//@Disabled
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 internal class PlatformServiceTest {
 
     private val minimumHold = 45
