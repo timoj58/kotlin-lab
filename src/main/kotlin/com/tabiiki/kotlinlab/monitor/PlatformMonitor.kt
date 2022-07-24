@@ -28,15 +28,7 @@ class PlatformMonitor(
     fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms.atPlatform(key)
     fun accept(key: Pair<String, String>, transport: Transport) = platforms.accept(key, transport)
     fun release(key: Pair<String, String>, transport: Transport) = platforms.release(key, transport)
-    fun getHoldChannel(key: Pair<String, String>): Channel<Transport> = holdChannels[key]!!
-
-    fun platformToKey(transport: Transport): Pair<String, String> {
-        var switchStation = false
-        if (!transport.platformKey().first.contains(LineDirection.TERMINAL.toString()))
-            switchStation = sectionService.isSwitchPlatform(transport, transport.getJourneyTime().first, true)
-
-        return transport.platformToKey(switchStation)!!
-    }
+    fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)]!!
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
         var previousSignal: SignalMessage? = null
@@ -128,6 +120,14 @@ class PlatformMonitor(
                 }
             }
         }
+
+    private fun platformToKey(transport: Transport): Pair<String, String> {
+        var switchStation = false
+        if (!transport.platformKey().first.contains(LineDirection.TERMINAL.toString()))
+            switchStation = sectionService.isSwitchPlatform(transport, transport.getJourneyTime().first, true)
+
+        return transport.platformToKey(switchStation)!!
+    }
 
     companion object {
         private val holdChannels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> = ConcurrentHashMap()

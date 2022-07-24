@@ -20,9 +20,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.test.annotation.DirtiesContext
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 internal class PlatformServiceTest {
 
     private val minimumHold = 45

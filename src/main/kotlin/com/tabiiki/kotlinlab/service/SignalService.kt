@@ -17,7 +17,6 @@ interface SignalService {
     fun getChannel(key: Pair<String, String>): Channel<SignalMessage>?
     suspend fun receive(key: Pair<String, String>): SignalMessage?
     suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage)
-    fun diagnostics()
 }
 
 @Service
@@ -47,14 +46,7 @@ class SignalServiceImpl(
         channels.send(key, signalMessage)
 
 
-    override fun diagnostics() =
-        signalFactory.get().filter { it.section.first.contains("Tram") }.forEach {
-            log.info("signal ${it.section} : ${it.status}")
-        }
-
     companion object {
-        private val log = LoggerFactory.getLogger(this.javaClass)
-
         class Channels {
             private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
                 ConcurrentHashMap()

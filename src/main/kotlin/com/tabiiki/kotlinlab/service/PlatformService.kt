@@ -9,10 +9,10 @@ import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
+import com.tabiiki.kotlinlab.util.Diagnostics
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -35,7 +35,6 @@ class PlatformServiceImpl(
     private val lineRepo: LineRepo,
     private val stationRepo: StationRepo,
 ) : PlatformService {
-    private val diagnostics = Diagnostics()
     private val platformMonitor = PlatformMonitor(sectionService, signalService, lineRepo)
 
     init {
@@ -78,8 +77,7 @@ class PlatformServiceImpl(
     }
 
     override fun diagnostics(transports: List<UUID>?) {
-        //   diagnostics.dump(platforms, transports)
-        //   sectionService.diagnostics(transports)
+      //  diagnostics.dump(platformMonitor, sectionService.getQueues(), transports)
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
@@ -178,12 +176,11 @@ class PlatformServiceImpl(
             delay(transport.timeStep)
         } while (!platformMonitor.atPlatform(key).isEmpty)
 
-        val holdChannelKey = platformMonitor.platformToKey(transport)
-        launch { sectionService.accept(transport, platformMonitor.getHoldChannel(holdChannelKey)) }
+        launch { sectionService.accept(transport, platformMonitor.getHoldChannel(transport)) }
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(this.javaClass)
+        private val diagnostics = Diagnostics()
 
         private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
             val line = transport.line.name
@@ -193,28 +190,5 @@ class PlatformServiceImpl(
 
         private fun platformTerminalKey(transport: Transport, key: Pair<String, String>): Pair<String, String> =
             Pair("${transport.line.name}:${LineDirection.TERMINAL}", key.second.substringBefore("|"))
-
-        class Diagnostics {
-
-            fun dump(platformMonitor: PlatformMonitor, transports: List<UUID>?) {
-                val items = mutableListOf<Transport.Companion.JournalRecord>()
-
-                platformMonitor.getPlatformKeys().forEach { queue ->
-                    platformMonitor.atPlatform(queue).ifPresent {
-                        log.info("${it.id} current instruction ${it.line.id} ${it.getCurrentInstruction()} in $queue")
-                    }
-                }
-                platformMonitor.getPlatformKeys().forEach { queue ->
-                    val toAdd = platformMonitor.atPlatform(queue)
-                        .filter { t -> transports == null || transports.contains(t.id) }
-                        .map { m -> m.journal.getLog().sortedByDescending { l -> l.milliseconds }.take(5) }
-                    toAdd.ifPresent {
-                        items.addAll(it)
-                    }
-                }
-
-                items.sortedByDescending { it.milliseconds }.forEach { log.info(it.print()) }
-            }
-        }
     }
 }

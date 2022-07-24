@@ -11,7 +11,6 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -26,7 +25,7 @@ interface SectionService {
     fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int>
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
     fun initQueues(key: Pair<String, String>)
-    fun diagnostics(transports: List<UUID>?)
+    fun getQueues(): SectionServiceImpl.Companion.Queues
     fun areSectionsClear(
         transport: Transport,
         lineInstructions: LineInstructions,
@@ -43,7 +42,6 @@ class SectionServiceImpl(
 ) : SectionService {
 
     private val queues = Queues(minimumHold, journeyRepo)
-    private val diagnostics = Diagnostics()
     private val sectionMonitor = SectionMonitor()
 
     override suspend fun accept(transport: Transport, channel: Channel<Transport>): Unit = coroutineScope {
@@ -77,8 +75,7 @@ class SectionServiceImpl(
         switchService.isSwitchPlatform(transport, section, destination)
 
     override fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
-
-    override fun diagnostics(transports: List<UUID>?) = diagnostics.dump(queues, transports)
+    override fun getQueues(): Queues = queues
 
     override fun areSectionsClear(
         transport: Transport,
@@ -142,7 +139,6 @@ class SectionServiceImpl(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(this.javaClass)
         private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
         private val holdChannels: ConcurrentHashMap<UUID, Channel<Transport>> = ConcurrentHashMap()
 
@@ -205,31 +201,7 @@ class SectionServiceImpl(
                     )
                 )
             }
-
             fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
-        }
-
-        class Diagnostics {
-
-            fun dump(queues: Queues, transports: List<UUID>?) {
-                val items = mutableListOf<Transport.Companion.JournalRecord>()
-
-                queues.getQueueKeys().forEach { queue ->
-                    queues.getQueue(queue).forEach {
-                        log.info("${it.id} current instruction ${it.line.id} ${it.getCurrentInstruction()} in ${it.section()} ${it.getPosition()}")
-                    }
-                }
-
-                queues.getQueueKeys().forEach { queue ->
-                    val toAdd = queues.getQueue(queue)
-                        .filter { t -> transports == null || transports.contains(t.id) }
-                        .map { m -> m.journal.getLog().sortedByDescending { l -> l.milliseconds }.take(5) }
-                        .flatten()
-                    items.addAll(toAdd)
-                }
-
-                items.sortedByDescending { it.milliseconds }.forEach { log.info(it.print()) }
-            }
         }
     }
 }
