@@ -65,6 +65,9 @@ data class Transport(
     var status = Status.DEPOT
     private var instruction = Instruction.STATIONARY
     var actualSection: Pair<String, String>? = null
+    private var journey: LineInstructions? = null
+    private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
+    private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
 
     override fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
@@ -223,10 +226,6 @@ data class Transport(
     }
 
     companion object {
-        private var journey: LineInstructions? = null
-        private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
-        private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
-
         enum class JournalActions { PLATFORM_HOLD, READY_TO_DEPART, RELEASE, DEPART, ARRIVE }
         data class JournalRecord(
             var id: UUID? = null,

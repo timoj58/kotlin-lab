@@ -175,7 +175,6 @@ class PlatformServiceImpl(
         do {
             delay(transport.timeStep)
         } while (!platformMonitor.atPlatform(key).isEmpty)
-
         launch { sectionService.accept(transport, platformMonitor.getHoldChannel(transport)) }
     }
 
