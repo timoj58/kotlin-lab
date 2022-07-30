@@ -1,0 +1,103 @@
+lines:
+  - id: ELIZ01
+    transport-id: 3
+    line-capacity: 8
+    name: Elizabeth
+    stations:
+      - 2
+      - 650
+      - 151
+      - 94
+      - 632
+      - 343
+      - 207
+      - 562
+      - 418
+    depots:
+      - 2
+      - 418
+
+  - id: ELIZ02
+    transport-id: 3
+    line-capacity: 6
+    name: Elizabeth
+    stations:
+      - 418
+      - 4
+      - 168
+      - 613
+      - 255
+      - 505
+      - 267
+      - 271
+      - 269
+    depots:
+      - 418
+      - 269
+
+  - id: ELIZ03
+    transport-id: 3
+    line-capacity: 6
+    name: Elizabeth
+    stations:
+      - 418
+      - 4
+      - 168
+      - 613
+      - 255
+      - 505
+      - 267
+      - 271
+      - 269
+      - 270
+    depots:
+      - 418
+      - 270
+
+  - id: ELIZ04
+    transport-id: 3
+    line-capacity: 8
+    name: Elizabeth
+    stations:
+      - 418
+      - 4
+      - 168
+      - 613
+      - 255
+      - 505
+      - 267
+      - 611
+      - 301
+      - 331
+      - 488
+      - 84
+      - 549
+      - 352
+      - 573
+      - 454
+    depots:
+      - 418
+      - 454
+
+  - id: ELIZ05
+    transport-id: 3
+    line-capacity: 8
+    name: Elizabeth
+    stations:
+      - 479
+      - 72
+      - 257
+      - 222
+      - 464
+      - 107
+      - 228
+      - 476
+      - 297
+      - 355
+      - 215
+      - 358
+      - 528
+      - 343
+    depots:
+      - 479
+      - 343

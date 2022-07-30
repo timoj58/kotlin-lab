@@ -13,4 +13,5 @@ network:
       - src/main/resources/network/overground/romford.yml
       - src/main/resources/network/overground/london-liverpool-st.yml
       - src/main/resources/network/overground/stratford.yml
+      - src/main/resources/network/overground/elizabeth.yml
     underground:

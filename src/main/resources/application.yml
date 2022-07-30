@@ -61,6 +61,7 @@ network:
       - src/main/resources/network/overground/romford.yml
       - src/main/resources/network/overground/london-liverpool-st.yml
       - src/main/resources/network/overground/stratford.yml
+      - src/main/resources/network/overground/elizabeth.yml
     cable:
       - src/main/resources/network/cable/cable.yml
     river:
