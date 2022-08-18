@@ -41,6 +41,7 @@ class SignalServiceImpl(
         signalFactory.get().filter { it.type == SignalType.SECTION }.map { it.section }
 
     override fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channels.getChannel(key)
+
     override suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
     override suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) =
         channels.send(key, signalMessage)

@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.StationService
@@ -17,29 +18,29 @@ import org.springframework.test.context.ActiveProfiles
 
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@ActiveProfiles("test-underground")
+@ActiveProfiles("te st-underground")
 @SpringBootTest
 class UndergroundLineControllerTest @Autowired constructor(
     @Value("\${network.start-delay}") val startDelay: Long,
     @Value("\${network.time-step}") val timeStep: Long,
     @Value("\${network.minimum-hold}") val minimumHold: Int,
     transportersConfig: TransportersConfig,
-    stationService: StationService,
     stationRepo: StationRepo,
     signalFactory: SignalFactory,
     journeyRepo: JourneyRepo,
-    switchService: SwitchService
+    switchService: SwitchService,
+    stationFactory: StationFactory
 ) {
     val lineControllerTest = LineControllerTest(
         startDelay,
         timeStep,
         minimumHold,
         transportersConfig,
-        stationService,
         stationRepo,
         signalFactory,
         journeyRepo,
-        switchService
+        switchService,
+        stationFactory
     )
 
     @ParameterizedTest

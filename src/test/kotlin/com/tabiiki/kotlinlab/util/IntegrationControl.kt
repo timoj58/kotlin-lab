@@ -11,13 +11,13 @@ import java.util.UUID
 import java.util.function.Consumer
 
 class IntegrationControl {
-    private val stationVisitedPerTrain = mutableMapOf<UUID, MutableSet<Pair<String, String>>>()
+    private val stationVisitedPerTrain = mutableMapOf<UUID, MutableList<String>>()
     private val trainsByLine = mutableMapOf<String, MutableSet<UUID>>()
-    private val sectionsByLine = mutableMapOf<String, Set<Pair<String, String>>>()
+    private val stationsByLine = mutableMapOf<String, Set<String>>()
     private var transportersPerLine = 0
 
     fun initControl(line: Line) {
-        sectionsByLine[line.id] = getLineStations(line)
+        stationsByLine[line.id] = line.stations.toSet()
         transportersPerLine += line.transporters.size
     }
 
@@ -25,14 +25,15 @@ class IntegrationControl {
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
-            if (!trainsByLine.containsKey(msg.line.id))
-                trainsByLine[msg.line.id] = mutableSetOf()
+            if (!trainsByLine.containsKey(msg.line))
+                trainsByLine[msg.line] = mutableSetOf()
             if (!stationVisitedPerTrain.containsKey(msg.transportId))
-                stationVisitedPerTrain[msg.transportId] = mutableSetOf()
+                stationVisitedPerTrain[msg.transportId] = mutableListOf()
 
-            trainsByLine[msg.line.id]?.add(msg.transportId)
-            if (msg.type == MessageType.ARRIVE)
-                stationVisitedPerTrain[msg.transportId]?.add(msg.section)
+            trainsByLine[msg.line]?.add(msg.transportId)
+            if (msg.type == MessageType.DEPART)
+                stationVisitedPerTrain[msg.transportId]?.add(msg.stationId)
+
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * timeout) > System.currentTimeMillis())
 
         dump.accept(diagnosticsCheck())
@@ -45,7 +46,7 @@ class IntegrationControl {
         val toLog = mutableListOf<UUID>()
         stationVisitedPerTrain.forEach { (k, u) ->
             val line = getLineByTrain(k)
-            val total = sectionsByLine[line]!!.toList()
+            val total = stationsByLine[line]!!.toList()
             println("$line - $k visited ${u.size} vs ${total.size}")
 
             if (u.size != total.size) toLog.add(k)
@@ -59,11 +60,6 @@ class IntegrationControl {
         println("completed journeys count: $count")
 
         Assertions.assertThat(count).isEqualTo(transportersPerLine)
-        stationVisitedPerTrain.values.flatten()
-            .forEach {
-                if (it.second == it.first) println("incorrect route $it")
-                Assertions.assertThat(it.second == it.first).isEqualTo(false)
-            }
     }
 
     private fun testSectionsVisited(): Int {
@@ -72,12 +68,16 @@ class IntegrationControl {
         if (stationVisitedPerTrain.isEmpty()) return 1
 
         stationVisitedPerTrain.forEach { (k, u) ->
-            if (u.size >= sectionsByLine[getLineByTrain(k)]!!.size) // hack for now due to terminals at start of line.  end seems ok.
+            if (u.containsAll(stationsByLine[getLineByTrain(k)]!!) && testAllStationsEntered(u))
                 completedRouteCount++
         }
 
         return completedRouteCount +
                 if (trainsByLine.values.flatten().size == transportersPerLine) 0 else 1
+    }
+
+    private fun testAllStationsEntered(stations: List<String>): Boolean {
+        return stations.groupBy { it }.values.flatten().count() + 1 >= stations.distinct().size * 2
     }
 
     private fun getLineByTrain(id: UUID): String {
@@ -88,14 +88,4 @@ class IntegrationControl {
         }
         return line
     }
-
-    private fun getLineStations(line: Line): Set<Pair<String, String>> {
-        val pairs = mutableSetOf<Pair<String, String>>()
-        for (station in 0..line.stations.size - 2 step 1) {
-            pairs.add(Pair("${line.name}:${line.stations[station]}", line.stations[station + 1]))
-            pairs.add(Pair("${line.name}:${line.stations.reversed()[station]}", line.stations.reversed()[station + 1]))
-        }
-        return pairs.toSet()
-    }
-
 }

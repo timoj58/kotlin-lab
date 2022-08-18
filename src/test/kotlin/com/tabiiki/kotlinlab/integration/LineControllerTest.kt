@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineRepoImpl
@@ -15,11 +16,12 @@ import com.tabiiki.kotlinlab.service.PlatformServiceImpl
 import com.tabiiki.kotlinlab.service.SectionServiceImpl
 import com.tabiiki.kotlinlab.service.SignalServiceImpl
 import com.tabiiki.kotlinlab.service.StationMessage
-import com.tabiiki.kotlinlab.service.StationService
+import com.tabiiki.kotlinlab.service.StationServiceImpl
 import com.tabiiki.kotlinlab.service.SwitchService
 import com.tabiiki.kotlinlab.util.IntegrationControl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -28,11 +30,11 @@ class LineControllerTest(
     val timeStep: Long,
     private val minimumHold: Int,
     private val transportersConfig: TransportersConfig,
-    private val stationService: StationService,
     private val stationRepo: StationRepo,
     private val signalFactory: SignalFactory,
     private val journeyRepo: JourneyRepo,
-    private val switchService: SwitchService
+    private val switchService: SwitchService,
+    private val stationFactory: StationFactory
 ) {
     private val integrationControl = IntegrationControl()
 
@@ -44,6 +46,8 @@ class LineControllerTest(
         val lineService =
             PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo)
         val lineConductor = LineConductorImpl(lineService)
+
+        val stationService = StationServiceImpl(signalService, stationFactory)
 
         val lineFactory = LineFactory(
             linesConfig = LinesConfig(
@@ -72,19 +76,19 @@ class LineControllerTest(
             conductor = lineConductor,
         )
 
-        controller.setStationChannels(
-            listOf(line).flatten().flatMap { it.stations }.distinct()
-                .associateWith { stationService.getChannel(it) }
-        )
-
-        val channel = Channel<Transport>()
         val listener = Channel<StationMessage>()
 
-        val job = launch { controller.start(line, channel) }
-        val job3 = launch { stationService.monitor(listener) }
+        val job = launch {
+            controller.start(line)
+        }
+
+        val job2 = launch {
+            delay(100)
+            stationService.start(listener, line.first().name)
+        }
 
         val running = async {
-            integrationControl.status(listener, listOf(job3, job), timeout) { t -> controller.diagnostics(t) }
+            integrationControl.status(listener, listOf(job, job2), timeout) { t -> controller.diagnostics(t) }
         }
     }
 

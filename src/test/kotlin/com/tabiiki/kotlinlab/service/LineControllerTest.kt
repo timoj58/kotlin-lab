@@ -46,8 +46,7 @@ internal class LineControllerTest {
         val lineControllerService =
             LineControllerImpl(1000, conductor)
 
-        val channel = Channel<Transport>()
-        val res = async { lineControllerService.start(listOf(line), channel) }
+        val res = async { lineControllerService.start(listOf(line)) }
         delay(2000)
 
         verify(conductor, atLeast(2)).release(
@@ -72,7 +71,7 @@ internal class LineControllerTest {
             LineControllerImpl(1000, conductor)
 
         val channel = Channel<Transport>()
-        val res = async { lineControllerService.start(listOf(line), channel) }
+        val res = async { lineControllerService.start(listOf(line)/*, channel*/) }
         delay(2000)
 
         verify(conductor, atLeast(2)).release(

@@ -116,7 +116,8 @@ class SectionServiceImpl(
                 transport.platformKey(), SignalMessage(
                     signalValue = SignalValue.GREEN,
                     id = transport.id,
-                    key = transport.section()
+                    key = transport.section(),
+                    line = transport.line.id
                 )
             )
         }
@@ -157,7 +158,7 @@ class SectionServiceImpl(
                             || (
                             queues[section]!!.second.size < 2 //only 1 transporter per section currently.
                                     && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold
-                                    && ((!incoming && defaultCheck(section)) || (incoming && incomingCheck(section)))),
+                                    && (if(incoming) incomingCheck(section) else defaultCheck(section))),
                             journeyTimeInSection(section))
 
             private fun defaultCheck(section: Pair<String, String>) =

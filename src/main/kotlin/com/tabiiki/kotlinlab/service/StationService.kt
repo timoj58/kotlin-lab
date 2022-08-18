@@ -1,13 +1,15 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.model.Line
-import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.repo.StationRepo
+import com.tabiiki.kotlinlab.factory.SignalMessage
+import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.monitor.StationMonitor
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 enum class MessageType {
     DEPART, ARRIVE
@@ -16,63 +18,38 @@ enum class MessageType {
 data class StationMessage(
     val stationId: String,
     val transportId: UUID,
-    val line: Line,
-    val section: Pair<String, String>,
+    val line: String,
     val type: MessageType
 )
 
 interface StationService {
-    fun getChannel(id: String): Channel<Transport>
-    suspend fun monitor(listener: Channel<StationMessage>)
-    suspend fun monitor(id: String, channel: Channel<Transport>, listener: Channel<StationMessage>)
+    suspend fun start(globalListener: Channel<StationMessage>, line: String? = null)
 }
 
 @Service
 class StationServiceImpl(
-    stationRepo: StationRepo
+    val signalService: SignalService,
+    val stationFactory: StationFactory
 ) : StationService {
 
-    //TODO change this.  no longer suitable for what is required.  perhaps delete for now.
-    private val channels = stationRepo.get().map { it.id }.associateWith { Channel<Transport>() }
+    private val stationMonitor = StationMonitor()
 
-    override fun getChannel(id: String): Channel<Transport> = channels[id]!!
-    override suspend fun monitor(listener: Channel<StationMessage>) = coroutineScope {
-        channels.forEach { (k, v) ->
-            launch { monitor(k, v, listener) }
+    override suspend fun start(globalListener: Channel<StationMessage>, line: String?) = coroutineScope {
+        stationFactory.get().forEach { code ->
+            val channel = Channel<SignalMessage>()
+            val station = stationFactory.get(code)
+            stationChannels[station] = channel
+            signalService.getPlatformSignals().filter { line == null || it.first.contains(line) } .filter { it.second.substringAfter(":") == code }
+                .map { signalService.getChannel(it) }.forEach {
+                    possibleChannel -> possibleChannel?.let {
+                    launch { stationMonitor.monitorPlatform(it, channel) }
+                    launch { stationMonitor.monitorStation(station, channel, globalListener) }
+                }
+                }
         }
     }
 
-    override suspend fun monitor(id: String, channel: Channel<Transport>, listener: Channel<StationMessage>) {
-        do {
-            val message = channel.receive()
-            if (waitingToArrive(id, message)) {
-                listener.send(
-                    StationMessage(
-                        stationId = id,
-                        transportId = message.id,
-                        line = message.line,
-                        section = message.section(),
-                        type = MessageType.ARRIVE
-                    )
-                )
-            } else if (waitingToDepart(id, message)) {
-                listener.send(
-                    StationMessage(
-                        stationId = id,
-                        transportId = message.id,
-                        line = message.line,
-                        section = message.section(),
-                        type = MessageType.DEPART
-                    )
-                )
-            }
-        } while (true)
+    companion object {
+        private val stationChannels: ConcurrentHashMap<Station, Channel<SignalMessage>> = ConcurrentHashMap()
     }
-
-    private fun waitingToDepart(id: String, message: Transport) =
-        message.atPlatform() && message.section().first == id
-
-    private fun waitingToArrive(id: String, message: Transport) =
-        !message.atPlatform() && message.section().second == id
-
 }

@@ -21,6 +21,7 @@ data class SignalMessage(
     val signalValue: SignalValue,
     val id: UUID? = null,
     val key: Pair<String, String>? = null,
+    val line: String? = null,
     var timesStamp: Long = System.currentTimeMillis()
 )
 
@@ -42,7 +43,8 @@ data class Signal(
                 status = SignalMessage(
                     signalValue = msg.signalValue,
                     id = msg.id,
-                    key = msg.key
+                    key = msg.key,
+                    line = msg.line
                 )
             }
         } while (true)

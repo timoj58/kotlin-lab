@@ -10,12 +10,17 @@ import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import javax.naming.ConfigurationException
 
+data class LineChannelMessage(
+    val line: String,
+    val section: Pair<String, String>,
+    val transporters: List<UUID>
+)
+
 interface LineController {
-    suspend fun start(line: List<Line>, channel: Channel<Transport>)
-    fun getStationChannels(): Map<String, Channel<Transport>>
-    fun setStationChannels(stationChannels: Map<String, Channel<Transport>>)
+    suspend fun start(line: List<Line>)
     fun diagnostics(transports: List<UUID>)
 }
 
@@ -29,7 +34,8 @@ class LineControllerImpl(
         if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
     }
 
-    override suspend fun start(line: List<Line>, channel: Channel<Transport>) = coroutineScope {
+    override suspend fun start(line: List<Line>) = coroutineScope {
+        launch { monitor() }
         launch { conductor.start(line.map { it.name }.distinct().first(), line) }
 
         conductor.getFirstTransportersToDispatch(line).forEach {
@@ -47,35 +53,31 @@ class LineControllerImpl(
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
     }
 
-    override fun getStationChannels(): Map<String, Channel<Transport>> =  stationChannels
-    override fun setStationChannels(channels: Map<String, Channel<Transport>>) {
-        stationChannels = channels
-    }
     override fun diagnostics(transports: List<UUID>) = conductor.diagnostics(transports)
-
 
     private suspend fun release(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { conductor.release(transport) }
-        launch { publish(transport, channel) }
+        launch { track(transport, channel) }
     }
 
     private suspend fun hold(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { conductor.hold(transport) }
-        launch { publish(transport, channel) }
+        launch { track(transport, channel) }
     }
 
-    private suspend fun publish(transport: Transport, channel: Channel<Transport>) = coroutineScope {
+    private suspend fun track(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { transport.track(channel) }
+    }
 
+    private suspend fun monitor() = coroutineScope {
         do {
             val message = channel.receive()
-            listOf(message.section().first, message.section().second)
-                .forEach { stationChannels[it]?.send(message) }
-
+            tracker[message.id] = message.section()
         } while (true)
     }
 
     companion object {
-        private var stationChannels: Map<String, Channel<Transport>> = mutableMapOf()
+        private val channel: Channel<Transport> = Channel()
+        private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> = ConcurrentHashMap()
     }
 }

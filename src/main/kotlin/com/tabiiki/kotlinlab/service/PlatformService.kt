@@ -106,17 +106,15 @@ class PlatformServiceImpl(
             )
         )
         platformMonitor.accept(key, transport)
-        //TODO this fixes the city line for now, and Romford.  3 or less
-        if (lineRepo.getLineStations(transport).size > 3) {
-            launch {
-                signalService.send(
-                    key, SignalMessage(
-                        signalValue = SignalValue.RED,
-                        id = transport.id,
-                        key = key
-                    )
+        launch {
+            signalService.send(
+                key, SignalMessage(
+                    signalValue = SignalValue.RED,
+                    id = transport.id,
+                    key = key,
+                    line = transport.line.id
                 )
-            }
+            )
         }
 
         val counter = AtomicInteger(0)
