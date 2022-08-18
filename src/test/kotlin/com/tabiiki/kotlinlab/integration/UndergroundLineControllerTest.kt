@@ -5,7 +5,6 @@ import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
-import com.tabiiki.kotlinlab.service.StationService
 import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.params.ParameterizedTest

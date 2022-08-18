@@ -39,12 +39,13 @@ class StationServiceImpl(
             val channel = Channel<SignalMessage>()
             val station = stationFactory.get(code)
             stationChannels[station] = channel
-            signalService.getPlatformSignals().filter { line == null || it.first.contains(line) } .filter { it.second.substringAfter(":") == code }
-                .map { signalService.getChannel(it) }.forEach {
-                    possibleChannel -> possibleChannel?.let {
-                    launch { stationMonitor.monitorPlatform(it, channel) }
-                    launch { stationMonitor.monitorStation(station, channel, globalListener) }
-                }
+            signalService.getPlatformSignals().filter { line == null || it.first.contains(line) }
+                .filter { it.second.substringAfter(":") == code }
+                .map { signalService.getChannel(it) }.forEach { possibleChannel ->
+                    possibleChannel?.let {
+                        launch { stationMonitor.monitorPlatform(it, channel) }
+                        launch { stationMonitor.monitorStation(station, channel, globalListener) }
+                    }
                 }
         }
     }

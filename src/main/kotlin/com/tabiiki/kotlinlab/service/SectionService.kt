@@ -152,14 +152,16 @@ class SectionServiceImpl(
             fun initQueues(key: Pair<String, String>) {
                 queues[key] = Pair(Channel(), ArrayDeque())
             }
+
             fun isClear(section: Pair<String, String>, incoming: Boolean): Pair<Boolean, Int> =
                 Pair(
                     queues[section]!!.second.isEmpty()
                             || (
                             queues[section]!!.second.size < 2 //only 1 transporter per section currently.
                                     && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold
-                                    && (if(incoming) incomingCheck(section) else defaultCheck(section))),
-                            journeyTimeInSection(section))
+                                    && (if (incoming) incomingCheck(section) else defaultCheck(section))),
+                    journeyTimeInSection(section)
+                )
 
             private fun defaultCheck(section: Pair<String, String>) =
                 checkDistanceTravelled(
@@ -202,6 +204,7 @@ class SectionServiceImpl(
                     )
                 )
             }
+
             fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
         }
     }

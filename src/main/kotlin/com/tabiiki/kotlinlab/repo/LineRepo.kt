@@ -68,5 +68,6 @@ class LineRepoImpl(private val stationRepo: StationRepo) : LineRepo {
         return stationsFrom.map { Pair("$line:${it.id}", stationTo) }.distinct()
     }
 
-    override fun getLineStations(line: String): List<Line> = lineDetails[line] ?: throw RuntimeException("missing $line")
+    override fun getLineStations(line: String): List<Line> =
+        lineDetails[line] ?: throw RuntimeException("missing $line")
 }

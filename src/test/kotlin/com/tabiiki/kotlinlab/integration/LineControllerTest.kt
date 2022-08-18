@@ -6,7 +6,6 @@ import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineRepoImpl
 import com.tabiiki.kotlinlab.repo.StationRepo

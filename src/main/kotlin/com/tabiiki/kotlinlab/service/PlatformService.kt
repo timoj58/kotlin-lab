@@ -77,7 +77,7 @@ class PlatformServiceImpl(
     }
 
     override fun diagnostics(transports: List<UUID>?) {
-      //  diagnostics.dump(platformMonitor, sectionService.getQueues(), transports)
+        //  diagnostics.dump(platformMonitor, sectionService.getQueues(), transports)
     }
 
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {

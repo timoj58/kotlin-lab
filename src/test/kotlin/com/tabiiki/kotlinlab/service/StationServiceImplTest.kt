@@ -31,7 +31,7 @@ class StationServiceImplTest {
             `when`(stationFactory.get(it.id)).thenReturn(it)
         }
 
-        `when`(signalService.getPlatformSignals()).thenReturn(listOf(Pair("",LineBuilder().stations[0].id)))
+        `when`(signalService.getPlatformSignals()).thenReturn(listOf(Pair("", LineBuilder().stations[0].id)))
         `when`(signalService.getChannel(Pair("", LineBuilder().stations[0].id))).thenReturn(channel)
 
     }
@@ -43,12 +43,21 @@ class StationServiceImplTest {
         val job = launch { stationService.start(listener) }
 
         val startTime = System.currentTimeMillis()
-        launch { channel.send(SignalMessage(signalValue = SignalValue.GREEN, id = UUID.randomUUID(), key = Pair("",""), line = "test")) }
+        launch {
+            channel.send(
+                SignalMessage(
+                    signalValue = SignalValue.GREEN,
+                    id = UUID.randomUUID(),
+                    key = Pair("", ""),
+                    line = "test"
+                )
+            )
+        }
         var received: Boolean
         do {
             val msg = listener.receive()
             received = msg.type == MessageType.DEPART
-        }while (!received && System.currentTimeMillis()  < startTime + 100)
+        } while (!received && System.currentTimeMillis() < startTime + 100)
 
         assertThat(received).isEqualTo(true)
 

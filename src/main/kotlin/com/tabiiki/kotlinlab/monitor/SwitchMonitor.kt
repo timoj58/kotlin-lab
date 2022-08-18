@@ -5,7 +5,7 @@ import kotlinx.coroutines.delay
 import java.util.function.Consumer
 
 class SwitchMonitor {
-     suspend fun switch(
+    suspend fun switch(
         transport: Transport,
         completeSection: Consumer<Pair<Transport, Pair<String, String>>>
     ) {
@@ -25,7 +25,7 @@ class SwitchMonitor {
     }
 
     companion object {
-         fun distanceToSwitch(transport: Transport): Double =
+        fun distanceToSwitch(transport: Transport): Double =
             if (transport.section().first.contains("|")) 100.0 else transport.getJourneyTime().third - 100.0
     }
 }

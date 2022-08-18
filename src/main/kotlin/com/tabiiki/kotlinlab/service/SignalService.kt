@@ -6,7 +6,6 @@ import com.tabiiki.kotlinlab.factory.SignalType
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 

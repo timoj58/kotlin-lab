@@ -7,7 +7,6 @@ import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import java.util.UUID
 
 class StationMonitor {
 
@@ -18,7 +17,7 @@ class StationMonitor {
         var previousSignal: SignalValue? = null
         do {
             val msg = platformChannel.receive()
-            if(previousSignal == null || previousSignal != msg.signalValue) {
+            if (previousSignal == null || previousSignal != msg.signalValue) {
                 stationChannel.send(msg)
                 previousSignal = msg.signalValue
             }

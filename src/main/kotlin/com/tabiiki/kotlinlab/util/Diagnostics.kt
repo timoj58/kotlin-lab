@@ -12,7 +12,8 @@ class Diagnostics {
     fun dump(
         platformMonitor: PlatformMonitor,
         queues: SectionServiceImpl.Companion.Queues,
-        transports: List<UUID>?) {
+        transports: List<UUID>?
+    ) {
         val items = mutableListOf<Transport.Companion.JournalRecord>()
 
         platformMonitor.getPlatformKeys().forEach { queue ->
