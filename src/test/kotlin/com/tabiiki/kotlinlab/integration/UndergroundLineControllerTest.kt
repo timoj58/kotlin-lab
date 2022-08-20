@@ -17,7 +17,7 @@ import org.springframework.test.context.ActiveProfiles
 
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@ActiveProfiles("te st-underground")
+@ActiveProfiles("test-underground")
 @SpringBootTest
 class UndergroundLineControllerTest @Autowired constructor(
     @Value("\${network.start-delay}") val startDelay: Long,
