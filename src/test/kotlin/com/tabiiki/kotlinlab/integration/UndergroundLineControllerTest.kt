@@ -44,17 +44,17 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @ParameterizedTest
     @CsvSource(
-      //  "city",
+        "city",
         "jubilee",
-      //  "circle",
-      //  "district",
-      //  "northern",
-      //  "piccadilly",
-      //  "central",
-      //  "metropolitan",
-      //  "bakerloo",
-      //  "victoria",
-      //  "hammersmith"
+        "circle",
+        "district",
+        "northern",
+        "piccadilly",
+        "central",
+        "metropolitan",
+        "bakerloo",
+        "victoria",
+        "hammersmith"
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
         lineControllerTest.test("underground", lineName, 5)
