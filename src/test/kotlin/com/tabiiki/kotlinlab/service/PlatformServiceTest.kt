@@ -127,8 +127,6 @@ internal class PlatformServiceTest {
             println("$t: ${u.size} vs ${lineData.first { it.third.contains(t) }.second}")
         }
 
-        platformService.diagnostics(null)
-
         assertThat(completed(lineData, tracker)).isEqualTo(true)
 
         jobs.forEach {

@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.monitor.SectionMonitor
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineInstructions
+import com.tabiiki.kotlinlab.util.Diagnostics
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -25,7 +26,6 @@ interface SectionService {
     fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int>
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
     fun initQueues(key: Pair<String, String>)
-    fun getQueues(): SectionServiceImpl.Companion.Queues
     fun areSectionsClear(
         transport: Transport,
         lineInstructions: LineInstructions,
@@ -45,8 +45,10 @@ class SectionServiceImpl(
     private val sectionMonitor = SectionMonitor()
 
     override suspend fun accept(transport: Transport, channel: Channel<Transport>): Unit = coroutineScope {
-        if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id })
+        if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id }) {
+            diagnostics.dump(null, queues)
             throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
+        }
 
         holdChannels[transport.id] = channel
         prepareRelease(transport) { t -> launch { release(t) } }
@@ -75,7 +77,6 @@ class SectionServiceImpl(
         switchService.isSwitchPlatform(transport, section, destination)
 
     override fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
-    override fun getQueues(): Queues = queues
 
     override fun areSectionsClear(
         transport: Transport,
@@ -142,6 +143,7 @@ class SectionServiceImpl(
     companion object {
         private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
         private val holdChannels: ConcurrentHashMap<UUID, Channel<Transport>> = ConcurrentHashMap()
+        private val diagnostics = Diagnostics()
 
         class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
             private val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
@@ -195,14 +197,11 @@ class SectionServiceImpl(
             fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
 
             fun release(key: Pair<String, String>, transport: Transport) {
-                if (queues[key]!!.second.size >= 2) throw RuntimeException("Only two transporters allowed in $key")
-
+                if (queues[key]!!.second.size >= 2) {
+                    diagnostics.dump(null, this)
+                    throw RuntimeException("Only two transporters allowed in $key")
+                }
                 queues[key]!!.second.addLast(transport)
-                transport.journal.add(
-                    Transport.Companion.JournalRecord(
-                        action = Transport.Companion.JournalActions.RELEASE, key = key
-                    )
-                )
             }
 
             fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first

@@ -60,7 +60,6 @@ data class Transport(
     var id: UUID = UUID.randomUUID()
     val transportId = config.transportId
     private val capacity = config.capacity
-    val journal = Journal(id)
     private val physics = Physics(config)
     var status = Status.DEPOT
     private var instruction = Instruction.STATIONARY
@@ -133,10 +132,6 @@ data class Transport(
                     || msg.signalValue != previousMsg.signalValue
                     && !(msg.id ?: UUID.randomUUID()).equals(id)
                 ) {
-
-                    if (msg.signalValue == SignalValue.GREEN) journal.add(
-                        JournalRecord(action = JournalActions.DEPART, key = this.section(), signal = msg.signalValue)
-                    )
 
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
@@ -215,37 +210,11 @@ data class Transport(
                 Pair("${line.name}:${it.from.id}", it.to.id),
                 Pair("${line.name}:${it.to.id}", it.next.id)
             )
-            journal.add(
-                JournalRecord(
-                    action = JournalActions.ARRIVE,
-                    key = Pair(it.from.id, it.to.id)
-                )
-            )
         }
         status = Status.PLATFORM
     }
 
     companion object {
-        enum class JournalActions { PLATFORM_HOLD, READY_TO_DEPART, RELEASE, DEPART, ARRIVE }
-        data class JournalRecord(
-            var id: UUID? = null,
-            val action: JournalActions,
-            val key: Pair<String, String>,
-            val signal: SignalValue = SignalValue.GREEN
-        ) {
-            val milliseconds: Long = System.currentTimeMillis()
-            fun print() = "$id: $action $signal - $key"
-        }
-
-        class Journal(val id: UUID) {
-            private val journal = mutableListOf<JournalRecord>()
-            fun add(journalRecord: JournalRecord) {
-                journal.add(journalRecord.also { it.id = this.id })
-            }
-
-            fun getLog() = journal
-        }
-
         class Physics(config: TransportConfig) {
             private val haversineCalculator = HaversineCalculator()
             private val drag = 0.88

@@ -9,13 +9,11 @@ import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
-import com.tabiiki.kotlinlab.util.Diagnostics
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
 interface PlatformService {
@@ -24,7 +22,6 @@ interface PlatformService {
     suspend fun release(transport: Transport)
     fun isClear(transport: Transport): Boolean
     fun canLaunch(transport: Transport): Boolean
-    fun diagnostics(transports: List<UUID>?)
 }
 
 @Service
@@ -76,10 +73,6 @@ class PlatformServiceImpl(
         return response
     }
 
-    override fun diagnostics(transports: List<UUID>?) {
-        //  diagnostics.dump(platformMonitor, sectionService.getQueues(), transports)
-    }
-
     override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
         lineRepo.addLineDetails(line, lineDetails)
         launch { sectionService.init(line) }
@@ -98,13 +91,6 @@ class PlatformServiceImpl(
         if (sectionService.isSwitchPlatform(transport, transport.section()))
             key = platformTerminalKey(transport, key)
 
-        transport.journal.add(
-            Transport.Companion.JournalRecord(
-                action = Transport.Companion.JournalActions.PLATFORM_HOLD,
-                key = key,
-                signal = SignalValue.RED
-            )
-        )
         platformMonitor.accept(key, transport)
         launch {
             signalService.send(
@@ -177,8 +163,6 @@ class PlatformServiceImpl(
     }
 
     companion object {
-        private val diagnostics = Diagnostics()
-
         private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
             val line = transport.line.name
             val dir = instructions.direction

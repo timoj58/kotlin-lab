@@ -21,7 +21,6 @@ data class LineChannelMessage(
 
 interface LineController {
     suspend fun start(line: List<Line>)
-    fun diagnostics(transports: List<UUID>)
 }
 
 @Service
@@ -52,8 +51,6 @@ class LineControllerImpl(
 
         } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
     }
-
-    override fun diagnostics(transports: List<UUID>) = conductor.diagnostics(transports)
 
     private suspend fun release(transport: Transport, channel: Channel<Transport>) = coroutineScope {
         launch { conductor.release(transport) }

@@ -27,7 +27,8 @@ class SwitchServiceImpl(
         val firstStation = transport.line.stations.first()
         val lastStation = transport.line.stations.last()
 
-        return firstStation == section.first && isPossibleSwitch.first || lastStation == section.second && isPossibleSwitch.second
+        return firstStation == section.first.replace("|", "") && isPossibleSwitch.first
+                || lastStation == section.second.replace("|", "") && isPossibleSwitch.second
     }
 
     override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean {

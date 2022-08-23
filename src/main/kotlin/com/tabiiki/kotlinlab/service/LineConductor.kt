@@ -16,7 +16,6 @@ interface LineConductor {
     suspend fun hold(transport: Transport)
     suspend fun start(line: String, lines: List<Line>)
     fun isClear(transport: Transport): Boolean
-    fun diagnostics(transports: List<UUID>)
 }
 
 @Service
@@ -49,6 +48,4 @@ class LineConductorImpl(
 
     override fun isClear(transport: Transport): Boolean =
         platformService.isClear(transport) && platformService.canLaunch(transport)
-
-    override fun diagnostics(transports: List<UUID>) = platformService.diagnostics(transports)
 }

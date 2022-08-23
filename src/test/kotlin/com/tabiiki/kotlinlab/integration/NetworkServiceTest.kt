@@ -36,7 +36,7 @@ class NetworkServiceTest @Autowired constructor(
         val channel = Channel<StationMessage>()
         val res = async { networkService.start(channel) }
         val running =
-            async { integrationControl.status(channel, listOf(res), 20) { t -> networkService.diagnostics(t) } }
+            async { integrationControl.status(channel, listOf(res), 20) }
     }
 
 }

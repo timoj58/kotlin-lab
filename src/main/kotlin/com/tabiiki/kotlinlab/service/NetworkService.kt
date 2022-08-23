@@ -9,7 +9,6 @@ import java.util.UUID
 
 interface NetworkService {
     suspend fun start(listener: Channel<StationMessage>)
-    fun diagnostics(transports: List<UUID>)
 }
 
 @Service
@@ -26,6 +25,4 @@ class NetworkServiceImpl(
         }
         launch { stationService.start(listener) }
     }
-
-    override fun diagnostics(transports: List<UUID>) = lineController.diagnostics(transports)
 }

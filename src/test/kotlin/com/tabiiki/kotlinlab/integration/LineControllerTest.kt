@@ -87,7 +87,7 @@ class LineControllerTest(
         }
 
         val running = async {
-            integrationControl.status(listener, listOf(job, job2), timeout) { t -> controller.diagnostics(t) }
+            integrationControl.status(listener, listOf(job, job2), timeout)
         }
     }
 

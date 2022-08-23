@@ -21,7 +21,7 @@ class IntegrationControl {
         transportersPerLine += line.transporters.size
     }
 
-    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>, timeout: Int, dump: Consumer<List<UUID>>) {
+    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>, timeout: Int) {
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
@@ -36,7 +36,7 @@ class IntegrationControl {
 
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * timeout) > System.currentTimeMillis())
 
-        dump.accept(diagnosticsCheck())
+        diagnosticsCheck()
         jobs.forEach { it.cancelAndJoin() }
         assert()
 

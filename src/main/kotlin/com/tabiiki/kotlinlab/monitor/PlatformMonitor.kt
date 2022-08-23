@@ -7,6 +7,7 @@ import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.service.SectionService
 import com.tabiiki.kotlinlab.service.SignalService
+import com.tabiiki.kotlinlab.util.Diagnostics
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -27,7 +28,7 @@ class PlatformMonitor(
     fun init(key: Pair<String, String>) = platforms.init(key)
     fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms.atPlatform(key)
     fun accept(key: Pair<String, String>, transport: Transport) = platforms.accept(key, transport)
-    fun release(key: Pair<String, String>, transport: Transport) = platforms.release(key, transport)
+    fun release(key: Pair<String, String>, transport: Transport) = platforms.release(key)
     fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)]!!
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
@@ -58,8 +59,9 @@ class PlatformMonitor(
             platformToKey(msg).let {
                 val atPlatform = platforms.atPlatform(it)
                 if (!atPlatform.isEmpty) {
+                    diagnostics.dump(this@PlatformMonitor)
                     throw RuntimeException(
-                        "${msg.id} arrived too quickly $it , already holding ${atPlatform.get().id} "
+                        "${msg.id} arrived too quickly from ${msg.getJourneyTime().first} $it , already holding ${atPlatform.get().id} "
                     )
                 }
             }
@@ -131,6 +133,7 @@ class PlatformMonitor(
 
     companion object {
         private val holdChannels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> = ConcurrentHashMap()
+        private val diagnostics = Diagnostics()
 
         private fun terminalSection(key: Pair<String, String>) = Pair(
             "${key.first.substringBefore(":")}:${key.second.substringAfter(":")}",
@@ -159,15 +162,7 @@ class PlatformMonitor(
                 platforms[key]!!.set(Optional.of(transport))
             }
 
-            fun release(key: Pair<String, String>, transport: Transport) {
-                platforms[key]!!.set(Optional.empty())
-                transport.journal.add(
-                    Transport.Companion.JournalRecord(
-                        action = Transport.Companion.JournalActions.READY_TO_DEPART, key = key, signal = SignalValue.RED
-                    )
-                )
-            }
-
+            fun release(key: Pair<String, String>) = platforms[key]!!.set(Optional.empty())
             fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms[key]!!.get()
         }
     }
