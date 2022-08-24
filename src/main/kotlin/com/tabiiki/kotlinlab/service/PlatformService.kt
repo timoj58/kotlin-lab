@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicInteger
 
 interface PlatformService {
-    suspend fun start(line: String, lineDetails: List<Line>)
+    suspend fun init(line: String, lineDetails: List<Line>)
     suspend fun hold(transport: Transport)
     suspend fun release(transport: Transport)
     fun isClear(transport: Transport): Boolean
@@ -73,7 +73,7 @@ class PlatformServiceImpl(
         return response
     }
 
-    override suspend fun start(line: String, lineDetails: List<Line>): Unit = coroutineScope {
+    override suspend fun init(line: String, lineDetails: List<Line>): Unit = coroutineScope {
         lineRepo.addLineDetails(line, lineDetails)
         launch { sectionService.init(line) }
 

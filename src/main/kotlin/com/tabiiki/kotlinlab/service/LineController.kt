@@ -20,6 +20,7 @@ data class LineChannelMessage(
 )
 
 interface LineController {
+    suspend fun init(line: List<Line>)
     suspend fun start(line: List<Line>)
 }
 
@@ -33,10 +34,12 @@ class LineControllerImpl(
         if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
     }
 
-    override suspend fun start(line: List<Line>) = coroutineScope {
+    override suspend fun init(line: List<Line>): Unit = coroutineScope {
         launch { monitor() }
-        launch { conductor.start(line.map { it.name }.distinct().first(), line) }
+        launch { conductor.init(line.map { it.name }.distinct().first(), line) }
+    }
 
+    override suspend fun start(line: List<Line>) = coroutineScope {
         conductor.getFirstTransportersToDispatch(line).forEach {
             launch { release(it, channel) }
         }

@@ -71,7 +71,7 @@ data class Transport(
     override fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
-    override fun getSectionStationCode(): String = section().first.substringAfter(":")
+    override fun getSectionStationCode(): String = section().first.substringAfter(":").replace("|", "")
     override fun getCurrentInstruction(): Instruction = this.instruction
     override fun getPosition(): Double = this.physics.displacement
 

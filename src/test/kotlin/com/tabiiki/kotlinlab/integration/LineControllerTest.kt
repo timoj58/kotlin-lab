@@ -75,6 +75,12 @@ class LineControllerTest(
             conductor = lineConductor,
         )
 
+        val initJob = launch {
+            controller.init(line)
+        }
+
+        delay(100)
+
         val listener = Channel<StationMessage>()
 
         val job = launch {
@@ -87,7 +93,7 @@ class LineControllerTest(
         }
 
         val running = async {
-            integrationControl.status(listener, listOf(job, job2), timeout)
+            integrationControl.status(listener, listOf(initJob, job, job2), timeout)
         }
     }
 

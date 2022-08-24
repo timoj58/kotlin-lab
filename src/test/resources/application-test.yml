@@ -1,5 +1,5 @@
 network:
-  time-step: 5
+  time-step: 10
   start-delay: 1000
   lines:
     default-line-capacity: 2

@@ -77,7 +77,7 @@ internal class PlatformServiceTest {
         //INIT start
         lines.groupBy { it.name }.values.forEach { line ->
             val startJob = launch {
-                platformService.start(line.map { it.name }.distinct().first(), line)
+                platformService.init(line.map { it.name }.distinct().first(), line)
             }
             jobs.add(startJob)
         }

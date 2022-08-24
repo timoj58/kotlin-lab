@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 
 interface NetworkService {
+
+    suspend fun init()
     suspend fun start(listener: Channel<StationMessage>)
 }
 
@@ -18,11 +20,17 @@ class NetworkServiceImpl(
     lineFactory: LineFactory,
 ) : NetworkService {
     private val lines = lineFactory.get().map { lineFactory.get(it) }
+    override suspend fun init() = coroutineScope {
+        lines.groupBy { it.name }.values.forEach { line ->
+            launch { lineController.init(line) }
+        }
+    }
 
     override suspend fun start(listener: Channel<StationMessage>): Unit = coroutineScope {
+        launch { stationService.start(listener) }
+
         lines.groupBy { it.name }.values.forEach { line ->
             launch { lineController.start(line) }
         }
-        launch { stationService.start(listener) }
     }
 }
