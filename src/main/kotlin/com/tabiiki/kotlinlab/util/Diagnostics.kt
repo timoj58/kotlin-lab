@@ -4,8 +4,6 @@ import com.tabiiki.kotlinlab.monitor.PlatformMonitor
 import com.tabiiki.kotlinlab.service.SectionServiceImpl
 import org.slf4j.LoggerFactory
 
-//one class to control this is cleaner.  TODO. also make it controlled  by param.  ie debug mode etc.
-//add signals too.  this should do lots of things in future.  for now its just moved out of the way.
 class Diagnostics {
     fun dump(
         platformMonitor: PlatformMonitor? = null,

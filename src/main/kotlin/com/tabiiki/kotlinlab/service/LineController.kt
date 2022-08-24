@@ -78,6 +78,6 @@ class LineControllerImpl(
 
     companion object {
         private val channel: Channel<Transport> = Channel()
-        private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> = ConcurrentHashMap()
+        private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> = ConcurrentHashMap() //TODO something with this
     }
 }
