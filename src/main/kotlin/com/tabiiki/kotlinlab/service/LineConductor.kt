@@ -7,7 +7,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
-import java.util.UUID
 
 interface LineConductor {
     fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport>

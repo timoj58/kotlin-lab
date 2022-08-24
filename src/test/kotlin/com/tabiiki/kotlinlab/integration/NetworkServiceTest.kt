@@ -8,7 +8,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -39,7 +38,7 @@ class NetworkServiceTest @Autowired constructor(
         val channel = Channel<StationMessage>()
         val res = async { networkService.start(channel) }
         val running =
-            async { integrationControl.status(channel, listOf(init,res), 20) }
+            async { integrationControl.status(channel, listOf(init, res), 20) }
     }
 
 }

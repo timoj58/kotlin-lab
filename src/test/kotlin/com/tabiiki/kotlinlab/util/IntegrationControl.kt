@@ -8,7 +8,6 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import org.assertj.core.api.Assertions
 import java.util.UUID
-import java.util.function.Consumer
 
 class IntegrationControl {
     private val stationVisitedPerTrain = mutableMapOf<UUID, MutableList<String>>()

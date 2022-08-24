@@ -5,7 +5,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
-import java.util.UUID
 
 interface NetworkService {
 

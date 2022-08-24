@@ -13,13 +13,13 @@ class Diagnostics {
     ) {
 
         platformMonitor?.getPlatformKeys()?.forEach { queue ->
-            platformMonitor?.atPlatform(queue)?.ifPresent {
+            platformMonitor.atPlatform(queue)?.ifPresent {
                 log.info("${it.id} current instruction ${it.line.id} ${it.getCurrentInstruction()} in $queue")
             }
         }
 
         queues?.getQueueKeys()?.forEach { queue ->
-            queues?.getQueue(queue)?.forEach {
+            queues.getQueue(queue)?.forEach {
                 log.info("${it.id} current instruction ${it.line.id} ${it.getCurrentInstruction()} in ${it.section()} ${it.getPosition()}")
             }
         }
