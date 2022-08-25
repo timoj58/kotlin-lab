@@ -79,7 +79,7 @@ class LineControllerTest(
             controller.init(line)
         }
 
-        delay(100)
+        delay(1000)
 
         val listener = Channel<StationMessage>()
 

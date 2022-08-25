@@ -59,7 +59,7 @@ data class Transport(
 
     var id: UUID = UUID.randomUUID()
     val transportId = config.transportId
-    private val capacity = config.capacity
+    private val carriage = Carriage(config.capacity)
     private val physics = Physics(config)
     var status = Status.DEPOT
     private var instruction = Instruction.STATIONARY
