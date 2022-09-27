@@ -3,8 +3,9 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.util.LineBuilder
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -20,7 +21,7 @@ class StationServiceImplTest {
     private val signalService = mock(SignalService::class.java)
     private val stationFactory = mock(StationFactory::class.java)
 
-    private val stationService = StationServiceImpl(signalService, stationFactory)
+    private val stationService = StationServiceImpl(timeStep = 10, signalService = signalService, stationFactory = stationFactory)
 
     private val channel: Channel<SignalMessage> = Channel()
 
@@ -39,8 +40,9 @@ class StationServiceImplTest {
     @Test
     fun testChannels() = runBlocking {
         val listener: Channel<StationMessage> = Channel()
+        val globalCommuterChannel = Channel<Commuter>()
 
-        val job = launch { stationService.start(listener) }
+        val job = launch { stationService.start(listener, globalCommuterChannel) }
 
         val startTime = System.currentTimeMillis()
         launch {
@@ -61,7 +63,7 @@ class StationServiceImplTest {
 
         assertThat(received).isEqualTo(true)
 
-        job.cancelAndJoin()
+        job.cancel()
     }
 
 }

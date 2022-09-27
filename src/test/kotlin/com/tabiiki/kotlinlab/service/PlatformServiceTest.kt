@@ -9,22 +9,21 @@ import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.repo.LineRepoImpl
 import com.tabiiki.kotlinlab.repo.StationRepoImpl
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-@Disabled
 internal class PlatformServiceTest {
 
     private val minimumHold = 45
@@ -46,7 +45,7 @@ internal class PlatformServiceTest {
     private val transportConfig = TransportersConfig(transportersAdapter)
 
     private val lineFactory = LineFactory(timeStep, transportConfig, linesConfig)
-    private val stationFactory = StationFactory(stationsConfig, linesConfig)
+    private val stationFactory = StationFactory(stationsConfig)
 
     private val journeyRepo = JourneyRepoImpl()
     private val stationRepo = StationRepoImpl(stationFactory)
@@ -60,10 +59,23 @@ internal class PlatformServiceTest {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 
+    private val stationService = StationServiceImpl(timeStep, signalService, stationFactory)
+
     @Test
     fun `platform & section service test`() = runBlocking {
 
+
         val jobs = mutableListOf<Job>()
+        val globalCommuterChannel = Channel<Commuter>()
+
+        jobs.add (
+            launch { stationService.start(Channel(), globalCommuterChannel, linesConfig.lines.first().name) }
+        )
+
+        //add a commuter.
+        val commuter = Commuter(commute = Pair("TEST:26","TEST:94"), channel = Channel(), timeStep = 10)
+        globalCommuterChannel.send(commuter)
+
         val tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>> = ConcurrentHashMap()
         val lineData = mutableListOf<Triple<String, Int, List<UUID>>>()
 
@@ -77,7 +89,7 @@ internal class PlatformServiceTest {
         //INIT start
         lines.groupBy { it.name }.values.forEach { line ->
             val startJob = launch {
-                platformService.init(line.map { it.name }.distinct().first(), line)
+                platformService.init(line.map { it.name }.distinct().first(), line, globalCommuterChannel)
             }
             jobs.add(startJob)
         }
@@ -130,7 +142,7 @@ internal class PlatformServiceTest {
         assertThat(completed(lineData, tracker)).isEqualTo(true)
 
         jobs.forEach {
-            it.cancelAndJoin()
+            it.cancel()
         }
     }
 

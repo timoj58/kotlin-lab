@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
@@ -20,7 +21,7 @@ data class LineChannelMessage(
 )
 
 interface LineController {
-    suspend fun init(line: List<Line>)
+    suspend fun init(line: List<Line>, channel: Channel<Commuter>)
     suspend fun start(line: List<Line>)
 }
 
@@ -34,9 +35,9 @@ class LineControllerImpl(
         if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
     }
 
-    override suspend fun init(line: List<Line>): Unit = coroutineScope {
+    override suspend fun init(line: List<Line>, channel: Channel<Commuter>): Unit = coroutineScope {
         launch { monitor() }
-        launch { conductor.init(line.map { it.name }.distinct().first(), line) }
+        launch { conductor.init(line.map { it.name }.distinct().first(), line, channel) }
     }
 
     override suspend fun start(line: List<Line>) = coroutineScope {
@@ -78,6 +79,7 @@ class LineControllerImpl(
 
     companion object {
         private val channel: Channel<Transport> = Channel()
-        private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> = ConcurrentHashMap() //TODO something with this
+        private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> =
+            ConcurrentHashMap() //TODO something with this
     }
 }

@@ -8,7 +8,6 @@ import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.Diagnostics
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -19,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 
 interface SectionService {
-    suspend fun accept(transport: Transport, channel: Channel<Transport>)
+    suspend fun accept(transport: Transport, channel: Channel<Transport>, jobs: List<Job>?)
     suspend fun init(line: String)
     fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean
     fun isClear(transport: Transport, incoming: Boolean = false): Boolean
@@ -44,15 +43,16 @@ class SectionServiceImpl(
     private val queues = Queues(minimumHold, journeyRepo)
     private val sectionMonitor = SectionMonitor()
 
-    override suspend fun accept(transport: Transport, channel: Channel<Transport>): Unit = coroutineScope {
-        if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id }) {
-            diagnostics.dump(null, queues)
-            throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
-        }
+    override suspend fun accept(transport: Transport, channel: Channel<Transport>, jobs: List<Job>?): Unit =
+        coroutineScope {
+            if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id }) {
+                diagnostics.dump(null, queues)
+                throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
+            }
 
-        holdChannels[transport.id] = channel
-        prepareRelease(transport) { t -> launch { release(t) } }
-    }
+            holdChannels[transport.id] = channel
+            prepareRelease(transport) { t -> launch { release(t, jobs) } }
+        }
 
     override suspend fun init(line: String): Unit = coroutineScope {
         queues.getQueueKeys().filter { it.first.contains(line) }.forEach {
@@ -97,12 +97,12 @@ class SectionServiceImpl(
     }
 
     private suspend fun arrive(transport: Transport) = coroutineScope {
-        jobs[transport.id]!!.cancelAndJoin()
+        jobs[transport.id]!!.cancel()
         journeyRepo.addJourneyTime(transport.getJourneyTime())
         holdChannels[transport.id]!!.send(transport)
     }
 
-    private suspend fun release(transport: Transport) = coroutineScope {
+    private suspend fun release(transport: Transport, jobs: List<Job>?) = coroutineScope {
         val job = launch { transport.signal(signalService.getChannel(transport.section())!!) }
 
         if (switchService.isSwitchSection(transport))
@@ -121,15 +121,17 @@ class SectionServiceImpl(
                     line = transport.line.id
                 )
             )
+
+            jobs?.forEach { it.cancel() }
         }
 
     }
 
     private suspend fun processSwitch(transport: Transport, section: Pair<String, String>, job: Job) = coroutineScope {
         queues.getQueue(section).removeFirstOrNull()?.let {
-            jobs[it.id]!!.cancelAndJoin()
+            jobs[it.id]!!.cancel()
         }
-        job.cancelAndJoin()
+        job.cancel()
         prepareRelease(transport) { t -> launch { transport.signal(signalService.getChannel(t.section())!!) } }
 
     }

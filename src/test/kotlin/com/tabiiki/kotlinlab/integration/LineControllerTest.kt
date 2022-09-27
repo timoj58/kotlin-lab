@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineRepoImpl
 import com.tabiiki.kotlinlab.repo.StationRepo
@@ -46,7 +47,7 @@ class LineControllerTest(
             PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo)
         val lineConductor = LineConductorImpl(lineService)
 
-        val stationService = StationServiceImpl(signalService, stationFactory)
+        val stationService = StationServiceImpl(timeStep = timeStep, signalService = signalService, stationFactory = stationFactory)
 
         val lineFactory = LineFactory(
             linesConfig = LinesConfig(
@@ -75,21 +76,19 @@ class LineControllerTest(
             conductor = lineConductor,
         )
 
-        val initJob = launch {
-            controller.init(line)
-        }
+        val globalCommuterChannel = Channel<Commuter>()
+
+        val initJob = launch { controller.init(line, globalCommuterChannel) }
 
         delay(1000)
 
         val listener = Channel<StationMessage>()
 
-        val job = launch {
-            controller.start(line)
-        }
+        val job = launch { controller.start(line) }
 
         val job2 = launch {
             delay(100)
-            stationService.start(listener, line.first().name)
+            stationService.start(listener, globalCommuterChannel, line.first().name)
         }
 
         val running = async {

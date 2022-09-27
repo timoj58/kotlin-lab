@@ -8,12 +8,10 @@ import org.springframework.stereotype.Repository
 @Repository
 class StationFactory(
     stationsConfig: StationsConfig,
-    linesConfig: LinesConfig
 ) {
     private val stations = stationsConfig.stations.map { config ->
         Station(
             config,
-            linesConfig.lines.filter { it.stations.contains(config.id) }.map { it.id }
         )
     }
 

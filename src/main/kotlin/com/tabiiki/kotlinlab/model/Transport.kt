@@ -26,10 +26,9 @@ enum class Status {
 }
 
 enum class Instruction {
-    STATIONARY, EMERGENCY_STOP, SCHEDULED_STOP,/*, LIMIT_10, LIMIT_20, LIMIT_30,*/ THROTTLE_ON;
+    STATIONARY, EMERGENCY_STOP, SCHEDULED_STOP, THROTTLE_ON;
 
-    fun isMoving(): Boolean =
-        listOf(THROTTLE_ON/*, LIMIT_10, LIMIT_20, LIMIT_30*/).contains(this)
+    fun isMoving(): Boolean = THROTTLE_ON == this
 }
 
 interface ITransport {
@@ -59,8 +58,9 @@ data class Transport(
 
     var id: UUID = UUID.randomUUID()
     val transportId = config.transportId
-    private val carriage = Carriage(config.capacity)
+    val carriage = Carriage(config.capacity)
     private val physics = Physics(config)
+
     var status = Status.DEPOT
     private var instruction = Instruction.STATIONARY
     var actualSection: Pair<String, String>? = null
@@ -135,7 +135,6 @@ data class Transport(
 
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
-                        // SignalValue.AMBER -> Instruction.LIMIT_20 // TODO this is not implemented properly
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
                     }.also { instruction = it }
 
@@ -239,9 +238,6 @@ data class Transport(
             private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {
                 return when (instruction) {
                     Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
-                    //  Instruction.LIMIT_10 -> percentage * (power.toDouble() / 1500.0)
-                    //  Instruction.LIMIT_20 -> percentage * (power.toDouble() / 1000.0)
-                    //  Instruction.LIMIT_30 -> percentage * (power.toDouble() / 500.0)
                     Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 1000.0) * -1
                     Instruction.EMERGENCY_STOP -> power.toDouble() * -1
                     else -> 0.0
@@ -277,9 +273,6 @@ data class Transport(
 
                 return when (instruction) {
                     Instruction.THROTTLE_ON -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
-                    //  Instruction.LIMIT_10 -> floor(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
-                    //  Instruction.LIMIT_20 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform)
-                    //  Instruction.LIMIT_30 -> floor(iterationsToPlatform) * 3 == floor(iterationsToBrakeToPlatform) - 1
                     else -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
                 }
             }

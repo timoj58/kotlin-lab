@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.factory
 
+import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.repo.LineDirection
 import kotlinx.coroutines.channels.Channel
@@ -14,7 +15,7 @@ enum class SignalType {
 }
 
 enum class SignalValue {
-    RED, GREEN//, AMBER
+    RED, GREEN
 }
 
 data class SignalMessage(
@@ -22,6 +23,7 @@ data class SignalMessage(
     val id: UUID? = null,
     val key: Pair<String, String>? = null,
     val line: String? = null,
+    val commuterChannel: Channel<Commuter>? = null,
     var timesStamp: Long = System.currentTimeMillis()
 )
 

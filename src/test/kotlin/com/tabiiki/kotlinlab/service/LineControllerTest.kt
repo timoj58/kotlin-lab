@@ -3,7 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -57,7 +57,7 @@ internal class LineControllerTest {
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
-        res.cancelAndJoin()
+        res.cancel()
     }
 
 
@@ -78,6 +78,6 @@ internal class LineControllerTest {
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
-        res.cancelAndJoin()
+        res.cancel()
     }
 }

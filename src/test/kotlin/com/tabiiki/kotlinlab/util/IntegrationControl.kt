@@ -4,7 +4,7 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import org.assertj.core.api.Assertions
 import java.util.UUID
@@ -36,7 +36,7 @@ class IntegrationControl {
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * timeout) > System.currentTimeMillis())
 
         diagnosticsCheck()
-        jobs.forEach { it.cancelAndJoin() }
+        jobs.forEach { it.cancel() }
         assert()
 
     }

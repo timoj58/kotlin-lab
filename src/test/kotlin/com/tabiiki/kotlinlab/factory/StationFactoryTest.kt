@@ -14,19 +14,7 @@ import org.mockito.Mockito
 
 internal class StationFactoryTest {
 
-    val lineConfig = Mockito.mock(LinesConfig::class.java)
-    val stationsConfig = Mockito.mock(StationsConfig::class.java)
-
-    @BeforeEach
-    fun init() {
-        Mockito.`when`(lineConfig.lines).thenReturn(
-            listOf(
-                LineConfig("1", "1", 1, 10, listOf("A", "C")),
-                LineConfig("2", "2", 2, 15, listOf("A", "B"))
-            )
-        )
-
-    }
+    private val stationsConfig = Mockito.mock(StationsConfig::class.java)
 
     @Test
     fun `get station`() {
@@ -38,16 +26,15 @@ internal class StationFactoryTest {
             )
         )
 
-        val station = StationFactory(stationsConfig, lineConfig).get("A")
+        val station = StationFactory(stationsConfig).get("A")
         assertNotNull(station)
-        assertThat(station.lines).isEqualTo(listOf("1", "2"))
     }
 
     @Test
     fun `station does not exist`() {
         Mockito.`when`(stationsConfig.stations).thenReturn(listOf())
         Assertions.assertThrows(NoSuchElementException::class.java) {
-            StationFactory(stationsConfig, lineConfig).get("A")
+            StationFactory(stationsConfig).get("A")
         }
     }
 }

@@ -25,19 +25,16 @@ internal class StationRepoTest {
         allStations.add(
             Station(
                 StationConfig(id = "E", latitude = 51.5002551610895, longitude = 0.00358625912595083),
-                listOf()
             )
         )
         allStations.add(
             Station(
                 StationConfig(id = "F", latitude = 51.5002551610895, longitude = 0.00358625912595083),
-                listOf()
             )
         )
         allStations.add(
             Station(
                 StationConfig(id = "D", latitude = 51.5002551610895, longitude = 0.00358625912595083),
-                listOf()
             )
         )
 

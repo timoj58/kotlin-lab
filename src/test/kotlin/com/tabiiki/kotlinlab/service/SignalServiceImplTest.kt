@@ -6,7 +6,7 @@ import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -41,7 +41,7 @@ internal class SignalServiceImplTest {
         delay(100)
         signalService.send(Pair("A", "B"), SignalMessage(SignalValue.RED))
         delay(200)
-        job2.cancelAndJoin()
+        job2.cancel()
     }
 
     suspend fun testChannel(channel: Channel<SignalMessage>, job: Job) {
@@ -50,7 +50,7 @@ internal class SignalServiceImplTest {
             signal = channel.receive().signalValue
         } while (signal != SignalValue.RED)
 
-        job.cancelAndJoin()
+        job.cancel()
     }
 
 }

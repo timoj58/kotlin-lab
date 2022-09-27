@@ -2,11 +2,13 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.StationFactory
+import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.monitor.StationMonitor
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -23,18 +25,29 @@ data class StationMessage(
 )
 
 interface StationService {
-    suspend fun start(globalListener: Channel<StationMessage>, line: String? = null)
+    suspend fun start(
+        globalListener: Channel<StationMessage>,
+        commuterChannel: Channel<Commuter>,
+        line: String? = null,
+    )
 }
 
 @Service
 class StationServiceImpl(
+    @Value("\${network.time-step}") val timeStep: Long,
     val signalService: SignalService,
     val stationFactory: StationFactory
 ) : StationService {
 
     private val stationMonitor = StationMonitor()
 
-    override suspend fun start(globalListener: Channel<StationMessage>, line: String?) = coroutineScope {
+    override suspend fun start(
+        globalListener: Channel<StationMessage>,
+        commuterChannel: Channel<Commuter>,
+        line: String?
+    ) = coroutineScope {
+        launch { stationMonitor.monitorCommuters(commuterChannel) }
+
         stationFactory.get().forEach { code ->
             val channel = Channel<SignalMessage>()
             val station = stationFactory.get(code)

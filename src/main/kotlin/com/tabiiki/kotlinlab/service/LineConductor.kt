@@ -1,8 +1,10 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.model.Transport
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -13,7 +15,7 @@ interface LineConductor {
     fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
     suspend fun release(transport: Transport)
     suspend fun hold(transport: Transport)
-    suspend fun init(line: String, lines: List<Line>)
+    suspend fun init(line: String, lines: List<Line>, channel: Channel<Commuter>)
     fun isClear(transport: Transport): Boolean
 }
 
@@ -41,8 +43,8 @@ class LineConductorImpl(
         launch { platformService.hold(transport) }
     }
 
-    override suspend fun init(line: String, lines: List<Line>): Unit = coroutineScope {
-        launch { platformService.init(line, lines) }
+    override suspend fun init(line: String, lines: List<Line>, channel: Channel<Commuter>): Unit = coroutineScope {
+        launch { platformService.init(line, lines, channel) }
     }
 
     override fun isClear(transport: Transport): Boolean =

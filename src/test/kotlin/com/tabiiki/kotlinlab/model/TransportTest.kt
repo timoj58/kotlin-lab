@@ -8,7 +8,7 @@ import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -91,8 +91,8 @@ internal class TransportTest {
         assertThat(train.platformFromKey()).isEqualTo(Pair("1:POSITIVE", "1:A"))
         assertThat(train.platformToKey()).isEqualTo(Pair("1:POSITIVE", "1:B"))
 
-        job.cancelAndJoin()
-        job2.cancelAndJoin()
+        job.cancel()
+        job2.cancel()
     }
 
     @Test
@@ -136,7 +136,7 @@ internal class TransportTest {
         assertThat(train.section().first).isEqualTo("1:2")
         assertThat(train.section().second).isEqualTo("3")
 
-        res.cancelAndJoin()
+        res.cancel()
     }
 
     @Test
@@ -160,7 +160,7 @@ internal class TransportTest {
             delay(1000)
         } while (!train.atPlatform())
 
-        res.cancelAndJoin()
+        res.cancel()
     }
 
     private fun launch() = runBlocking {
@@ -172,14 +172,13 @@ internal class TransportTest {
             train.release(
                 LineInstructions(
                     from = Station(
-                        StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second), listOf()
+                        StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second),
                     ),
                     to = Station(
-                        StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second), listOf()
+                        StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second),
                     ),
                     next = Station(
                         StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second),
-                        listOf()
                     ),
                     direction = LineDirection.POSITIVE
                 )
