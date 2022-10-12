@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.monitor
 
+import com.tabiiki.kotlinlab.factory.RouteFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
@@ -30,7 +31,7 @@ class StationMonitorTest {
         val job2 = launch { stationMonitor.monitorPlatform(platformChannel, stationChannel) }
 
         //add a commuter.
-        val commuter = Commuter(commute = Pair("A", "B"), channel = Channel(), timeStep = 10)
+        val commuter = Commuter(commute = Pair("A", "B"), channel = Channel(), timeStep = 10, routeFactory = mock(RouteFactory::class.java))
         commuterChannel.send(commuter)
         //send a RED
         launch { platformChannel.send(

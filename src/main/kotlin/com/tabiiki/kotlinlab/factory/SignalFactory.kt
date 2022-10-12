@@ -7,7 +7,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 import java.util.UUID
 
 enum class SignalType {
@@ -61,7 +61,7 @@ data class Signal(
 
 }
 
-@Repository
+@Component
 class SignalFactory(
     private val lineFactory: LineFactory
 ) {

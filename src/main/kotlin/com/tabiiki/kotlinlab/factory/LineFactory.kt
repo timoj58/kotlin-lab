@@ -5,10 +5,10 @@ import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.LineNetwork
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 import javax.naming.ConfigurationException
 
-@Repository
+@Component
 class LineFactory(
     @Value("\${network.time-step}") val timeStep: Long,
     transportConfig: TransportersConfig,

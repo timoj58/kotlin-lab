@@ -17,7 +17,7 @@ interface CommuterService {
 @Service
 class CommuterServiceImpl(
     @Value("\${network.time-step}") val timeStep: Long,
-    val routeService: RouteService
+    val routeService: RouteService,
 ): CommuterService {
     private val commuterChannel = Channel<Commuter>()
     private val trackingChannel = Channel<Commuter>()
@@ -36,7 +36,9 @@ class CommuterServiceImpl(
             val commuter =  Commuter(
                 commute = routeService.generate(),
                 channel = trackingChannel,
-                timeStep = timeStep)
+                timeStep = timeStep,
+                routeFactory = routeService.routeFactory())
+
             launch { commuter.track() }
             launch { commuterChannel.send(commuter) }
         } while (true)

@@ -1,11 +1,10 @@
 package com.tabiiki.kotlinlab.factory
 
-import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.StationsConfig
 import com.tabiiki.kotlinlab.model.Station
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 
-@Repository
+@Component
 class StationFactory(
     stationsConfig: StationsConfig,
 ) {

@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.model
 
+import com.tabiiki.kotlinlab.factory.RouteFactory
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import java.util.UUID
@@ -8,9 +9,9 @@ data class Commuter(
     val id: UUID = UUID.randomUUID(),
     val commute: Pair<String, String>,
     val channel: Channel<Commuter>,
-    val timeStep: Long
+    val timeStep: Long,
+    val routeFactory: RouteFactory
 ) {
-    //this can be calculated dynamically? need to track though....
     private var route: List<Pair<String, String>> = mutableListOf()
 
     fun journey(): Pair<String, String> {
@@ -25,12 +26,24 @@ data class Commuter(
         do {
              channel.send(this)
              delay(timeStep)
-        } while (true)
+        } while ( route.none { it.second == commute.second })
     }
 
     companion object {
-        //something like this for now.
+        //TODO finding the routes, probably should be dynamic. static first cut.
         class RouteCalculator {
+            /*
+               to calculate a route, the commuter needs to know all the lines, and stations.
+               ie, given x & y, what options are available.
+
+               notes here.
+
+               as part of this, may need to change on the same line, if its a train that terminates early.
+
+               perhaps build into the signalling.  ie train X arrives with destination.
+               ie dont get on.  or do and get off at end.  computer less stupid than a human i guess.
+
+             */
 
         }
     }
