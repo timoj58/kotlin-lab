@@ -5,10 +5,6 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
