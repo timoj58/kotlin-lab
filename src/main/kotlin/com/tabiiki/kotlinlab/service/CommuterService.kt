@@ -36,8 +36,10 @@ class CommuterServiceImpl(
             val commuter =  Commuter(
                 commute = routeService.generate(),
                 channel = trackingChannel,
-                timeStep = timeStep,
-                routeFactory = routeService.routeFactory())
+                timeStep = timeStep
+            )
+
+            TODO("do not pass route factory to commute, allow commuter to message commuter service with dedicated channel")
 
             launch { commuter.track() }
             launch { commuterChannel.send(commuter) }

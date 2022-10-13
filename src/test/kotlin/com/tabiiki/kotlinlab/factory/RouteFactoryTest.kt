@@ -13,12 +13,26 @@ class RouteFactoryTest {
         "src/main/resources/network/dockland/dlr.yml",
         "src/main/resources/network/underground/jubilee.yml",
         "src/main/resources/network/underground/district.yml",
+        "src/main/resources/network/underground/circle.yml",
+        "src/main/resources/network/underground/city.yml",
+        "src/main/resources/network/underground/bakerloo.yml",
+        "src/main/resources/network/underground/northern.yml",
+        "src/main/resources/network/underground/piccadilly.yml",
+        "src/main/resources/network/underground/victoria.yml",
+        "src/main/resources/network/underground/hammersmith.yml",
         ))
     private val linesConfig = LinesConfig(linesAdapter)
     private val transportersAdapter = TransportersAdapter(
         listOf(
             TransportConfig(
                 transportId = 3,
+                capacity = 1000,
+                weight = 1500,
+                topSpeed = 20,
+                power = 2300
+            ),
+            TransportConfig(
+                transportId = 4,
                 capacity = 1000,
                 weight = 1500,
                 topSpeed = 20,
@@ -45,6 +59,14 @@ class RouteFactoryTest {
         )
     }
 
+    @Test
+    fun `calculate route including circle line Bayswater to Stratford `() {  //very slow but tests circle.
+        routeFactory.getAvailableRoutes(Pair("37","528"))
+        routeFactory.getAvailableRoutes(Pair("37","528"))
+        val routes = routeFactory.getAvailableRoutes(Pair("37","528"))
+
+        Assertions.assertThat(routes.size).isEqualTo(4) //better tests at some point. will change as more routes added.
+    }
     @Test
     fun `calculate routes from Stratford to Canary Wharf `() {
         val routes = routeFactory.getAvailableRoutes(Pair("528","94"))

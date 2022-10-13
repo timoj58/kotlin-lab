@@ -18,7 +18,7 @@ class CarriageTest {
         TODO("this is broken")
 
         val stationChannel = Channel<Commuter>()
-        val commuter = Commuter(commute = Pair("B", "A"), channel = Channel(), timeStep = 10, routeFactory = mock(RouteFactory::class.java))
+        val commuter = Commuter(commute = Pair("B", "A"), channel = Channel(), timeStep = 10)
 
         val embarkJob = launch { carriage.embark(stationChannel) }
         val channel = carriage.getChannel()

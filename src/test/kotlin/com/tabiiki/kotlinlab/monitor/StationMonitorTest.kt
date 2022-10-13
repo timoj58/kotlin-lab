@@ -31,7 +31,7 @@ class StationMonitorTest {
         val job2 = launch { stationMonitor.monitorPlatform(platformChannel, stationChannel) }
 
         //add a commuter.
-        val commuter = Commuter(commute = Pair("A", "B"), channel = Channel(), timeStep = 10, routeFactory = mock(RouteFactory::class.java))
+        val commuter = Commuter(commute = Pair("A", "B"), channel = Channel(), timeStep = 10)
         commuterChannel.send(commuter)
         //send a RED
         launch { platformChannel.send(

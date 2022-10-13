@@ -1,6 +1,5 @@
 package com.tabiiki.kotlinlab.model
 
-import com.tabiiki.kotlinlab.factory.RouteFactory
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import java.util.UUID
@@ -10,7 +9,6 @@ data class Commuter(
     val commute: Pair<String, String>,
     val channel: Channel<Commuter>,
     val timeStep: Long,
-    val routeFactory: RouteFactory
 ) {
     private var route: List<Pair<String, String>> = mutableListOf()
 

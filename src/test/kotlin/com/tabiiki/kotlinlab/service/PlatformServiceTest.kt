@@ -75,7 +75,7 @@ internal class PlatformServiceTest {
         )
 
         //add a commuter.
-        val commuter = Commuter(commute = Pair("TEST:26","TEST:94"), channel = Channel(), timeStep = 10, routeFactory = mock(RouteFactory::class.java))
+        val commuter = Commuter(commute = Pair("TEST:26","TEST:94"), channel = Channel(), timeStep = 10)
         globalCommuterChannel.send(commuter)
 
         val tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>> = ConcurrentHashMap()
