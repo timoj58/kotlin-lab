@@ -84,8 +84,7 @@ class RouteFactory(
                 if (lineInterchanges.isEmpty())
                     route.removeLast()
                 else
-                //need to filter out circle lines using same station as interchange
-                    lineInterchanges/*.filter { it != from }*/.forEach { interchange ->
+                    lineInterchanges.forEach { interchange ->
                         traverseLines(
                             linesToTest = filterLinesToTest(lineToTest, interchange, testedLines).toMutableList(),
                             linesTo = linesTo,
