@@ -66,7 +66,17 @@ class RouteFactoryTest {
         routeFactory.getAvailableRoutes(Pair("37","528"))
         val routes = routeFactory.getAvailableRoutes(Pair("37","528"))
 
-        Assertions.assertThat(routes.size).isEqualTo(3386) //better tests at some point. will change as more routes added.
+        Assertions.assertThat(routes.size).isEqualTo(5614) //better tests at some point. will change as more routes added.
+
+        //test if the circle interchange is present.
+        Assertions.assertThat(routes).contains(
+            listOf(Pair("Circle:37","Circle:418"),Pair("Circle:418","Circle:183"),Pair("Circle:183","Circle:24"),
+                Pair("Jubilee:24","Jubilee:63"),Pair("Jubilee:63","Jubilee:235"),Pair("Jubilee:235","Jubilee:629"),
+                Pair("Jubilee:629","Jubilee:598"), Pair("Jubilee:598","Jubilee:509"),Pair("Jubilee:509","Jubilee:345"),
+                Pair("Jubilee:345","Jubilee:50"),Pair("Jubilee:50","Jubilee:93"),Pair("Jubilee:93","Jubilee:94"),
+                Pair("Jubilee:94","Jubilee:396"),Pair("Jubilee:396","Jubilee:95"),Pair("Jubilee:95","Jubilee:615"),
+                Pair("Jubilee:615","Jubilee:528")),
+        )
     }
     @Test
     fun `calculate routes from Stratford to Canary Wharf `() {

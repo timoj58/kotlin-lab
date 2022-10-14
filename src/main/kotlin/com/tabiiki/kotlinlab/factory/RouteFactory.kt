@@ -85,7 +85,7 @@ class RouteFactory(
                     route.removeLast()
                 else
                 //need to filter out circle lines using same station as interchange
-                    lineInterchanges.filter { it != from }.forEach { interchange ->
+                    lineInterchanges/*.filter { it != from }*/.forEach { interchange ->
                         traverseLines(
                             linesToTest = filterLinesToTest(lineToTest, interchange, testedLines).toMutableList(),
                             linesTo = linesTo,
@@ -159,7 +159,7 @@ class RouteFactory(
                 2 -> if (fromIdx < toIdx) stations.subList(fromIdx, toIdx + 1) else stations.subList(toIdx, fromIdx + 1)
                     .reversed()
                 //circle line  418 to 418 .. return the shortest route
-                3 -> getLeastStops(from, to, stations)
+                3, 4 -> getLeastStops(from, to, stations)
                 else -> throw RuntimeException("invalid station $from $to count on route $fromCount + $toCount $stations")
             }
         }
