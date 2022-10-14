@@ -187,10 +187,10 @@ class RouteFactory(
         private fun calcShortestRoute(idx1a: Int, idx1b: Int, idx2: Int, stations: List<String>): List<String> {
             val possibleRoutes = mutableListOf<List<String>>()
 
-            if (idx2 > idx1a) possibleRoutes.add(stations.subList(idx1a, idx2))
-            if (idx2 > idx1b) possibleRoutes.add(stations.subList(idx1b, idx2))
-            if (idx2 < idx1a) possibleRoutes.add(stations.subList(idx2, idx1a).reversed())
-            if (idx2 < idx1b) possibleRoutes.add(stations.subList(idx2, idx1b).reversed())
+            if (idx2 > idx1a) possibleRoutes.add(stations.subList(idx1a, idx2+1))
+            if (idx2 > idx1b) possibleRoutes.add(stations.subList(idx1b, idx2+1))
+            if (idx2 < idx1a) possibleRoutes.add(stations.subList(idx2, idx1a+1).reversed())
+            if (idx2 < idx1b) possibleRoutes.add(stations.subList(idx2, idx1b+1).reversed())
 
             return possibleRoutes.minBy { it.size }
         }
