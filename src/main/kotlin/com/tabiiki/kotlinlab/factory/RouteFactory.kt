@@ -68,25 +68,19 @@ class RouteFactory(
         from: String,
         to: String,
         possibleRoutes: MutableList<List<Pair<String, String>>>,
-        testForRepeatInterchange: Boolean = false
     ) {
         if (linesToTest.isEmpty()) return
         do {
             val lineToTest = linesToTest.removeFirst()
-            if (testForRepeatInterchange
-                &&
-                possibleRoutes.flatten().any { pair ->
-                    pair.first == "${lineToTest.name}:$to" || pair.second == "${lineToTest.name}:$to"
-                }
-            ) return
 
             if (testedLines == null || testedLines.none { it == lineToTest.id }) {
                 testedLines?.add(lineToTest.id)
 
                 val lineInterchanges = interchanges.filter { lineToTest.stations.contains(it) }.toMutableList()
 
-                if (linesTo.any { it.id == lineToTest.id })
+                if (linesTo.any { it.id == lineToTest.id } && route.none { it.second.substringAfter(":") == to })
                     possibleRoutes.add(addRoute(route = route, line = lineToTest, from = from, to = to))
+
                 if (lineInterchanges.isEmpty())
                     route.removeLast()
                 else
@@ -105,7 +99,6 @@ class RouteFactory(
                             from = interchange,
                             to = to,
                             possibleRoutes = possibleRoutes,
-                            testForRepeatInterchange = true
                         )
                     }
             }
@@ -124,8 +117,7 @@ class RouteFactory(
 
     private fun filterLinesToTest(lineToTest: Line, interchange: String, testedLines: List<String>?): List<Line> =
         lines.filter { line ->
-            //using name as we do not want to interchange to the same line (diff route).  however, this maybe required for certain routes
-            line.name != lineToTest.name && line.stations.any {
+            line.id != lineToTest.id && line.stations.any {
                 interchange == it && testedLines?.none { t -> t == line.id } ?: true
             }
         }
@@ -168,7 +160,7 @@ class RouteFactory(
                     .reversed()
                 //circle line  418 to 418 .. return the shortest route
                 3 -> getLeastStops(from, to, stations)
-                else -> throw RuntimeException("invalid station $from $to count on route $fromCount + $toCount")
+                else -> throw RuntimeException("invalid station $from $to count on route $fromCount + $toCount $stations")
             }
         }
 
@@ -187,10 +179,10 @@ class RouteFactory(
         private fun calcShortestRoute(idx1a: Int, idx1b: Int, idx2: Int, stations: List<String>): List<String> {
             val possibleRoutes = mutableListOf<List<String>>()
 
-            if (idx2 > idx1a) possibleRoutes.add(stations.subList(idx1a, idx2+1))
-            if (idx2 > idx1b) possibleRoutes.add(stations.subList(idx1b, idx2+1))
-            if (idx2 < idx1a) possibleRoutes.add(stations.subList(idx2, idx1a+1).reversed())
-            if (idx2 < idx1b) possibleRoutes.add(stations.subList(idx2, idx1b+1).reversed())
+            if (idx2 > idx1a) possibleRoutes.add(stations.subList(idx1a, idx2 + 1))
+            if (idx2 > idx1b) possibleRoutes.add(stations.subList(idx1b, idx2 + 1))
+            if (idx2 < idx1a) possibleRoutes.add(stations.subList(idx2, idx1a + 1).reversed())
+            if (idx2 < idx1b) possibleRoutes.add(stations.subList(idx2, idx1b + 1).reversed())
 
             return possibleRoutes.minBy { it.size }
         }

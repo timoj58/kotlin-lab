@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class RouteFactoryTest {
@@ -65,7 +66,7 @@ class RouteFactoryTest {
         routeFactory.getAvailableRoutes(Pair("37","528"))
         val routes = routeFactory.getAvailableRoutes(Pair("37","528"))
 
-        Assertions.assertThat(routes.size).isEqualTo(4) //better tests at some point. will change as more routes added.
+        Assertions.assertThat(routes.size).isEqualTo(3386) //better tests at some point. will change as more routes added.
     }
     @Test
     fun `calculate routes from Stratford to Canary Wharf `() {
