@@ -20,17 +20,17 @@ data class Carriage(
 
     override fun getChannel() = channel
 
-    override suspend fun embark(channel: Channel<Commuter>) = coroutineScope {
+    override suspend fun embark(stationChannel: Channel<Commuter>) = coroutineScope {
         do {
             val commuter = channel.receive()
-            if (commuters.size < capacity) commuters.add(commuter) else channel.send(commuter)
+            if (commuters.size < capacity) commuters.add(commuter) else stationChannel.send(commuter)
         } while (true)
     }
 
-    override suspend fun disembark(station: String, channel: Channel<Commuter>) = coroutineScope {
-        commuters.filter { it.journey().second == station }.forEach {
+    override suspend fun disembark(station: String, stationChannel: Channel<Commuter>) = coroutineScope {
+        commuters.filter { it.getNextJourneyStage().second == station }.forEach {
             commuters.remove(it)
-            channel.send(it)
+            stationChannel.send(it)
         }
     }
 

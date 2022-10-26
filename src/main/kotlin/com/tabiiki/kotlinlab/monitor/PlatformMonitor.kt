@@ -28,7 +28,7 @@ class PlatformMonitor(
     fun init(key: Pair<String, String>) = platforms.init(key)
     fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms.atPlatform(key)
     fun accept(key: Pair<String, String>, transport: Transport) = platforms.accept(key, transport)
-    fun release(key: Pair<String, String>, transport: Transport) = platforms.release(key)
+    fun release(key: Pair<String, String>) = platforms.release(key)
     fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)]!!
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {

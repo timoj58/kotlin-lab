@@ -17,7 +17,7 @@ interface CommuterService {
 @Service
 class CommuterServiceImpl(
     @Value("\${network.time-step}") val timeStep: Long,
-    val routeService: RouteService,
+    private val routeService: RouteService,
 ): CommuterService {
     private val commuterChannel = Channel<Commuter>()
     private val trackingChannel = Channel<Commuter>()
@@ -28,21 +28,25 @@ class CommuterServiceImpl(
 
     override suspend fun generate() = coroutineScope {
 
+        launch { routeService.listen() }
         launch { commuterMonitor.monitor(trackingChannel) }
 
         do {
             delay(timeStep)
             //release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)
+            //also what happens when they complete journey? need to track  them.
             val commuter =  Commuter(
                 commute = routeService.generate(),
-                channel = trackingChannel,
-                timeStep = timeStep
-            )
+                stationChannel = trackingChannel,
+                timeStep = timeStep,
+                routeChannel = routeService.getChannel(),
+            )  {
+                launch { it.track() }
+                launch { commuterChannel.send(it) }
+            }
 
-            TODO("do not pass route factory to commute, allow commuter to message commuter service with dedicated channel")
+            launch { commuter.initJourney() }
 
-            launch { commuter.track() }
-            launch { commuterChannel.send(commuter) }
         } while (true)
     }
 

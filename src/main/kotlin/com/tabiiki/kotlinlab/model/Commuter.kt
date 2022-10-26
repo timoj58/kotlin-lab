@@ -1,48 +1,52 @@
 package com.tabiiki.kotlinlab.model
 
+import com.tabiiki.kotlinlab.factory.AvailableRoutes
+import com.tabiiki.kotlinlab.service.RouteEnquiry
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.function.Consumer
 
 data class Commuter(
     val id: UUID = UUID.randomUUID(),
-    val commute: Pair<String, String>,
-    val channel: Channel<Commuter>,
+    val commute: Pair<String, String>, //TODO destroy commuter once completed?  makes sense.
+    val stationChannel: Channel<Commuter>,
     val timeStep: Long,
+    val routeChannel: Channel<RouteEnquiry>,
+    val ready: Consumer<Commuter>,
 ) {
-    private var route: List<Pair<String, String>> = mutableListOf()
 
-    fun journey(): Pair<String, String> {
-        TODO("return the latest stage of journey")
-    }
+    fun getNextJourneyStage(): Pair<String, String> = route?.removeFirst() ?: throw Exception("route is complete")
 
-    fun station(): String {
-        TODO("return the station - handle initial action")
+    fun getCurrentStation(): String = commute.first
+
+    suspend fun initJourney() = coroutineScope {
+        launch {
+            routeChannel.send(
+                RouteEnquiry(route = commute, channel = channel)
+            )
+        }
+
+        do {
+            enquiry = channel.receive()
+            route = enquiry!!.routes.minBy { it.size }.toMutableList()
+            ready.accept(this@Commuter)
+        } while (enquiry == null)
+
     }
 
     suspend fun track() {
         do {
-             channel.send(this)
-             delay(timeStep)
-        } while ( route.none { it.second == commute.second })
+            stationChannel.send(this)
+            delay(timeStep)
+        } while (route!!.isNotEmpty())
     }
 
     companion object {
-        //TODO finding the routes, probably should be dynamic. static first cut.
-        class RouteCalculator {
-            /*
-               to calculate a route, the commuter needs to know all the lines, and stations.
-               ie, given x & y, what options are available.
-
-               notes here.
-
-               as part of this, may need to change on the same line, if its a train that terminates early.
-
-               perhaps build into the signalling.  ie train X arrives with destination.
-               ie dont get on.  or do and get off at end.  computer less stupid than a human i guess.
-
-             */
-
-        }
+        val channel: Channel<AvailableRoutes> = Channel()
+        var enquiry: AvailableRoutes? = null
+        var route: MutableList<Pair<String, String>>? = null
     }
 }

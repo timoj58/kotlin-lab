@@ -2,7 +2,6 @@ package com.tabiiki.kotlinlab.model
 
 import org.junit.jupiter.api.Test
 
-
 class CommuterTest {
 
     @Test

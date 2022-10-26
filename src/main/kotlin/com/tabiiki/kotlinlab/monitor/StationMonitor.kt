@@ -62,7 +62,7 @@ class StationMonitor(val timestep: Long = 100) {
     suspend fun monitorCommuters(channel: Channel<Commuter>) = coroutineScope {
         do {
             val msg = channel.receive()
-            val station = msg.station()
+            val station = msg.getCurrentStation()
 
             if(!stationCommuters.contains(station)) stationCommuters[station] = mutableListOf()
             stationCommuters[station]!!.add(msg)
@@ -72,7 +72,7 @@ class StationMonitor(val timestep: Long = 100) {
     private suspend fun embark(platform: Pair<String, String>, carriageChannel: Channel<Commuter>) = coroutineScope {
         val station = platform.second.substringAfter(":")
         do {
-            stationCommuters[station]?.filter { it.journey() == platform }?.forEach {
+            stationCommuters[station]?.filter { it.getNextJourneyStage() == platform }?.forEach {
                 stationCommuters[station]!!.remove(it)
                 launch { carriageChannel.send(it) }
             }

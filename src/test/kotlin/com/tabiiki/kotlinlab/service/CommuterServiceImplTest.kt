@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
-import kotlinx.coroutines.delay
+import com.tabiiki.kotlinlab.factory.AvailableRoutes
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
@@ -13,19 +14,31 @@ class CommuterServiceImplTest {
 
     @Test
     fun `commuter service test check commuter added to channel` () = runBlocking {
+        val routeChannel = Channel<RouteEnquiry>()
         Mockito.`when` (routeService.generate()).thenReturn(Pair("A", "B"))
+        Mockito.`when` (routeService.getChannel()).thenReturn(routeChannel)
+
+        val channelJob = launch {
+            do {
+                val enquiry = routeChannel.receive()
+                enquiry.channel.send(AvailableRoutes(
+                    routes = listOf(listOf(Pair("A", "B")))
+                ))
+            }while (true)
+        }
 
         val channel = commuterServiceImpl.getCommuterChannel()
-
         val job = launch { commuterServiceImpl.generate() }
 
-        delay(100)
-
         val commuter = channel.receive()
+
         Assertions.assertThat(commuter).isNotNull
         Assertions.assertThat(commuter.commute.first).isNotNull
         Assertions.assertThat(commuter.commute.second).isNotNull
+        Assertions.assertThat(commuter.getCurrentStation()).isEqualTo("A")
+        Assertions.assertThat(commuter.getNextJourneyStage()).isEqualTo(Pair("A", "B"))
 
         job.cancel()
+        channelJob.cancel()
     }
 }

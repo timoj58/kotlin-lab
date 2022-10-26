@@ -35,8 +35,8 @@ interface StationService {
 @Service
 class StationServiceImpl(
     @Value("\${network.time-step}") val timeStep: Long,
-    val signalService: SignalService,
-    val stationFactory: StationFactory
+    private val signalService: SignalService,
+    private val stationFactory: StationFactory
 ) : StationService {
 
     private val stationMonitor = StationMonitor()

@@ -12,6 +12,9 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
 @Disabled //TODO these tests are most likely wrong.  ie switch lines occur on multiple lines, not a single line.
+/*
+    these do not make any sense:  review or leave.  testing data is wrong.
+ */
 internal class SwitchServiceImplTest {
 
     private val lineFactory = mock(LineFactory::class.java)
@@ -35,7 +38,7 @@ internal class SwitchServiceImplTest {
     @ParameterizedTest
     @CsvSource("B,C,FALSE", "C,B,FALSE", "C,D,TRUE")
     fun `is switch section`(to: String, from: String, res: Boolean) {
-        `when`(lineFactory.isSwitchSection("3", Pair(to, from))).thenReturn(Pair(true, true))
+        `when`(lineFactory.isSwitchSection("3", Pair(to, from))).thenReturn(Pair(res, res))
 
         val transport = Transport(
             config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
@@ -50,7 +53,7 @@ internal class SwitchServiceImplTest {
     @ParameterizedTest
     @CsvSource("B,C,FALSE", "C,B,FALSE", "D,C,TRUE")
     fun `is switch platform`(to: String, from: String, res: Boolean) {
-        `when`(lineFactory.isSwitchSection("3", Pair(to, from))).thenReturn(Pair(true, true))
+        `when`(lineFactory.isSwitchSection("3", Pair(to, from))).thenReturn(Pair(res, res))
 
         val transport = Transport(
             config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),

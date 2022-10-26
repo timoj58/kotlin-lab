@@ -141,7 +141,7 @@ class PlatformServiceImpl(
         launch { transport.release(instructions) }
         launch { addToSection(actualKey, transport, jobs) }
 
-        platformMonitor.release(actualKey, transport)
+        platformMonitor.release(actualKey)
     }
 
     private fun testForDepartureTerminal(transport: Transport, key: Pair<String, String>): Pair<String, String> {

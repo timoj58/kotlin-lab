@@ -4,39 +4,39 @@ import com.tabiiki.kotlinlab.model.Line
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
+data class AvailableRoutes(val routes: List<List<Pair<String, String>>>)
+
 @Component
 class RouteFactory(
-    val lineFactory: LineFactory
+    private val interchangeFactory: InterchangeFactory
 ) {
-    private val lines: List<Line> = lineFactory.get().map { lineFactory.get(it) }
-    private val interchanges = generateInterchanges(lines)
-    private val memoized: ConcurrentHashMap<Pair<String, String>, List<List<Pair<String, String>>>> =
+    private val memoized: ConcurrentHashMap<Pair<String, String>, AvailableRoutes> =
         ConcurrentHashMap()
 
-    fun getInterchanges(): List<String> = interchanges
+    fun isSelectableStation(station: String) = interchangeFactory.stations.any { it == station }
 
-    fun getAvailableRoutes(journey: Pair<String, String>): List<List<Pair<String, String>>> =
+    fun getAvailableRoutes(journey: Pair<String, String>): AvailableRoutes =
         memoized.getOrElse(journey) {
-            memoized[journey] = getDirectRoutes(journey).toMutableList().plus(getInterchangeRoutes(journey)).distinct()
+            memoized[journey] = AvailableRoutes(getDirectRoutes(journey).toMutableList().plus(getInterchangeRoutes(journey)))
             return memoized[journey]!!
         }
 
     private fun getDirectRoutes(journey: Pair<String, String>): List<List<Pair<String, String>>> =
-        lines.filter { it.stations.contains(journey.first) && it.stations.contains(journey.second) }.map { line ->
+        interchangeFactory.lines.filter { it.stations.contains(journey.first) && it.stations.contains(journey.second) }.map { line ->
             createRoute(line = line.name, stations = getSublist(journey.first, journey.second, line.stations))
         }.distinct()
 
     private fun getInterchangeRoutes(journey: Pair<String, String>): List<List<Pair<String, String>>> {
         val possibleRoutes = mutableListOf<List<Pair<String, String>>>()
 
-        val linesFrom = getLines(include = journey.first, exclude = journey.second)
-        val linesTo = getLines(include = journey.second, exclude = journey.first)
+        val linesFrom = interchangeFactory.getLines(include = journey.first, exclude = journey.second)
+        val linesTo = interchangeFactory.getLines(include = journey.second, exclude = journey.first)
 
         //performance is faster like this than with a flow based on some tests.
         linesFrom.forEach { lineFrom ->
-            interchanges.filter { lineFrom.stations.contains(it) }.forEach { interchange ->
+            interchangeFactory.interchanges.filter { lineFrom.stations.contains(it) }.forEach { interchange ->
                 traverseLines(
-                    linesToTest = lines.filter { line -> line.stations.any { interchange == it } }.toMutableList(),
+                    linesToTest = interchangeFactory.linesToTest(interchange),
                     linesTo = linesTo,
                     route = addRoute(
                         route = mutableListOf(),
@@ -53,11 +53,6 @@ class RouteFactory(
 
         return possibleRoutes.distinct()
     }
-
-    private fun getLines(include: String, exclude: String): List<Line> =
-        lines.filter { it.stations.contains(include) && it.stations.none { s -> s == exclude } }.filter {
-            it.stations.any { station -> interchanges.contains(station) }
-        }
 
 
     private fun traverseLines(
@@ -76,8 +71,9 @@ class RouteFactory(
             if (testedLines == null || testedLines.none { it == lineToTest.id }) {
                 testedLines?.add(lineToTest.id)
 
-                val lineInterchanges = interchanges.filter { lineToTest.stations.contains(it) }.toMutableList()
+                val lineInterchanges = interchangeFactory.interchanges.filter { lineToTest.stations.contains(it) }.toMutableList()
 
+                //this ensures we do not add routes that bypass the destination by using it as an interchange
                 if (linesTo.any { it.id == lineToTest.id } && route.none { it.second.substringAfter(":") == to })
                     possibleRoutes.add(addRoute(route = route, line = lineToTest, from = from, to = to))
 
@@ -86,7 +82,7 @@ class RouteFactory(
                 else
                     lineInterchanges.forEach { interchange ->
                         traverseLines(
-                            linesToTest = filterLinesToTest(lineToTest, interchange, testedLines).toMutableList(),
+                            linesToTest = interchangeFactory.filterLinesToTest(lineToTest, interchange, testedLines).toMutableList(),
                             linesTo = linesTo,
                             testedLines = testedLines ?: mutableListOf(),
                             route = addRoute(
@@ -114,28 +110,7 @@ class RouteFactory(
         route.plus(createRoute(line = line.name, stations = getSublist(from, to, line.stations)))
 
 
-    private fun filterLinesToTest(lineToTest: Line, interchange: String, testedLines: List<String>?): List<Line> =
-        lines.filter { line ->
-            line.id != lineToTest.id && line.stations.any {
-                interchange == it && testedLines?.none { t -> t == line.id } ?: true
-            }
-        }
-
     companion object {
-
-        fun generateInterchanges(lines: List<Line>): List<String> {
-            val interchanges = mutableListOf<String>()
-            lines.forEach { line ->
-                val otherLines = lines.filter { it.name != line.name }
-                line.stations.forEach { station ->
-                    otherLines.forEach { other ->
-                        if (other.stations.contains(station)) interchanges.add(station)
-                    }
-                }
-            }
-
-            return interchanges.distinct()
-        }
 
         fun createRoute(line: String, stations: List<String>): List<Pair<String, String>> {
             val route = mutableListOf<Pair<String, String>>()

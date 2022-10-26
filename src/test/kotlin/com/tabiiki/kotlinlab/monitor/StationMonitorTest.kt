@@ -1,9 +1,9 @@
 package com.tabiiki.kotlinlab.monitor
 
-import com.tabiiki.kotlinlab.factory.RouteFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
+import com.tabiiki.kotlinlab.service.RouteEnquiry
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -26,12 +26,13 @@ class StationMonitorTest {
         val stationChannel = Channel<SignalMessage>()
 
         val commuterChannel = Channel<Commuter>()
+        val routeEnquiryChannel = Channel<RouteEnquiry>()
         val carriageChannel = mock(Channel::class.java) as Channel<Commuter>?
         val job = launch { stationMonitor.monitorCommuters(commuterChannel) }
         val job2 = launch { stationMonitor.monitorPlatform(platformChannel, stationChannel) }
 
         //add a commuter.
-        val commuter = Commuter(commute = Pair("A", "B"), channel = Channel(), timeStep = 10)
+        val commuter = Commuter(commute = Pair("A", "B"), stationChannel = Channel(), timeStep = 10, routeChannel = routeEnquiryChannel) {}
         commuterChannel.send(commuter)
         //send a RED
         launch { platformChannel.send(
