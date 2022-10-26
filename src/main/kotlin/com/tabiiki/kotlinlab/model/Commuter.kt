@@ -18,7 +18,7 @@ data class Commuter(
     val ready: Consumer<Commuter>,
 ) {
 
-    fun getNextJourneyStage(): Pair<String, String> = route?.removeFirst() ?: throw Exception("route is complete")
+    fun getNextJourneyStage(): Pair<String, String> = route!!.removeFirstOrNull() ?: throw Exception("route is complete")
 
     fun getCurrentStation(): String = commute.first
 
@@ -29,12 +29,10 @@ data class Commuter(
             )
         }
 
-        do {
-            enquiry = channel.receive()
-            route = enquiry!!.routes.minBy { it.size }.toMutableList()
-            ready.accept(this@Commuter)
-        } while (enquiry == null)
+        enquiry = channel.receive()
 
+        route = enquiry!!.routes.minBy { it.size }.toMutableList()
+        ready.accept(this@Commuter)
     }
 
     suspend fun track() {
