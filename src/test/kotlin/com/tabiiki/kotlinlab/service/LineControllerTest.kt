@@ -3,16 +3,15 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.atLeast
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import javax.naming.ConfigurationException
 
 internal class LineControllerTest {

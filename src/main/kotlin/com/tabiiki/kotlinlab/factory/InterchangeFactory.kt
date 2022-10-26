@@ -9,6 +9,7 @@ class InterchangeFactory(
 ) {
     final val lines: List<Line> = lineFactory.get().map { lineFactory.get(it) }
     final val stations = lines.map { it.stations }.flatten()
+
     //TODO there will be a cost to this in terms of startup.  should be in init method.
     final val interchanges = generateInterchanges(lines)
     final val virtualInterchanges = generateVirtualInterchanges(lines)
@@ -25,7 +26,8 @@ class InterchangeFactory(
             }
         }
 
-    fun linesToTest(interchange: String) =  lines.filter { line -> line.stations.any { interchange == it } }.toMutableList()
+    fun linesToTest(interchange: String) =
+        lines.filter { line -> line.stations.any { interchange == it } }.toMutableList()
 
     private fun generateInterchanges(lines: List<Line>): List<String> {
         val interchanges = mutableListOf<String>()

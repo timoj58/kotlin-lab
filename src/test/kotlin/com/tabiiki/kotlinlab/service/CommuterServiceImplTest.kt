@@ -13,18 +13,20 @@ class CommuterServiceImplTest {
     private val commuterServiceImpl = CommuterServiceImpl(10, routeService)
 
     @Test
-    fun `commuter service test check commuter added to channel` () = runBlocking {
+    fun `commuter service test check commuter added to channel`() = runBlocking {
         val routeChannel = Channel<RouteEnquiry>()
-        Mockito.`when` (routeService.generate()).thenReturn(Pair("A", "B"))
-        Mockito.`when` (routeService.getChannel()).thenReturn(routeChannel)
+        Mockito.`when`(routeService.generate()).thenReturn(Pair("A", "B"))
+        Mockito.`when`(routeService.getChannel()).thenReturn(routeChannel)
 
         val channelJob = launch {
             do {
                 val enquiry = routeChannel.receive()
-                enquiry.channel.send(AvailableRoutes(
-                    routes = listOf(listOf(Pair("A", "B")))
-                ))
-            }while (true)
+                enquiry.channel.send(
+                    AvailableRoutes(
+                        routes = listOf(listOf(Pair("A", "B")))
+                    )
+                )
+            } while (true)
         }
 
         val channel = commuterServiceImpl.getCommuterChannel()

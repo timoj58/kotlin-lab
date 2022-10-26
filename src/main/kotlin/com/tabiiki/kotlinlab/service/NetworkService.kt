@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.LineFactory
-import com.tabiiki.kotlinlab.model.Commuter
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -28,7 +27,12 @@ class NetworkServiceImpl(
     }
 
     override suspend fun start(listener: Channel<StationMessage>): Unit = coroutineScope {
-        launch { stationService.start(globalListener = listener, commuterChannel = commuterService.getCommuterChannel()) }
+        launch {
+            stationService.start(
+                globalListener = listener,
+                commuterChannel = commuterService.getCommuterChannel()
+            )
+        }
 
         lines.groupBy { it.name }.values.forEach { line ->
             launch { lineController.start(line) }

@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import org.assertj.core.api.Assertions
 import java.util.UUID

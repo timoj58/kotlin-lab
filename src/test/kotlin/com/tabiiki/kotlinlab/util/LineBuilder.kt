@@ -13,8 +13,8 @@ class LineBuilder {
         Station(
             StationConfig(id = "A", latitude = 51.541692575874, longitude = -0.00375164102719075),
         ),
-        Station(StationConfig(id = "B", latitude = 51.528525530727, longitude = 0.00531739383278791),),
-        Station(StationConfig(id = "C", latitude = 51.5002551610895, longitude = 0.00358625912595083),)
+        Station(StationConfig(id = "B", latitude = 51.528525530727, longitude = 0.00531739383278791)),
+        Station(StationConfig(id = "C", latitude = 51.5002551610895, longitude = 0.00358625912595083))
     )
 
 

@@ -18,7 +18,7 @@ interface CommuterService {
 class CommuterServiceImpl(
     @Value("\${network.time-step}") val timeStep: Long,
     private val routeService: RouteService,
-): CommuterService {
+) : CommuterService {
     private val commuterChannel = Channel<Commuter>()
     private val trackingChannel = Channel<Commuter>()
 
@@ -35,12 +35,12 @@ class CommuterServiceImpl(
             delay(timeStep)
             //release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)
             //also what happens when they complete journey? need to track  them.
-            val commuter =  Commuter(
+            val commuter = Commuter(
                 commute = routeService.generate(),
                 stationChannel = trackingChannel,
                 timeStep = timeStep,
                 routeChannel = routeService.getChannel(),
-            )  {
+            ) {
                 launch { it.track() }
                 launch { commuterChannel.send(it) }
             }

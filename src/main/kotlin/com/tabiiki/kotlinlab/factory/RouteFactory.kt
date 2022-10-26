@@ -17,14 +17,16 @@ class RouteFactory(
 
     fun getAvailableRoutes(journey: Pair<String, String>): AvailableRoutes =
         memoized.getOrElse(journey) {
-            memoized[journey] = AvailableRoutes(getDirectRoutes(journey).toMutableList().plus(getInterchangeRoutes(journey)))
+            memoized[journey] =
+                AvailableRoutes(getDirectRoutes(journey).toMutableList().plus(getInterchangeRoutes(journey)))
             return memoized[journey]!!
         }
 
     private fun getDirectRoutes(journey: Pair<String, String>): List<List<Pair<String, String>>> =
-        interchangeFactory.lines.filter { it.stations.contains(journey.first) && it.stations.contains(journey.second) }.map { line ->
-            createRoute(line = line.name, stations = getSublist(journey.first, journey.second, line.stations))
-        }.distinct()
+        interchangeFactory.lines.filter { it.stations.contains(journey.first) && it.stations.contains(journey.second) }
+            .map { line ->
+                createRoute(line = line.name, stations = getSublist(journey.first, journey.second, line.stations))
+            }.distinct()
 
     private fun getInterchangeRoutes(journey: Pair<String, String>): List<List<Pair<String, String>>> {
         val possibleRoutes = mutableListOf<List<Pair<String, String>>>()
@@ -71,7 +73,8 @@ class RouteFactory(
             if (testedLines == null || testedLines.none { it == lineToTest.id }) {
                 testedLines?.add(lineToTest.id)
 
-                val lineInterchanges = interchangeFactory.interchanges.filter { lineToTest.stations.contains(it) }.toMutableList()
+                val lineInterchanges =
+                    interchangeFactory.interchanges.filter { lineToTest.stations.contains(it) }.toMutableList()
 
                 //this ensures we do not add routes that bypass the destination by using it as an interchange
                 if (linesTo.any { it.id == lineToTest.id } && route.none { it.second.substringAfter(":") == to })
@@ -82,7 +85,8 @@ class RouteFactory(
                 else
                     lineInterchanges.forEach { interchange ->
                         traverseLines(
-                            linesToTest = interchangeFactory.filterLinesToTest(lineToTest, interchange, testedLines).toMutableList(),
+                            linesToTest = interchangeFactory.filterLinesToTest(lineToTest, interchange, testedLines)
+                                .toMutableList(),
                             linesTo = linesTo,
                             testedLines = testedLines ?: mutableListOf(),
                             route = addRoute(

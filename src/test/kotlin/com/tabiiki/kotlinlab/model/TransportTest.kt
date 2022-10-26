@@ -8,7 +8,6 @@ import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

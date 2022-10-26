@@ -5,15 +5,14 @@ import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.util.LineBuilder
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.util.UUID
 
 class StationServiceImplTest {
@@ -21,7 +20,8 @@ class StationServiceImplTest {
     private val signalService = mock(SignalService::class.java)
     private val stationFactory = mock(StationFactory::class.java)
 
-    private val stationService = StationServiceImpl(timeStep = 10, signalService = signalService, stationFactory = stationFactory)
+    private val stationService =
+        StationServiceImpl(timeStep = 10, signalService = signalService, stationFactory = stationFactory)
 
     private val channel: Channel<SignalMessage> = Channel()
 

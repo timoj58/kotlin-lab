@@ -22,7 +22,7 @@ interface RouteService {
 class RouteServiceImpl(
     private val stationRepo: StationRepo,
     private val routeFactory: RouteFactory
-): RouteService {
+) : RouteService {
     override fun generate(): Pair<String, String> {
         val stations = stationRepo.get()
         val from = generateStation(stations)
@@ -34,7 +34,7 @@ class RouteServiceImpl(
             val enquiry = channel.receive()
             println("enquiry for: ${enquiry.route}")
             enquiry.channel.send(routeFactory.getAvailableRoutes(enquiry.route))
-        }while (true)
+        } while (true)
     }
 
     override fun getChannel(): Channel<RouteEnquiry> = channel

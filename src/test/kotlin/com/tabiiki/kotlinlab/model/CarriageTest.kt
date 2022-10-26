@@ -17,12 +17,17 @@ class CarriageTest {
         val stationChannel = Channel<Commuter>()
         val routeEnquiryChannel = Channel<RouteEnquiry>()
 
-        val commuter = Commuter(commute = Pair("B", "A"), stationChannel = Channel(), timeStep = 10, routeChannel = routeEnquiryChannel) {}
+        val commuter = Commuter(
+            commute = Pair("B", "A"),
+            stationChannel = Channel(),
+            timeStep = 10,
+            routeChannel = routeEnquiryChannel
+        ) {}
 
         val embarkJob = launch { carriage.embark(stationChannel) }
         delay(100)
         val channel = carriage.getChannel()
-        launch {  channel.send(commuter) }
+        launch { channel.send(commuter) }
         delay(100)
         embarkJob.cancel()
 

@@ -6,14 +6,13 @@ import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 
 internal class SignalServiceImplTest {
 

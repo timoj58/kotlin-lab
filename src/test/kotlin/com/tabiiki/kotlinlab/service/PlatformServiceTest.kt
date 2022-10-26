@@ -68,14 +68,19 @@ internal class PlatformServiceTest {
         val jobs = mutableListOf<Job>()
         val globalCommuterChannel = Channel<Commuter>()
 
-        jobs.add (
+        jobs.add(
             launch { stationService.start(Channel(), globalCommuterChannel, linesConfig.lines.first().name) }
         )
 
-        val routeEnquiryChannel = Channel<RouteEnquiry> ()
+        val routeEnquiryChannel = Channel<RouteEnquiry>()
 
         //add a commuter. TODO fix this.  needs to get journey
-        val commuter = Commuter(commute = Pair("TEST:26","TEST:94"), stationChannel = Channel(), timeStep = 10, routeChannel = routeEnquiryChannel) {}
+        val commuter = Commuter(
+            commute = Pair("TEST:26", "TEST:94"),
+            stationChannel = Channel(),
+            timeStep = 10,
+            routeChannel = routeEnquiryChannel
+        ) {}
         globalCommuterChannel.send(commuter)
 
         val tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>> = ConcurrentHashMap()

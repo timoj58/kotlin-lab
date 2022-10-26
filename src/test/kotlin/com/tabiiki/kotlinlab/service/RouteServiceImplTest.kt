@@ -20,7 +20,7 @@ class RouteServiceImplTest {
     private val routeServiceImpl = RouteServiceImpl(stationRepo, routeFactory)
 
     @Test
-    fun `route service generation test` () {
+    fun `route service generation test`() {
 
         stationRepo.get().forEach {
             `when`(routeFactory.isSelectableStation(it.id)).thenReturn(nextBoolean())

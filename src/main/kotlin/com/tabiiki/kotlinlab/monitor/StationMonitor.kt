@@ -64,7 +64,7 @@ class StationMonitor(val timestep: Long = 100) {
             val msg = channel.receive()
             val station = msg.getCurrentStation()
 
-            if(!stationCommuters.contains(station)) stationCommuters[station] = mutableListOf()
+            if (!stationCommuters.contains(station)) stationCommuters[station] = mutableListOf()
             stationCommuters[station]!!.add(msg)
         } while (true)
     }
