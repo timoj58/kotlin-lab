@@ -20,13 +20,19 @@ public class LinesAdapter {
     private List<String> tram;
 
     public LinesAdapter(
-            List<String> underground) {
+            List<String> underground,
+            List<String> overground,
+            List<String> tram,
+            List<String> cable,
+            List<String> river,
+            List<String> dockland
+            ) {
         this.underground = underground;
-        this.tram = List.of();
-        this.overground = List.of();
-        this.cable = List.of();
-        this.river = List.of();
-        this.dockland = List.of();
+        this.tram = tram;
+        this.overground = overground;
+        this.cable = cable;
+        this.river = river;
+        this.dockland = dockland;
     }
 
     public LinesAdapter() {

@@ -21,7 +21,12 @@ class LineFactory(
     }
 
     private val lines =
-        linesConfig.lines.map { Line(timeStep, it, transportConfig.get(), linesConfig.defaultLineCapacity) }
+        linesConfig.lines.map { Line(
+            timeStep =timeStep,
+            config = it,
+            transportConfig = transportConfig.get(),
+            defaultLineCapacity = linesConfig.defaultLineCapacity,
+        ) }
 
     init {
         lines.groupBy { it.name }.values.forEach { line -> lineNetworks[line.first().name] = LineNetwork(line) }

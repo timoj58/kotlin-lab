@@ -1,6 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.factory.AvailableRoutes
+import com.tabiiki.kotlinlab.factory.AvailableRoute
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -22,8 +22,8 @@ class CommuterServiceImplTest {
             do {
                 val enquiry = routeChannel.receive()
                 enquiry.channel.send(
-                    AvailableRoutes(
-                        routes = listOf(listOf(Pair("A", "B")))
+                    AvailableRoute(
+                        route = mutableListOf(Pair("A", "B"))
                     )
                 )
             } while (true)

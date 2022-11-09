@@ -1,20 +1,21 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.factory.AvailableRoutes
+import com.tabiiki.kotlinlab.factory.AvailableRoute
 import com.tabiiki.kotlinlab.factory.RouteFactory
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
 
-data class RouteEnquiry(val route: Pair<String, String>, val channel: Channel<AvailableRoutes>)
+data class RouteEnquiry(val route: Pair<String, String>, val channel: Channel<AvailableRoute>, val depth: Int = 2)
 
 
 interface RouteService {
     fun generate(): Pair<String, String>
     suspend fun listen()
-
     fun getChannel(): Channel<RouteEnquiry>
 }
 
@@ -29,11 +30,10 @@ class RouteServiceImpl(
         return Pair(from, generateStation(stations, from))
     }
 
-    override suspend fun listen() {
+    override suspend fun listen() = coroutineScope {
         do {
             val enquiry = channel.receive()
-            println("enquiry for: ${enquiry.route}")
-            enquiry.channel.send(routeFactory.getAvailableRoutes(enquiry.route))
+            launch { routeFactory.generateAvailableRoutes(enquiry) }
         } while (true)
     }
 
@@ -50,6 +50,6 @@ class RouteServiceImpl(
     }
 
     companion object {
-        val channel: Channel<RouteEnquiry> = Channel()
+        private val channel: Channel<RouteEnquiry> = Channel()
     }
 }

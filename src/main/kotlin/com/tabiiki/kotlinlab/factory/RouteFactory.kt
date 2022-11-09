@@ -1,169 +1,188 @@
 package com.tabiiki.kotlinlab.factory
 
 import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.service.RouteEnquiry
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
-data class AvailableRoutes(val routes: List<List<Pair<String, String>>>)
+data class AvailableRoute(val route: MutableList<Pair<String, String>>)
+
+private data class RouteNode(
+    val key: Pair<String, String>,
+    val children: MutableSet<RouteNode>,
+    val parent: MutableList<Pair<String, String>> = mutableListOf()
+)
 
 @Component
 class RouteFactory(
     private val interchangeFactory: InterchangeFactory
 ) {
-    private val memoized: ConcurrentHashMap<Pair<String, String>, AvailableRoutes> =
+    private val memoized: ConcurrentHashMap<Pair<String, String>, MutableList<AvailableRoute>> =
         ConcurrentHashMap()
 
     fun isSelectableStation(station: String) = interchangeFactory.stations.any { it == station }
 
-    fun getAvailableRoutes(journey: Pair<String, String>): AvailableRoutes =
-        memoized.getOrElse(journey) {
-            memoized[journey] =
-                AvailableRoutes(getDirectRoutes(journey).toMutableList().plus(getInterchangeRoutes(journey)))
-            return memoized[journey]!!
+    suspend fun generateAvailableRoutes(enquiry: RouteEnquiry) {
+        if (memoized.contains(enquiry.route) && memoized[enquiry.route]!!.isNotEmpty())
+            memoized[enquiry.route]!!.forEach { enquiry.channel.send(it) }
+        else {
+            memoized[enquiry.route] = mutableListOf()
+            getDirectRoutes(enquiry)
+            getInterchangeRoutes(enquiry)
         }
+    }
 
-    private fun getDirectRoutes(journey: Pair<String, String>): List<List<Pair<String, String>>> =
+    private suspend fun getDirectRoutes(enquiry: RouteEnquiry) {
+        val journey = enquiry.route
         interchangeFactory.lines.filter { it.stations.contains(journey.first) && it.stations.contains(journey.second) }
-            .map { line ->
-                createRoute(line = line.name, stations = getSublist(journey.first, journey.second, line.stations))
-            }.distinct()
+            .map { line -> createRoute(line = line.name, from = journey.first, to = journey.second) }
+            .distinct()
+            .map { AvailableRoute(it.toMutableList()) }.forEach {
+                it.let {
+                    memoized[enquiry.route]!!.add(it)
+                    enquiry.channel.send(it)
+                }
+            }
+    }
 
-    private fun getInterchangeRoutes(journey: Pair<String, String>): List<List<Pair<String, String>>> {
-        val possibleRoutes = mutableListOf<List<Pair<String, String>>>()
+    private suspend fun getInterchangeRoutes(enquiry: RouteEnquiry) {
+        val journey = enquiry.route
 
         val linesFrom = interchangeFactory.getLines(include = journey.first, exclude = journey.second)
-        val linesTo = interchangeFactory.getLines(include = journey.second, exclude = journey.first)
+        val linesTo = interchangeFactory.getLines(include = journey.second, exclude = journey.first).map { it.id }
 
-        //performance is faster like this than with a flow based on some tests.
         linesFrom.forEach { lineFrom ->
-            interchangeFactory.interchanges.filter { lineFrom.stations.contains(it) }.forEach { interchange ->
-                traverseLines(
-                    linesToTest = interchangeFactory.linesToTest(interchange),
-                    linesTo = linesTo,
-                    route = addRoute(
-                        route = mutableListOf(),
-                        line = lineFrom,
-                        from = journey.first,
-                        to = interchange
-                    ).toMutableList(),
-                    from = interchange,
-                    to = journey.second,
-                    possibleRoutes = possibleRoutes
-                )
-            }
-        }
+            val links = interchangeFactory.getLinks(key = lineFrom.name, exclude = journey.first)
+            val root = Pair(lineFrom.name, journey.first)
+            val route = RouteNode(
+                key = root,
+                children = links.map {
+                    RouteNode(
+                        key = it,
+                        children = mutableSetOf(),
+                        parent = mutableListOf(root)
+                    )
+                }.toMutableSet()
+            )
 
-        return possibleRoutes.distinct()
+            processLinks(
+                route = route,
+                links = route.children.toMutableList(),
+                linesTo = linesTo,
+                enquiry = enquiry,
+            )
+        }
+        enquiry.channel.close()
     }
 
-
-    private fun traverseLines(
-        linesToTest: MutableList<Line>,
-        linesTo: List<Line>,
-        testedLines: MutableList<String>? = null,
-        route: MutableList<Pair<String, String>>,
-        from: String,
-        to: String,
-        possibleRoutes: MutableList<List<Pair<String, String>>>,
+    private suspend fun processLinks(
+        route: RouteNode,
+        links: MutableList<RouteNode>,
+        linesTo: List<String>,
+        enquiry: RouteEnquiry,
     ) {
-        if (linesToTest.isEmpty()) return
+        if (links.isEmpty() || links.first().parent.size > enquiry.depth) return
+
         do {
-            val lineToTest = linesToTest.removeFirst()
-
-            if (testedLines == null || testedLines.none { it == lineToTest.id }) {
-                testedLines?.add(lineToTest.id)
-
-                val lineInterchanges =
-                    interchangeFactory.interchanges.filter { lineToTest.stations.contains(it) }.toMutableList()
-
-                //this ensures we do not add routes that bypass the destination by using it as an interchange
-                if (linesTo.any { it.id == lineToTest.id } && route.none { it.second.substringAfter(":") == to })
-                    possibleRoutes.add(addRoute(route = route, line = lineToTest, from = from, to = to))
-
-                if (lineInterchanges.isEmpty())
-                    route.removeLast()
-                else
-                    lineInterchanges.forEach { interchange ->
-                        traverseLines(
-                            linesToTest = interchangeFactory.filterLinesToTest(lineToTest, interchange, testedLines)
-                                .toMutableList(),
+            val to = enquiry.route.second
+            val link = links.removeFirst()
+            if (linesTo.any { interchangeFactory.getLineIdsByLink(link.key).contains(it) })
+                createAvailableRoute(node = link, to = to).let {
+                    enquiry.channel.send(it)
+                    memoized[enquiry.route]!!.add(it) }
+            else
+                interchangeFactory.getLinks(key = link.key.first, exclude = link.key.second)
+                    .filter { filterOutRepeats(link, it.second) }
+                    .toMutableList().let {
+                        link.children.addAll(
+                            it.map { next ->
+                                RouteNode(
+                                    key = next,
+                                    children = mutableSetOf(),
+                                    parent = link.parent.plus(link.key).toMutableList(),
+                                )
+                            }.toMutableList()
+                        )
+                        processLinks(
+                            route = route,
+                            links = link.children
+                                .sortedByDescending { child -> linesTo.contains(child.key.first) }.toMutableList(),
                             linesTo = linesTo,
-                            testedLines = testedLines ?: mutableListOf(),
-                            route = addRoute(
-                                route = route,
-                                line = lineToTest,
-                                from = from,
-                                to = interchange
-                            ).toMutableList(),
-                            from = interchange,
-                            to = to,
-                            possibleRoutes = possibleRoutes,
+                            enquiry = enquiry,
                         )
                     }
-            }
-        } while (linesToTest.isNotEmpty())
+        } while (links.isNotEmpty())
     }
 
+    private fun createAvailableRoute(node: RouteNode, to: String): AvailableRoute {
+        val route = mutableListOf<Pair<String, String>>()
+        node.parent.add(node.key)
+        for (idx in 0 until node.parent.size - 1 step 1) {
+            val parentFrom = node.parent[idx]
+            val parentTo = node.parent[idx + 1]
+            route.addAll(
+                createRouteFromLine(
+                    from = parentFrom,
+                    to = parentTo,
+                    line = parentFrom.first,
+                )
+            )
+        }
 
-    private fun addRoute(
-        route: List<Pair<String, String>>,
-        line: Line,
-        from: String,
-        to: String
-    ): List<Pair<String, String>> =
-        route.plus(createRoute(line = line.name, stations = getSublist(from, to, line.stations)))
+        route.addAll(
+            createRouteFromLine(
+                from = node.key,
+                to = Pair(node.key.first, to),
+                line = node.key.first,
+            )
+        )
+
+        return AvailableRoute(route = route)
+    }
+
+    private fun createRouteFromLine(
+        from: Pair<String, String>,
+        to: Pair<String, String>,
+        line: String
+    ): List<Pair<String, String>> {
+        val isVirtualFrom = interchangeFactory.isVirtualLink(link = from)
+        val isVirtualTo = interchangeFactory.isVirtualLink(link = to)
+
+        if ((isVirtualFrom || isVirtualTo) && from.first != to.first){
+            val virtualTo = interchangeFactory.getVirtualLinkTo(to, from.first)
+            if(virtualTo != null) return createVirtualRoute(from = from, to = virtualTo)
+        }
+
+        val lineDetails = interchangeFactory.lines.firstOrNull {
+            it.name == line && it.stations.containsAll(listOf(from.second, to.second))
+        }
+
+        if (lineDetails == null) {
+            val linesFrom = interchangeFactory.lines.filter { it.name == line && it.stations.contains(from.second) }
+            val linesTo = interchangeFactory.lines.filter { it.name == line && it.stations.contains(to.second) }
+
+            for (interchange in interchangeFactory.getLinks(key = line, exclude = "").map { it.second }) {
+                val lineFrom = linesFrom.firstOrNull { it.stations.contains(interchange) }
+                val lineTo = linesTo.firstOrNull { it.stations.contains(interchange) }
+
+                if (lineFrom != null && lineTo != null)
+                    return createRoute(line = lineFrom.name, from = from.second, to = interchange).toMutableList()
+                        .plus(createRoute(line = lineTo.name, from = interchange, to = to.second))
+
+            }
+            throw RuntimeException("no route found for $from $isVirtualFrom $to $isVirtualTo and $line")
+        } else return createRoute(line = lineDetails.name, from = from.second, to = to.second)
+    }
 
 
     companion object {
+        private fun createRoute(line: String, from: String, to: String): List<Pair<String, String>> =
+            listOf(Pair("$line:$from", "$line:$to"))
 
-        fun createRoute(line: String, stations: List<String>): List<Pair<String, String>> {
-            val route = mutableListOf<Pair<String, String>>()
-            for (idx in 0..stations.size - 2 step 1) {
-                val from = stations[idx]
-                val to = stations[idx + 1]
-                route.add(Pair("$line:$from", "$line:$to"))
-            }
+        private fun createVirtualRoute(from: Pair<String, String>, to: Pair<String, String>): List<Pair<String, String>> =
+            listOf(Pair("${from.first}:${from.second}", "${to.first}:${to.second}"))
 
-            return route
-        }
-
-        fun getSublist(from: String, to: String, stations: List<String>): List<String> {
-            val fromIdx = stations.indexOf(from)
-            val toIdx = stations.indexOf(to)
-            val fromCount = stations.count { it == from }
-            val toCount = stations.count { it == to }
-
-            return when (fromCount + toCount) {
-                2 -> if (fromIdx < toIdx) stations.subList(fromIdx, toIdx + 1) else stations.subList(toIdx, fromIdx + 1)
-                    .reversed()
-                //circle line  418 to 418 .. return the shortest route
-                3, 4 -> getLeastStops(from, to, stations)
-                else -> throw RuntimeException("invalid station $from $to count on route $fromCount + $toCount $stations")
-            }
-        }
-
-        private fun getLeastStops(from: String, to: String, stations: List<String>): List<String> {
-            //for each index of either, find the shortest distance...fixed on basis only one line has two stations.  circle.
-            val fromFirstIdx = stations.indexOfFirst { it == from }
-            val fromLastIdx = stations.indexOfLast { it == from }
-            val toFirstIdx = stations.indexOfFirst { it == to }
-            val toLastIdx = stations.indexOfLast { it == to }
-
-            return if (toFirstIdx == toLastIdx)
-                calcShortestRoute(fromFirstIdx, fromLastIdx, toFirstIdx, stations) else
-                calcShortestRoute(toFirstIdx, toLastIdx, fromFirstIdx, stations).reversed()
-        }
-
-        private fun calcShortestRoute(idx1a: Int, idx1b: Int, idx2: Int, stations: List<String>): List<String> {
-            val possibleRoutes = mutableListOf<List<String>>()
-
-            if (idx2 > idx1a) possibleRoutes.add(stations.subList(idx1a, idx2 + 1))
-            if (idx2 > idx1b) possibleRoutes.add(stations.subList(idx1b, idx2 + 1))
-            if (idx2 < idx1a) possibleRoutes.add(stations.subList(idx2, idx1a + 1).reversed())
-            if (idx2 < idx1b) possibleRoutes.add(stations.subList(idx2, idx1b + 1).reversed())
-
-            return possibleRoutes.minBy { it.size }
-        }
-
+        private fun filterOutRepeats(link: RouteNode, station: String): Boolean =
+            link.parent.map { it.second }.none { it == station }
     }
 }

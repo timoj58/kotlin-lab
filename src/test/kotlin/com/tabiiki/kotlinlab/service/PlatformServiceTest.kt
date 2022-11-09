@@ -29,7 +29,7 @@ internal class PlatformServiceTest {
     private val minimumHold = 45
     private val timeStep = 5L
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
-    private val linesAdapter = LinesAdapter(listOf("src/test/resources/network/test-line2.yml"))
+    private val linesAdapter = LinesAdapter(listOf("src/test/resources/network/test-line2.yml"), listOf(), listOf(), listOf(), listOf(), listOf())
     private val linesConfig = LinesConfig(linesAdapter)
     private val transportersAdapter = TransportersAdapter(
         listOf(

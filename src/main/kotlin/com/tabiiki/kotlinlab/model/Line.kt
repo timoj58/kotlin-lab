@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.LineConfig
+import com.tabiiki.kotlinlab.configuration.LineType
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import javax.naming.ConfigurationException
 
@@ -8,7 +9,7 @@ data class Line(
     val timeStep: Long,
     private val config: LineConfig,
     private val transportConfig: List<TransportConfig>,
-    private val defaultLineCapacity: Int? = null
+    private val defaultLineCapacity: Int? = null,
 ) {
     val id = config.id
     val name = config.name
@@ -42,6 +43,8 @@ data class Line(
             startIndex += perDepot
         }
     }
+
+    fun getType(): LineType = config.type!!
 
     private fun getMultiDepots(): List<String> {
         var duplicateCount = mutableMapOf<String, Int>()
