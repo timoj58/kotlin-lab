@@ -30,7 +30,6 @@ class CommuterServiceImpl(
         launch { routeService.listen() }
         launch { commuterMonitor.monitor(trackingChannel) }
 
-        //TODO very costly.  need to optimize all of this....interesting.  possible that it needs its own app.
         do {
             delay(timeStep)
             //release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)

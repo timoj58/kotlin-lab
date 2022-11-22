@@ -30,7 +30,6 @@ internal class LineFactoryTest {
         )
     }
 
-
     @Test
     fun `get line`() {
         Mockito.`when`(linesConfig.lines).thenReturn(
@@ -63,4 +62,5 @@ internal class LineFactoryTest {
             LineFactory(4, transportsConfig, linesConfig).get("1")
         }
     }
+
 }

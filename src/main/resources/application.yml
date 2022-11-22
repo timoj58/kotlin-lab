@@ -10,9 +10,14 @@ network:
     ferries:
       - transport-id: 1
         capacity: 200
-        weight: 10000
-        top-speed: 15
+        weight: 20000
+        top-speed: 10
         power: 5000
+      - transport-id: 7
+        capacity: 200
+        weight: 20000
+        top-speed: 5
+        power: 1000
     cable-cars:
       - transport-id: 2
         capacity: 20
@@ -65,10 +70,7 @@ network:
     cable:
       - src/main/resources/network/cable/cable.yml
     river:
-      - src/main/resources/network/river/rb1.yml
-      - src/main/resources/network/river/rb2.yml
-      - src/main/resources/network/river/rb4.yml
-      - src/main/resources/network/river/rb6.yml
+      - src/main/resources/network/river/river.yml
     dockland:
       - src/main/resources/network/dockland/dlr.yml
     tram:

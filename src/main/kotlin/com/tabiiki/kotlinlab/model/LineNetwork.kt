@@ -6,10 +6,8 @@ data class LineNetwork(private val lines: List<Line>) {
     private val network: MutableList<NetworkNode> = mutableListOf()
 
     init {
-        lines.map { listOf(it.stations.first(), it.stations.last()) }.flatten().distinct().forEach {
-            network.add(
-                NetworkNode(it, mutableSetOf("*"))
-            )
+        lines.map { listOf(it.stations.first(), it.stations.last()) }.flatten().groupBy { it }.forEach {
+            network.add(NetworkNode(it.key, mutableSetOf("*".repeat(it.value.size))))
         }
 
         lines.map { it.stations.subList(1, it.stations.lastIndex) }.flatten().distinct().forEach {

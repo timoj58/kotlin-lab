@@ -29,18 +29,18 @@ data class Line(
     private val depots = config.depots
 
     init {
-        val perDepot = if (depots.isEmpty()) 0 else transporters.size / depots.size
-        if (perDepot != 0 && transporters.size % perDepot != 0) throw ConfigurationException("transporters must be divisible by depots")
+        val perDepot = if (depots.isEmpty()) 0.0 else transporters.size / depots.size.toDouble()
+        if (perDepot != 0.0 && transporters.size % perDepot != 0.0) throw ConfigurationException("transporters must be divisible by depots")
         var startIndex = 0
         val multiDepots = getMultiDepots()
         depots.distinct().forEach { depot ->
-            transporterSlice(startIndex, perDepot, depot) { d -> this.nextStationFromDepot(d) }
-            startIndex += perDepot
+            transporterSlice(startIndex, perDepot.toInt(), depot) { d -> this.nextStationFromDepot(d) }
+            startIndex += perDepot.toInt()
         }
 
         multiDepots.forEach { depot ->
-            transporterSlice(startIndex, perDepot, depot) { d -> this.nextStationFromMultiDepot(d) }
-            startIndex += perDepot
+            transporterSlice(startIndex, perDepot.toInt(), depot) { d -> this.nextStationFromMultiDepot(d) }
+            startIndex += perDepot.toInt()
         }
     }
 
@@ -57,10 +57,11 @@ data class Line(
         return duplicateCount.filter { it.value > 1 }.keys.toList()
     }
 
-    private fun transporterSlice(startIndex: Int, perDepot: Int, depot: String, nextStation: (String) -> String) =
-        transporters.slice(startIndex until startIndex + perDepot)
+    private fun transporterSlice(startIndex: Int, perDepot: Int, depot: String, nextStation: (String) -> String) {
+        if (perDepot == 0) transporters.first().addSection(Pair("$name:$depot", nextStation(depot)))
+        else transporters.slice(startIndex until startIndex + perDepot)
             .forEach { transport -> transport.addSection(Pair("$name:$depot", nextStation(depot))) }
-
+    }
 
     private fun nextStationFromDepot(currentStation: String): String =
         if (stations.last() == currentStation) stations.reversed()[1] else stations[stations.indexOf(currentStation) + 1]

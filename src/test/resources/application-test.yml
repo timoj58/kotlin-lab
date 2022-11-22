@@ -4,10 +4,7 @@ network:
   lines:
     default-line-capacity: 2
     river:
-      - src/main/resources/network/river/rb1.yml
-      - src/main/resources/network/river/rb2.yml
-      - src/main/resources/network/river/rb4.yml
-      - src/main/resources/network/river/rb6.yml
+      - src/main/resources/network/river/river.yml
     tram:
       - src/main/resources/network/tram/tram.yml
     dockland:

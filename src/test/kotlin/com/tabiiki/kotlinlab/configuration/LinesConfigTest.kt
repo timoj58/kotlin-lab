@@ -16,7 +16,7 @@ internal class LinesConfigTest {
             mutableListOf("src/main/resources/network/cable/cable.yml")
         )
         linesAdapter.setRiver(
-            mutableListOf("src/main/resources/network/river/rb1.yml")
+            mutableListOf("src/main/resources/network/river/river.yml")
         )
         linesAdapter.setUnderground(
             mutableListOf("src/main/resources/network/underground/city.yml")

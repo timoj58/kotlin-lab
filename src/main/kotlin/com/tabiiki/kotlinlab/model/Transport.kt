@@ -132,10 +132,10 @@ data class Transport(
                     || msg.signalValue != previousMsg.signalValue
                     && !(msg.id ?: UUID.randomUUID()).equals(id)
                 ) {
-
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
+
                     }.also { instruction = it }
 
                     previousMsg = msg

@@ -6,18 +6,24 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 class RouteFactoryTest {
     private val routeFactory = RouteFactory(InterchangeFactoryBuilder().build())
 
     @Test
+    // @Disabled
     fun `calculate route including circle line Bayswater to Stratford `() =
         runBlocking {
             val channel = Channel<AvailableRoute>()
             val job = launch {
-                routeFactory.generateAvailableRoutes(RouteEnquiry(route = Pair("37", "528"), channel = channel, depth = 3))
+                routeFactory.generateAvailableRoutes(
+                    RouteEnquiry(
+                        route = Pair("37", "528"),
+                        channel = channel,
+                        depth = 3
+                    )
+                )
             }
 
             val enquiries = testResults(
@@ -36,6 +42,28 @@ class RouteFactoryTest {
         }
 
     @Test
+    //@Disabled
+    fun `calculate routes via connected line on itself  from West Ealing to Goodge St `() = runBlocking {
+        val channel = Channel<AvailableRoute>()
+        val job = launch {
+            routeFactory.generateAvailableRoutes(RouteEnquiry(route = Pair("613", "227"), channel = channel))
+        }
+        val enquiries = testResults(
+            channel,
+            listOf(
+                listOf(
+                    Pair("Elizabeth:613", "Elizabeth:650"),
+                    Pair("River:678", "River:666"), //virtual has beem removed for now.
+                    Pair("Northern:192", "Northern:227"),
+                )
+            )
+        )
+
+        Assertions.assertThat(enquiries.isNotEmpty())
+        job.cancel()
+    }
+
+    @Test
     fun `calculate routes from Stratford to Canary Wharf `() = runBlocking {
         val channel = Channel<AvailableRoute>()
         val job = launch {
@@ -45,8 +73,9 @@ class RouteFactoryTest {
         val enquiries = testResults(
             channel,
             listOf(
-                listOf(Pair("Jubilee:528", "Jubilee:94"),),
-                listOf(Pair("DLR:528", "DLR:94"),)),
+                listOf(Pair("Jubilee:528", "Jubilee:94")),
+                listOf(Pair("DLR:528", "DLR:94"))
+            ),
         )
 
         Assertions.assertThat(enquiries.isNotEmpty())
@@ -76,6 +105,7 @@ class RouteFactoryTest {
     }
 
     @Test
+    //@Disabled
     fun `calculate route with virtual interchange from Emirates Royal Docks to Bermondsey `() = runBlocking {
         val channel = Channel<AvailableRoute>()
         val job = launch {
@@ -85,8 +115,9 @@ class RouteFactoryTest {
         val enquiries = testResults(
             channel,
             listOf(
-                listOf(Pair("Emirates Air Line:655", "Emirates Air Line:654"),Pair("Jubilee:396", "Jubilee:50")),
-        ))
+                listOf(Pair("Emirates Air Line:655", "Emirates Air Line:654"), Pair("Jubilee:396", "Jubilee:50")),
+            )
+        )
 
         Assertions.assertThat(enquiries.isNotEmpty())
         job.cancel()
@@ -96,7 +127,7 @@ class RouteFactoryTest {
         channel: Channel<AvailableRoute>,
         test: List<List<Pair<String, String>>>
     ): List<List<Pair<String, String>>> {
-        val enquiries :MutableList<List<Pair<String, String>>> = mutableListOf()
+        val enquiries: MutableList<List<Pair<String, String>>> = mutableListOf()
         do {
             val enquiry = channel.receive()
             println("$enquiry")

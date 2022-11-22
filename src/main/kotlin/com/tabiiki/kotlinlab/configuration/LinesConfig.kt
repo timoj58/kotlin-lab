@@ -18,12 +18,13 @@ data class LineConfig(
     @JsonProperty("stations") val stations: List<String>,
     @JsonProperty("depots") val depots: List<String> = listOf(),
 
-) {
+    ) {
     var type: LineType? = null
 }
 
 enum class LineType {
     UNDERGROUND, OVERGROUND, RIVER, CABLE, DOCKLAND, TRAM;
+
     fun notThis(): List<LineType> = LineType.values().filter { it != this }
 }
 

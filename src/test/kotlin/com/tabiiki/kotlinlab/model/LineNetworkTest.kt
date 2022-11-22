@@ -13,7 +13,7 @@ internal class LineNetworkTest {
 
         assertThat(lineNetwork.getNodes()).containsAll(
             listOf(
-                NetworkNode("A", mutableSetOf("*")),
+                NetworkNode("A", mutableSetOf("**")),
                 NetworkNode("C", mutableSetOf("*")),
                 NetworkNode("D", mutableSetOf("*")),
                 NetworkNode("B", mutableSetOf("A", "C", "D")),
@@ -29,7 +29,7 @@ internal class LineNetworkTest {
 
         assertThat(lineNetwork.getNodes()).containsAll(
             listOf(
-                NetworkNode("A", mutableSetOf("*")),
+                NetworkNode("A", mutableSetOf("**")),
                 NetworkNode("B", mutableSetOf("A", "C")),
                 NetworkNode("C", mutableSetOf("D", "B")),
                 NetworkNode("D", mutableSetOf("A", "C")),

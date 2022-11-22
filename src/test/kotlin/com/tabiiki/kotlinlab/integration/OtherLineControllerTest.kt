@@ -45,14 +45,11 @@ class OtherLineControllerTest @Autowired constructor(
     @CsvSource(
         "tram,tram",
         "dockland,dlr",
-        "river,rb1",
-        "river,rb2",
-        "river,rb4",
-        "river,rb6",
+        "river,river",
         "cable,cable"
     )
     fun `test all transports complete a full journey on an other line`(lineType: String, lineName: String) =
         runBlocking {
-            lineControllerTest.test(lineType, lineName, 3)
+            lineControllerTest.test(lineType, lineName, 10)
         }
 }

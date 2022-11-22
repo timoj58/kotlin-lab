@@ -32,12 +32,12 @@ data class Commuter(
             )
         }
 
-    //    do {
+        do {
             val enquiry = channel.receive()
             if (enquiry.route.isEmpty()) throw RuntimeException("no routes for $commute")
             route.add(enquiry)
-            if(route.size == 1) ready.accept(this@Commuter)
-     //   } while (true) //should be while channel is open.  enquiry can close it.
+            if (route.size == 1) ready.accept(this@Commuter)
+        } while (true)
 
     }
 

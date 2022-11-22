@@ -41,10 +41,7 @@ class InterchangeFactoryBuilder {
                 "src/main/resources/network/cable/cable.yml"
             ),
             listOf(
-                "src/main/resources/network/river/rb1.yml",
-                "src/main/resources/network/river/rb2.yml",
-                "src/main/resources/network/river/rb4.yml",
-                "src/main/resources/network/river/rb6.yml"
+                "src/main/resources/network/river/river.yml",
             ),
             listOf("src/main/resources/network/dockland/dlr.yml")
         )
@@ -88,6 +85,13 @@ class InterchangeFactoryBuilder {
                 ),
                 TransportConfig(
                     transportId = 6,
+                    capacity = 1000,
+                    weight = 1500,
+                    topSpeed = 20,
+                    power = 2300
+                ),
+                TransportConfig(
+                    transportId = 7,
                     capacity = 1000,
                     weight = 1500,
                     topSpeed = 20,

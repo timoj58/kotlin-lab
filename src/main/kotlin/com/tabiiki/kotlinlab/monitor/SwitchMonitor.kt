@@ -20,6 +20,7 @@ class SwitchMonitor {
             transport.actualSection =
                 Pair("${sectionLeft.first.substringBefore(":")}:${sectionLeft.second}", "${sectionLeft.second}|")
         }
+        //println("switching ${transport.id} ${transport.actualSection} ${transport.section()}")
         completeSection.accept(Pair(transport.also { it.addSection(it.actualSection!!) }, sectionLeft))
     }
 

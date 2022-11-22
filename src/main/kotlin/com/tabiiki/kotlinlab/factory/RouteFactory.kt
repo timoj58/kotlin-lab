@@ -1,6 +1,5 @@
 package com.tabiiki.kotlinlab.factory
 
-import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.service.RouteEnquiry
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
@@ -52,7 +51,8 @@ class RouteFactory(
         val linesTo = interchangeFactory.getLines(include = journey.second, exclude = journey.first).map { it.id }
 
         linesFrom.forEach { lineFrom ->
-            val links = interchangeFactory.getLinks(key = lineFrom.name, exclude = journey.first)
+            val links =
+                interchangeFactory.getLinks(key = lineFrom.name, exclude = journey.first, lineType = lineFrom.getType())
             val root = Pair(lineFrom.name, journey.first)
             val route = RouteNode(
                 key = root,
@@ -72,7 +72,6 @@ class RouteFactory(
                 enquiry = enquiry,
             )
         }
-        enquiry.channel.close()
     }
 
     private suspend fun processLinks(
@@ -87,12 +86,20 @@ class RouteFactory(
             val to = enquiry.route.second
             val link = links.removeFirst()
             if (linesTo.any { interchangeFactory.getLineIdsByLink(link.key).contains(it) })
-                createAvailableRoute(node = link, to = to).let {
+                createAvailableRoute(node = link, to = to)?.let {
                     enquiry.channel.send(it)
-                    memoized[enquiry.route]!!.add(it) }
-            else
-                interchangeFactory.getLinks(key = link.key.first, exclude = link.key.second)
-                    .filter { filterOutRepeats(link, it.second) }
+                    memoized[enquiry.route]!!.add(it)
+                }
+            else {
+                val interchanges = interchangeFactory.getLinks(
+                    key = link.key.first,
+                    exclude = link.key.second,
+                    lineType = interchangeFactory.getLineType(link.key.first)
+                )
+                if (interchanges.none { filterOutRepeatStations(link, it.second) }) return
+                if (interchanges.none { filterOutRepeatLines(link, it.first) }) return
+                interchanges.filter { filterOutRepeatStations(link, it.second) }
+                    .filter { filterOutRepeatLines(link, it.first) }
                     .toMutableList().let {
                         link.children.addAll(
                             it.map { next ->
@@ -111,33 +118,37 @@ class RouteFactory(
                             enquiry = enquiry,
                         )
                     }
+            }
         } while (links.isNotEmpty())
     }
 
-    private fun createAvailableRoute(node: RouteNode, to: String): AvailableRoute {
-        val route = mutableListOf<Pair<String, String>>()
-        node.parent.add(node.key)
-        for (idx in 0 until node.parent.size - 1 step 1) {
-            val parentFrom = node.parent[idx]
-            val parentTo = node.parent[idx + 1]
+    private fun createAvailableRoute(node: RouteNode, to: String): AvailableRoute? {
+        try {
+            val route = mutableListOf<Pair<String, String>>()
+            node.parent.add(node.key)
+            for (idx in 0 until node.parent.size - 1 step 1) {
+                val parentFrom = node.parent[idx]
+                val parentTo = node.parent[idx + 1]
+                route.addAll(
+                    createRouteFromLine(
+                        from = parentFrom,
+                        to = parentTo,
+                        line = parentFrom.first,
+                    )
+                )
+            }
+
             route.addAll(
                 createRouteFromLine(
-                    from = parentFrom,
-                    to = parentTo,
-                    line = parentFrom.first,
+                    from = node.key,
+                    to = Pair(node.key.first, to),
+                    line = node.key.first,
                 )
             )
+            return AvailableRoute(route = route)
+        } catch (e: NoRouteException) {
+            return null
         }
-
-        route.addAll(
-            createRouteFromLine(
-                from = node.key,
-                to = Pair(node.key.first, to),
-                line = node.key.first,
-            )
-        )
-
-        return AvailableRoute(route = route)
     }
 
     private fun createRouteFromLine(
@@ -148,9 +159,9 @@ class RouteFactory(
         val isVirtualFrom = interchangeFactory.isVirtualLink(link = from)
         val isVirtualTo = interchangeFactory.isVirtualLink(link = to)
 
-        if ((isVirtualFrom || isVirtualTo) && from.first != to.first){
+        if ((isVirtualFrom || isVirtualTo) && from.first != to.first) {
             val virtualTo = interchangeFactory.getVirtualLinkTo(to, from.first)
-            if(virtualTo != null) return createVirtualRoute(from = from, to = virtualTo)
+            if (virtualTo != null) return createVirtualRoute(from = from, to = virtualTo)
         }
 
         val lineDetails = interchangeFactory.lines.firstOrNull {
@@ -160,8 +171,11 @@ class RouteFactory(
         if (lineDetails == null) {
             val linesFrom = interchangeFactory.lines.filter { it.name == line && it.stations.contains(from.second) }
             val linesTo = interchangeFactory.lines.filter { it.name == line && it.stations.contains(to.second) }
+            val interchanges =
+                interchangeFactory.getLinks(key = line, exclude = "", lineType = interchangeFactory.getLineType(line))
+                    .map { it.second }
 
-            for (interchange in interchangeFactory.getLinks(key = line, exclude = "").map { it.second }) {
+            for (interchange in interchanges) {
                 val lineFrom = linesFrom.firstOrNull { it.stations.contains(interchange) }
                 val lineTo = linesTo.firstOrNull { it.stations.contains(interchange) }
 
@@ -170,19 +184,27 @@ class RouteFactory(
                         .plus(createRoute(line = lineTo.name, from = interchange, to = to.second))
 
             }
-            throw RuntimeException("no route found for $from $isVirtualFrom $to $isVirtualTo and $line")
+            //do not want to connect lines to themselves across multiple links. (ie elizabeth). (or add code back TBC).
+            throw NoRouteException("no route found for $from $isVirtualFrom $to $isVirtualTo and $line")
         } else return createRoute(line = lineDetails.name, from = from.second, to = to.second)
     }
 
-
     companion object {
+        class NoRouteException(message: String) : Exception(message)
+
         private fun createRoute(line: String, from: String, to: String): List<Pair<String, String>> =
             listOf(Pair("$line:$from", "$line:$to"))
 
-        private fun createVirtualRoute(from: Pair<String, String>, to: Pair<String, String>): List<Pair<String, String>> =
+        private fun createVirtualRoute(
+            from: Pair<String, String>,
+            to: Pair<String, String>
+        ): List<Pair<String, String>> =
             listOf(Pair("${from.first}:${from.second}", "${to.first}:${to.second}"))
 
-        private fun filterOutRepeats(link: RouteNode, station: String): Boolean =
+        private fun filterOutRepeatStations(link: RouteNode, station: String): Boolean =
             link.parent.map { it.second }.none { it == station }
+
+        private fun filterOutRepeatLines(link: RouteNode, line: String): Boolean =
+            link.parent.map { it.first }.count { it == line } < 2
     }
 }

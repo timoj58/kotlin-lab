@@ -57,7 +57,8 @@ class PlatformServiceImpl(
     }
 
     override fun canLaunch(transport: Transport): Boolean {
-        if (lineRepo.getLineStations(transport).size == 2) return true
+        //this is the offending item related to city line.
+        //if (lineRepo.getLineStations(transport).size == 2) return true
 
         var response = true
         val line = transport.section().first.substringBefore(":")
@@ -115,6 +116,7 @@ class PlatformServiceImpl(
 
         do {
             delay(transport.timeStep)
+
         } while (counter.incrementAndGet() < minimumHold
             || !sectionService.isClear(transport)
             || !sectionService.areSectionsClear(transport, lineInstructions) { k -> lineRepo.getPreviousSections(k) }

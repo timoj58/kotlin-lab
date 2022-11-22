@@ -21,12 +21,14 @@ class LineFactory(
     }
 
     private val lines =
-        linesConfig.lines.map { Line(
-            timeStep =timeStep,
-            config = it,
-            transportConfig = transportConfig.get(),
-            defaultLineCapacity = linesConfig.defaultLineCapacity,
-        ) }
+        linesConfig.lines.map {
+            Line(
+                timeStep = timeStep,
+                config = it,
+                transportConfig = transportConfig.get(),
+                defaultLineCapacity = linesConfig.defaultLineCapacity,
+            )
+        }
 
     init {
         lines.groupBy { it.name }.values.forEach { line -> lineNetworks[line.first().name] = LineNetwork(line) }
@@ -36,8 +38,8 @@ class LineFactory(
     fun get(): List<String> = lines.map { it.id }
     fun getNetwork(id: String): LineNetwork? = lineNetworks[id]
 
-    fun isSwitchStation(lineId: String, station: String): Boolean {
-        val network = getNetwork(lineId) ?: return false
+    fun isSwitchStation(line: String, station: String): Boolean {
+        val network = getNetwork(line) ?: return false
         return network.getNodes().any {
             (it.station == station.replace("|", ""))
                     && it.linked.contains("*")

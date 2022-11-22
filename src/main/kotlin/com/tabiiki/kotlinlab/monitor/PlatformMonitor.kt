@@ -34,8 +34,8 @@ class PlatformMonitor(
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
         var previousSignal: SignalMessage? = null
         val isTerminal = key.first.contains(LineDirection.TERMINAL.toString())
+        //TODO tidy this up.
         val terminalSection = terminalSection(key)
-
         do {
             signalService.receive(key)?.let {
                 if (previousSignal == null || it != previousSignal) {
@@ -83,6 +83,7 @@ class PlatformMonitor(
                 )
             )
             else lineRepo.getPreviousSections(key).map { Pair(it, sectionService.isClearWithPriority(it)) }
+
             val priority = sections.filter { it.second.second != 0 }.sortedByDescending { it.second.second }
                 .firstOrNull { !it.second.first }
 
@@ -113,6 +114,7 @@ class PlatformMonitor(
     ) =
         coroutineScope {
             val sections = if (isTerminal) listOf(terminalSection) else lineRepo.getPreviousSections(key)
+
             sections.forEach {
                 launch {
                     signalService.send(
