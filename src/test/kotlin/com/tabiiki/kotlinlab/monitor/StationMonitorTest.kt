@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.monitor
 
+import com.tabiiki.kotlinlab.factory.AvailableRoute
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
@@ -12,14 +13,16 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.springframework.test.annotation.DirtiesContext
 import java.util.UUID
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class StationMonitorTest {
 
     private val stationMonitor = StationMonitor()
 
     @Test
-    fun `commuters test`() = runBlocking {
+    fun `commuter embark test`() = runBlocking {
         val transporterId = UUID.randomUUID()
 
         val platformChannel = Channel<SignalMessage>()
@@ -37,8 +40,20 @@ class StationMonitorTest {
             stationChannel = Channel(),
             timeStep = 10,
             routeChannel = routeEnquiryChannel
-        ) {}
+        ) {
+        }
+         val job3 = launch { commuter.initJourney() }
+
+        launch {
+            commuter.getChannel().send(
+                AvailableRoute(
+                    route = mutableListOf(Pair("A", "B"))
+                )
+            )
+        }
+
         commuterChannel.send(commuter)
+
         //send a RED
         launch {
             platformChannel.send(
@@ -46,7 +61,7 @@ class StationMonitorTest {
                     id = transporterId,
                     signalValue = SignalValue.RED,
                     commuterChannel = carriageChannel,
-                    key = Pair("A", "B")
+                    key = Pair("B", "A")
                 )
             )
         }
@@ -71,5 +86,6 @@ class StationMonitorTest {
 
         job.cancel()
         job2.cancel()
+        job3.cancel()
     }
 }

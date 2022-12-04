@@ -78,8 +78,7 @@ data class Transport(
     override fun platformKey(): Pair<String, String> =
         Pair("${line.name}:${this.lineDirection()}", section().first.substringBefore("|"))
 
-    override fun section(): Pair<String, String> =
-        sectionData.second ?: sectionData.first!!
+    override fun section(): Pair<String, String> = sectionData.second ?: sectionData.first!!
 
     override fun platformFromKey(): Pair<String, String> {
         val line = line.name

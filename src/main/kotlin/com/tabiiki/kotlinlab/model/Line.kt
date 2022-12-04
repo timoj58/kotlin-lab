@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.configuration.LineConfig
 import com.tabiiki.kotlinlab.configuration.LineType
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import javax.naming.ConfigurationException
+import kotlin.math.floor
 
 data class Line(
     val timeStep: Long,
@@ -30,7 +31,7 @@ data class Line(
 
     init {
         val perDepot = if (depots.isEmpty()) 0.0 else transporters.size / depots.size.toDouble()
-        if (perDepot != 0.0 && transporters.size % perDepot != 0.0) throw ConfigurationException("transporters must be divisible by depots")
+        if (perDepot != 0.0 && transporters.size % floor(perDepot) != 0.0) throw ConfigurationException("transporters must be divisible by depots")
         var startIndex = 0
         val multiDepots = getMultiDepots()
         depots.distinct().forEach { depot ->

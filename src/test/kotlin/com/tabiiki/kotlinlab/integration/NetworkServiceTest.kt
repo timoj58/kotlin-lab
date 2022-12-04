@@ -19,7 +19,6 @@ import org.springframework.test.context.ActiveProfiles
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @ActiveProfiles("test")
 @SpringBootTest
-@Disabled
 class NetworkServiceTest @Autowired constructor(
     val networkService: NetworkService,
     private val lineFactory: LineFactory

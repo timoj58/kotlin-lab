@@ -1,6 +1,6 @@
 network:
-  time-step: 10
-  start-delay: 1000
+  time-step: 20
+  start-delay: 2000
   lines:
     default-line-capacity: 2
     river:
@@ -29,5 +29,5 @@ network:
       - src/main/resources/network/underground/central.yml
       - src/main/resources/network/underground/district.yml
       - src/main/resources/network/underground/northern.yml
-      #- src/main/resources/network/underground/circle.yml
+      - src/main/resources/network/underground/circle.yml
       - src/main/resources/network/underground/piccadilly.yml

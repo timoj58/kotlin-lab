@@ -69,10 +69,11 @@ class StationMonitor(val timestep: Long = 100) {
         } while (true)
     }
 
-    private suspend fun embark(platform: Pair<String, String>, carriageChannel: Channel<Commuter>) = coroutineScope {
-        val station = platform.second.substringAfter(":")
+    private suspend fun embark(journey: Pair<String, String>, carriageChannel: Channel<Commuter>) = coroutineScope {
+        val station = journey.second.substringAfter(":")
         do {
-            stationCommuters[station]?.filter { it.getNextJourneyStage() == platform }?.forEach {
+            //TODO review this.  ie platform checks...probably correct.
+            stationCommuters[station]?.filter { it.peekNextJourneyStage().first == journey.second }?.forEach {
                 stationCommuters[station]!!.remove(it)
                 launch { carriageChannel.send(it) }
             }

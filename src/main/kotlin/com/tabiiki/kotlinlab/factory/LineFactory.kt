@@ -41,11 +41,7 @@ class LineFactory(
     fun isSwitchStation(line: String, station: String): Boolean {
         val network = getNetwork(line) ?: return false
         return network.getNodes().any {
-            (it.station == station.replace("|", ""))
-                    && it.linked.contains("*")
-                    && it.linked.size > 1
-        }
-
+            (it.station == station.replace("|", "")) && it.linked.contains("*") && it.linked.size > 1 }
     }
 
     fun isSwitchSection(lineId: String, section: Pair<String, String>): Pair<Boolean, Boolean> =

@@ -7,7 +7,9 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import org.springframework.test.annotation.DirtiesContext
 
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class CommuterServiceImplTest {
     private val routeService = Mockito.mock(RouteService::class.java)
     private val commuterServiceImpl = CommuterServiceImpl(10, routeService)
@@ -38,7 +40,7 @@ class CommuterServiceImplTest {
         Assertions.assertThat(commuter.commute.first).isNotNull
         Assertions.assertThat(commuter.commute.second).isNotNull
         Assertions.assertThat(commuter.getCurrentStation()).isEqualTo("A")
-        Assertions.assertThat(commuter.getNextJourneyStage()).isEqualTo(Pair("A", "B"))
+        Assertions.assertThat(commuter.peekNextJourneyStage()).isEqualTo(Pair("A", "B"))
 
         job.cancel()
         channelJob.cancel()

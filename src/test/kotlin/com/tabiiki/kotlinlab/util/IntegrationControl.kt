@@ -23,6 +23,7 @@ class IntegrationControl {
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
+            //println("$msg")
             if (!trainsByLine.containsKey(msg.line))
                 trainsByLine[msg.line] = mutableSetOf()
             if (!stationVisitedPerTrain.containsKey(msg.transportId))

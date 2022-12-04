@@ -28,9 +28,12 @@ data class Carriage(
     }
 
     override suspend fun disembark(station: String, stationChannel: Channel<Commuter>) = coroutineScope {
-        commuters.filter { it.getNextJourneyStage().second == station }.forEach {
-            commuters.remove(it)
-            stationChannel.send(it)
+        commuters.filter { it.peekNextJourneyStage().second == station }.forEach {
+            it.let {
+                it.completeJourneyStage()
+                commuters.remove(it)
+                stationChannel.send(it)
+            }
         }
     }
 

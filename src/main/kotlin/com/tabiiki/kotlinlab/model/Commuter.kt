@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import java.util.UUID
 import java.util.function.Consumer
 
@@ -18,8 +19,11 @@ data class Commuter(
     val ready: Consumer<Commuter>,
 ) {
 
-    fun getNextJourneyStage(): Pair<String, String> =
-        route.first().route.removeFirstOrNull() ?: throw Exception("route is complete")
+    fun peekNextJourneyStage(): Pair<String, String> =
+        route.first().route.first()
+
+    fun  completeJourneyStage(): Pair<String, String> =
+        route.first().route.removeFirstOrNull() ?: throw Exception("route is already complete")
 
     fun getCurrentStation(): String = commute.first
 
@@ -47,6 +51,9 @@ data class Commuter(
             delay(timeStep)
         } while (route.isNotEmpty())
     }
+
+    @TestOnly
+    fun getChannel() = channel
 
     companion object {
         val channel: Channel<AvailableRoute> = Channel()

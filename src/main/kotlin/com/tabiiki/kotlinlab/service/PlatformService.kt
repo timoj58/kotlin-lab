@@ -94,6 +94,7 @@ class PlatformServiceImpl(
     ): Unit = coroutineScope {
         val lineInstructions = lineRepo.getLineInstructions(transport)
         var key = platformKey(transport, lineInstructions)
+
         if (sectionService.isSwitchPlatform(transport, transport.section()))
             key = platformTerminalKey(transport, key)
 
