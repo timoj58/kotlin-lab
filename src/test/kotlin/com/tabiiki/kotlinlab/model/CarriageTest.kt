@@ -39,14 +39,14 @@ class CarriageTest {
         delay(100)
         val channel = carriage.getChannel()
         launch { channel.send(commuter) }
-        delay(100)
+        delay(1000)
         embarkJob.cancel()
 
         assert(!carriage.isEmpty())
 
         val job = launch { carriage.disembark("A", stationChannel) }
 
-        delay(200)
+        delay(1000)
 
         assert(carriage.isEmpty())
         job.cancel()
