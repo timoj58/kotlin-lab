@@ -17,6 +17,74 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 
+
+private class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
+    private val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
+        ConcurrentHashMap()
+
+    fun getQueue(key: Pair<String, String>): ArrayDeque<Transport> = queues[key]!!.second
+
+    fun initQueues(key: Pair<String, String>) {
+        queues[key] = Pair(Channel(), ArrayDeque())
+    }
+
+    fun isClear(section: Pair<String, String>, incoming: Boolean): Pair<Boolean, Int> =
+        Pair(
+            queues[section]!!.second.isEmpty()
+                    || (
+                    queues[section]!!.second.size < 2 //only 1 transporter per section currently.
+                            && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold
+                            && (if (incoming) incomingCheck(section) else defaultCheck(section))),
+            journeyTimeInSection(section)
+        )
+
+    private fun defaultCheck(section: Pair<String, String>) =
+        checkDistanceTravelled(
+            section,
+            queues[section]!!.second.last().getPosition(),
+            false
+        ) && !queues[section]!!.second.last().isStationary()
+
+
+    private fun incomingCheck(section: Pair<String, String>) =
+        checkDistanceTravelled(
+            section,
+            queues[section]!!.second.first().getPosition(),
+            true
+        )
+
+    private fun journeyTimeInSection(section: Pair<String, String>) =
+        queues[section]!!.second.lastOrNull()?.getJourneyTime()?.second ?: 0
+
+    private fun checkDistanceTravelled(
+        section: Pair<String, String>,
+        currentPosition: Double,
+        incoming: Boolean
+    ): Boolean {
+        val journey = journeyRepo.getJourneyTime(section, 0)
+        if (journey.second == 0.0 && !incoming) return true
+        val predictedDistance = (journey.second / journey.first) * minimumHold
+        return if (!incoming) currentPosition > predictedDistance else currentPosition < predictedDistance
+    }
+
+    fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
+
+    fun release(key: Pair<String, String>, transport: Transport) {
+        if (queues[key]!!.second.size >= 2) {
+            diagnostics.dump(null, this)
+            throw RuntimeException("Only two transporters allowed in $key")
+        }
+        queues[key]!!.second.addLast(transport)
+    }
+
+    fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
+
+    companion object {
+        private val diagnostics = Diagnostics()
+    }
+}
+
+
 interface SectionService {
     suspend fun accept(transport: Transport, channel: Channel<Transport>, jobs: List<Job>?)
     suspend fun init(line: String)
@@ -146,67 +214,5 @@ class SectionServiceImpl(
 
     companion object {
         private val diagnostics = Diagnostics()
-
-        class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
-            private val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
-                ConcurrentHashMap()
-
-            fun getQueue(key: Pair<String, String>): ArrayDeque<Transport> = queues[key]!!.second
-
-            fun initQueues(key: Pair<String, String>) {
-                queues[key] = Pair(Channel(), ArrayDeque())
-            }
-
-            fun isClear(section: Pair<String, String>, incoming: Boolean): Pair<Boolean, Int> =
-                Pair(
-                    queues[section]!!.second.isEmpty()
-                            || (
-                            queues[section]!!.second.size < 2 //only 1 transporter per section currently.
-                                    && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold
-                                    && (if (incoming) incomingCheck(section) else defaultCheck(section))),
-                    journeyTimeInSection(section)
-                )
-
-            private fun defaultCheck(section: Pair<String, String>) =
-                checkDistanceTravelled(
-                    section,
-                    queues[section]!!.second.last().getPosition(),
-                    false
-                ) && !queues[section]!!.second.last().isStationary()
-
-
-            private fun incomingCheck(section: Pair<String, String>) =
-                checkDistanceTravelled(
-                    section,
-                    queues[section]!!.second.first().getPosition(),
-                    true
-                )
-
-            private fun journeyTimeInSection(section: Pair<String, String>) =
-                queues[section]!!.second.lastOrNull()?.getJourneyTime()?.second ?: 0
-
-            private fun checkDistanceTravelled(
-                section: Pair<String, String>,
-                currentPosition: Double,
-                incoming: Boolean
-            ): Boolean {
-                val journey = journeyRepo.getJourneyTime(section, 0)
-                if (journey.second == 0.0 && !incoming) return true
-                val predictedDistance = (journey.second / journey.first) * minimumHold
-                return if (!incoming) currentPosition > predictedDistance else currentPosition < predictedDistance
-            }
-
-            fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
-
-            fun release(key: Pair<String, String>, transport: Transport) {
-                if (queues[key]!!.second.size >= 2) {
-                    diagnostics.dump(null, this)
-                    throw RuntimeException("Only two transporters allowed in $key")
-                }
-                queues[key]!!.second.addLast(transport)
-            }
-
-            fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
-        }
     }
 }

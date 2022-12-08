@@ -6,7 +6,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.TestOnly
 import java.util.UUID
 import java.util.function.Consumer
 
@@ -25,7 +24,7 @@ data class Commuter(
     fun peekNextJourneyStage(): Pair<String, String> =
         route.first().route.first()
 
-    fun  completeJourneyStage(): Pair<String, String> =
+    fun completeJourneyStage(): Pair<String, String> =
         route.first().route.removeFirstOrNull() ?: throw Exception("route is already complete")
 
     fun getCurrentStation(): String = commute.first

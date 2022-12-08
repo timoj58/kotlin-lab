@@ -6,9 +6,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
-import org.springframework.test.annotation.DirtiesContext
 
 
 class CarriageTest {
@@ -30,9 +28,11 @@ class CarriageTest {
 
         val init = launch { commuter.initJourney() }
 
-        launch { commuter.channel.send(
-            AvailableRoute(route = mutableListOf(Pair("B", "A")))
-        ) }
+        launch {
+            commuter.channel.send(
+                AvailableRoute(route = mutableListOf(Pair("B", "A")))
+            )
+        }
 
         delay(100)
 

@@ -44,7 +44,6 @@ private class Platforms {
 }
 
 
-
 class PlatformMonitor(
     private val sectionService: SectionService,
     private val signalService: SignalService,

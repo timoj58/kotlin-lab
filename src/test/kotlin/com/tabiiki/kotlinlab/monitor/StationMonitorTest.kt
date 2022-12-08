@@ -42,7 +42,7 @@ class StationMonitorTest {
             routeChannel = routeEnquiryChannel
         ) {
         }
-         val job3 = launch { commuter.initJourney() }
+        val job3 = launch { commuter.initJourney() }
 
         launch {
             commuter.channel.send(
