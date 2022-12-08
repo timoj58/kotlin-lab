@@ -1,6 +1,6 @@
 network:
-  time-step: 10
-  start-delay: 1000
+  time-step: 12
+  start-delay: 2000
   lines:
     default-line-capacity: 2
     river:
