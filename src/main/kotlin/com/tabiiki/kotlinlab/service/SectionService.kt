@@ -19,7 +19,7 @@ import java.util.function.Consumer
 
 
 private class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
-    private val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
+    val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
         ConcurrentHashMap()
 
     fun getQueue(key: Pair<String, String>): ArrayDeque<Transport> = queues[key]!!.second
@@ -71,7 +71,7 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
 
     fun release(key: Pair<String, String>, transport: Transport) {
         if (queues[key]!!.second.size >= 2) {
-            diagnostics.dump(null, this)
+            diagnostics.dump(null, queues)
             throw RuntimeException("Only two transporters allowed in $key")
         }
         queues[key]!!.second.addLast(transport)
@@ -116,7 +116,7 @@ class SectionServiceImpl(
     override suspend fun accept(transport: Transport, channel: Channel<Transport>, jobs: List<Job>?): Unit =
         coroutineScope {
             if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id }) {
-                diagnostics.dump(null, queues)
+                diagnostics.dump(null, queues.queues)
                 throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
             }
 
