@@ -38,7 +38,7 @@ class StationServiceImpl(
     private val signalService: SignalService,
     private val stationFactory: StationFactory
 ) : StationService {
-
+    private val stationChannels: ConcurrentHashMap<Station, Channel<SignalMessage>> = ConcurrentHashMap()
     private val stationMonitor = StationMonitor()
 
     override suspend fun start(
@@ -63,7 +63,4 @@ class StationServiceImpl(
         }
     }
 
-    companion object {
-        private val stationChannels: ConcurrentHashMap<Station, Channel<SignalMessage>> = ConcurrentHashMap()
-    }
 }

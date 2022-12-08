@@ -31,6 +31,10 @@ class LineControllerImpl(
     private val conductor: LineConductor
 ) : LineController {
 
+    private val channel: Channel<Transport> = Channel()
+    private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> =
+        ConcurrentHashMap() //TODO something with this
+
     init {
         if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
     }
@@ -75,11 +79,5 @@ class LineControllerImpl(
             val message = channel.receive()
             tracker[message.id] = message.section()
         } while (true)
-    }
-
-    companion object {
-        private val channel: Channel<Transport> = Channel()
-        private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> =
-            ConcurrentHashMap() //TODO something with this
     }
 }

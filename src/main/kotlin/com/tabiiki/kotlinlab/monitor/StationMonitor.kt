@@ -16,6 +16,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 class StationMonitor(val timestep: Long = 100) {
 
+    private val stationCommuters: ConcurrentHashMap<String, MutableList<Commuter>> = ConcurrentHashMap()
+    private val carriageChannelJobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
+
     suspend fun monitorPlatform(
         platformChannel: Channel<SignalMessage>,
         stationChannel: Channel<SignalMessage>,
@@ -80,10 +83,4 @@ class StationMonitor(val timestep: Long = 100) {
             delay(timestep)
         } while (true)
     }
-
-    companion object {
-        private val stationCommuters: ConcurrentHashMap<String, MutableList<Commuter>> = ConcurrentHashMap()
-        private val carriageChannelJobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
-    }
-
-}
+ }

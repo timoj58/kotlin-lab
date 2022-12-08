@@ -30,7 +30,7 @@ class CommuterServiceImpl(
         launch { routeService.listen() }
         launch { commuterMonitor.monitor(trackingChannel) }
 
-        do {
+      //  do {
             delay(timeStep)
             //release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)
             //also what happens when they complete journey? need to track  them.
@@ -46,7 +46,7 @@ class CommuterServiceImpl(
 
             launch { commuter.initJourney() }
 
-        } while (true)
+       // } while (true)
 
     }
 

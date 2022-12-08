@@ -6,7 +6,6 @@ import kotlinx.coroutines.coroutineScope
 interface ICarriage {
 
     fun isEmpty(): Boolean
-    fun getChannel(): Channel<Commuter>
     suspend fun embark(channel: Channel<Commuter>)
     suspend fun disembark(station: String, channel: Channel<Commuter>)
 }
@@ -15,10 +14,10 @@ data class Carriage(
     val capacity: Int
 ) : ICarriage {
 
+    val channel: Channel<Commuter> = Channel()
+
     private val commuters = mutableListOf<Commuter>()
     override fun isEmpty(): Boolean = commuters.isEmpty()
-
-    override fun getChannel() = channel
 
     override suspend fun embark(stationChannel: Channel<Commuter>) = coroutineScope {
         do {
@@ -37,7 +36,4 @@ data class Carriage(
         }
     }
 
-    companion object {
-        val channel: Channel<Commuter> = Channel()
-    }
 }

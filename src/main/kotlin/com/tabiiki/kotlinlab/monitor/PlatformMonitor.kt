@@ -17,11 +17,40 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
 
+private class Platforms {
+    private val platforms: ConcurrentHashMap<Pair<String, String>, AtomicReference<Optional<Transport>>> =
+        ConcurrentHashMap()
+
+    fun init(key: Pair<String, String>) {
+        platforms[key] = AtomicReference(Optional.empty())
+    }
+
+    fun isClear(key: Pair<String, String>): Boolean = platforms[key]?.get()?.isEmpty ?: true
+    fun getPlatformKeys(): List<Pair<String, String>> = platforms.keys().toList()
+
+    fun accept(key: Pair<String, String>, transport: Transport) {
+        if (!platforms[key]!!.get().isEmpty) {
+            throw RuntimeException(
+                "FATAL - already holding ${
+                    platforms[key]!!.get().get().id
+                } for $key next ${transport.id}"
+            )
+        }
+        platforms[key]!!.set(Optional.of(transport))
+    }
+
+    fun release(key: Pair<String, String>) = platforms[key]!!.set(Optional.empty())
+    fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms[key]!!.get()
+}
+
+
+
 class PlatformMonitor(
     private val sectionService: SectionService,
     private val signalService: SignalService,
     private val lineRepo: LineRepo
 ) {
+    private val holdChannels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> = ConcurrentHashMap()
     private val platforms = Platforms()
     fun getPlatformKeys(): List<Pair<String, String>> = platforms.getPlatformKeys()
     fun isClear(key: Pair<String, String>): Boolean = platforms.isClear(key)
@@ -134,38 +163,11 @@ class PlatformMonitor(
     }
 
     companion object {
-        private val holdChannels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> = ConcurrentHashMap()
         private val diagnostics = Diagnostics()
 
         private fun terminalSection(key: Pair<String, String>) = Pair(
             "${key.first.substringBefore(":")}:${key.second.substringAfter(":")}",
             "${key.second.substringAfter(":")}|"
         )
-
-        class Platforms {
-            private val platforms: ConcurrentHashMap<Pair<String, String>, AtomicReference<Optional<Transport>>> =
-                ConcurrentHashMap()
-
-            fun init(key: Pair<String, String>) {
-                platforms[key] = AtomicReference(Optional.empty())
-            }
-
-            fun isClear(key: Pair<String, String>): Boolean = platforms[key]?.get()?.isEmpty ?: true
-            fun getPlatformKeys(): List<Pair<String, String>> = platforms.keys().toList()
-
-            fun accept(key: Pair<String, String>, transport: Transport) {
-                if (!platforms[key]!!.get().isEmpty) {
-                    throw RuntimeException(
-                        "FATAL - already holding ${
-                            platforms[key]!!.get().get().id
-                        } for $key next ${transport.id}"
-                    )
-                }
-                platforms[key]!!.set(Optional.of(transport))
-            }
-
-            fun release(key: Pair<String, String>) = platforms[key]!!.set(Optional.empty())
-            fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms[key]!!.get()
-        }
     }
 }

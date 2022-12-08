@@ -24,6 +24,7 @@ class RouteServiceImpl(
     private val stationRepo: StationRepo,
     private val routeFactory: RouteFactory
 ) : RouteService {
+    private val channel: Channel<RouteEnquiry> = Channel()
     override fun generate(): Pair<String, String> {
         val stations = stationRepo.get()
         val from = generateStation(stations)
@@ -49,7 +50,4 @@ class RouteServiceImpl(
         return station
     }
 
-    companion object {
-        private val channel: Channel<RouteEnquiry> = Channel()
-    }
 }

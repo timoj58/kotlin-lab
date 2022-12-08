@@ -40,6 +40,8 @@ class SectionServiceImpl(
     private val journeyRepo: JourneyRepo,
 ) : SectionService {
 
+    private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
+    private val holdChannels: ConcurrentHashMap<UUID, Channel<Transport>> = ConcurrentHashMap()
     private val queues = Queues(minimumHold, journeyRepo)
     private val sectionMonitor = SectionMonitor()
 
@@ -143,8 +145,6 @@ class SectionServiceImpl(
     }
 
     companion object {
-        private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
-        private val holdChannels: ConcurrentHashMap<UUID, Channel<Transport>> = ConcurrentHashMap()
         private val diagnostics = Diagnostics()
 
         class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {

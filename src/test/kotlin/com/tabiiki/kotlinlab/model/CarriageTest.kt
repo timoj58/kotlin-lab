@@ -10,12 +10,11 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.test.annotation.DirtiesContext
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+
 class CarriageTest {
 
     private val carriage = Carriage(100)
 
-    @Disabled // fails when run as a larger group of work (odd)
     @Test
     fun `carriage embark and disembark test`() = runBlocking {
 
@@ -31,7 +30,7 @@ class CarriageTest {
 
         val init = launch { commuter.initJourney() }
 
-        launch { commuter.getChannel().send(
+        launch { commuter.channel.send(
             AvailableRoute(route = mutableListOf(Pair("B", "A")))
         ) }
 
@@ -39,16 +38,16 @@ class CarriageTest {
 
         val embarkJob = launch { carriage.embark(stationChannel) }
         delay(100)
-        val channel = carriage.getChannel()
+        val channel = carriage.channel
         launch { channel.send(commuter) }
-        delay(1000)
+        delay(100)
         embarkJob.cancel()
 
         assert(!carriage.isEmpty())
 
         val job = launch { carriage.disembark("A", stationChannel) }
 
-        delay(1000)
+        delay(100)
 
         assert(carriage.isEmpty())
         job.cancel()

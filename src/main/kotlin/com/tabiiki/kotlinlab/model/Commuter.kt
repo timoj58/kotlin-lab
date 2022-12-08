@@ -19,6 +19,9 @@ data class Commuter(
     val ready: Consumer<Commuter>,
 ) {
 
+    val channel: Channel<AvailableRoute> = Channel()
+    val route: MutableList<AvailableRoute> = mutableListOf()
+
     fun peekNextJourneyStage(): Pair<String, String> =
         route.first().route.first()
 
@@ -28,8 +31,6 @@ data class Commuter(
     fun getCurrentStation(): String = commute.first
 
     suspend fun initJourney() = coroutineScope {
-        println("sending enquiry: $commute")
-
         launch {
             routeChannel.send(
                 RouteEnquiry(route = commute, channel = channel)
@@ -52,12 +53,7 @@ data class Commuter(
         } while (route.isNotEmpty())
     }
 
-    @TestOnly
-    fun getChannel() = channel
-
     companion object {
-        val channel: Channel<AvailableRoute> = Channel()
-        val route: MutableList<AvailableRoute> = mutableListOf()
 
         /*  taken from old routeFactory.  of some use when working out which transporter to get on  ...
 

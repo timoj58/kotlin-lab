@@ -9,6 +9,30 @@ import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 
+
+private class Channels {
+    private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
+        ConcurrentHashMap()
+    private val channelsOut: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
+        ConcurrentHashMap()
+
+    fun initIn(key: Pair<String, String>): Channel<SignalMessage> {
+        channelsIn[key] = Channel()
+        return channelsIn[key]!!
+    }
+
+    fun initOut(key: Pair<String, String>): Channel<SignalMessage> {
+        channelsOut[key] = Channel()
+        return channelsOut[key]!!
+    }
+
+    suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) =
+        channelsIn[key]?.send(signalMessage) ?: throw RuntimeException("bad channel $key")
+
+    suspend fun receive(key: Pair<String, String>): SignalMessage? = channelsOut[key]?.receive()
+    fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channelsOut[key]
+}
+
 interface SignalService {
     suspend fun init(key: Pair<String, String>)
     fun getPlatformSignals(): List<Pair<String, String>>
@@ -44,30 +68,4 @@ class SignalServiceImpl(
     override suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
     override suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) =
         channels.send(key, signalMessage)
-
-
-    companion object {
-        class Channels {
-            private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
-                ConcurrentHashMap()
-            private val channelsOut: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
-                ConcurrentHashMap()
-
-            fun initIn(key: Pair<String, String>): Channel<SignalMessage> {
-                channelsIn[key] = Channel()
-                return channelsIn[key]!!
-            }
-
-            fun initOut(key: Pair<String, String>): Channel<SignalMessage> {
-                channelsOut[key] = Channel()
-                return channelsOut[key]!!
-            }
-
-            suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) =
-                channelsIn[key]?.send(signalMessage) ?: throw RuntimeException("bad channel $key")
-
-            suspend fun receive(key: Pair<String, String>): SignalMessage? = channelsOut[key]?.receive()
-            fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channelsOut[key]
-        }
-    }
 }

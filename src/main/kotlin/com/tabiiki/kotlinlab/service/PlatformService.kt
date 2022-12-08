@@ -36,6 +36,7 @@ class PlatformServiceImpl(
     private val stationRepo: StationRepo,
 ) : PlatformService {
     private val platformMonitor = PlatformMonitor(sectionService, signalService, lineRepo)
+    private var commuterChannel: Channel<Commuter>? = null
 
     init {
         signalService.getSectionSignals().forEach { sectionService.initQueues(it) }
@@ -106,7 +107,7 @@ class PlatformServiceImpl(
                     id = transport.id,
                     key = key,
                     line = transport.line.id,
-                    commuterChannel = transport.carriage.getChannel()
+                    commuterChannel = transport.carriage.channel
                 )
             )
         }
@@ -177,7 +178,6 @@ class PlatformServiceImpl(
     }
 
     companion object {
-        private var commuterChannel: Channel<Commuter>? = null
         private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
             val line = transport.line.name
             val dir = instructions.direction

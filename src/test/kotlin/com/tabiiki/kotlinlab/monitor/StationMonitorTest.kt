@@ -45,7 +45,7 @@ class StationMonitorTest {
          val job3 = launch { commuter.initJourney() }
 
         launch {
-            commuter.getChannel().send(
+            commuter.channel.send(
                 AvailableRoute(
                     route = mutableListOf(Pair("A", "B"))
                 )
