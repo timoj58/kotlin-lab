@@ -14,10 +14,14 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class StationMonitor(val timestep: Long = 100) {
+class StationMonitor(val timeStep: Long, stations: List<String>) {
 
     private val stationCommuters: ConcurrentHashMap<String, MutableList<Commuter>> = ConcurrentHashMap()
     private val carriageChannelJobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
+
+    init {
+        stations.forEach { stationCommuters[it] = mutableListOf() }
+    }
 
     suspend fun monitorPlatform(
         platformChannel: Channel<SignalMessage>,
@@ -26,9 +30,10 @@ class StationMonitor(val timestep: Long = 100) {
         var previousSignal: SignalValue? = null
         do {
             val msg = platformChannel.receive()
+            if(msg.commuterChannel == null && !msg.init) throw Exception("no channel from ${msg.author}")
             msg.commuterChannel?.let {
                 when (msg.signalValue) {
-                    SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch { embark(msg.key!!, msg.commuterChannel) }
+                    SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch { embark(msg.key!!, it) }
                     SignalValue.GREEN -> carriageChannelJobs[msg.id!!]?.cancel()
                 }
             }
@@ -52,7 +57,7 @@ class StationMonitor(val timestep: Long = 100) {
                     globalListener.send(
                         StationMessage(
                             stationId = station.id,
-                            transportId = msg.id,
+                            transportId = it,
                             line = msg.line!!,
                             type = messageType
                         )
@@ -66,8 +71,6 @@ class StationMonitor(val timestep: Long = 100) {
         do {
             val msg = channel.receive()
             val station = msg.getCurrentStation()
-
-            if (!stationCommuters.contains(station)) stationCommuters[station] = mutableListOf()
             stationCommuters[station]!!.add(msg)
         } while (true)
     }
@@ -75,12 +78,13 @@ class StationMonitor(val timestep: Long = 100) {
     private suspend fun embark(journey: Pair<String, String>, carriageChannel: Channel<Commuter>) = coroutineScope {
         val station = journey.second.substringAfter(":")
         do {
-            //TODO review this.  ie platform checks...probably correct.
-            stationCommuters[station]?.filter { it.peekNextJourneyStage().first == journey.second }?.forEach {
-                stationCommuters[station]!!.remove(it)
-                launch { carriageChannel.send(it) }
+            stationCommuters[station]?.let {
+                it.filter { commuter ->  commuter.peekNextJourneyStage().first == journey.second }.forEach { embark ->
+                    stationCommuters[station]!!.remove(embark)
+                    launch { carriageChannel.send(embark) }
+                }
             }
-            delay(timestep)
+            delay(timeStep)
         } while (true)
     }
 }

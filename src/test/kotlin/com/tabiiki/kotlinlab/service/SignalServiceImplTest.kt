@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.Signal
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
+import com.tabiiki.kotlinlab.factory.SignalType
 import com.tabiiki.kotlinlab.factory.SignalValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -22,7 +23,7 @@ internal class SignalServiceImplTest {
     @BeforeEach
     fun init() {
         `when`(signalFactory.get(Pair("A", "B"))).thenReturn(
-            Signal(Pair("A", "B"))
+            Signal(section = Pair("A", "B"), type = SignalType.TEST)
         )
     }
 

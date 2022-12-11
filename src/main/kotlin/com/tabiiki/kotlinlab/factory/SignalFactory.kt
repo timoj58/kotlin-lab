@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 enum class SignalType {
-    PLATFORM, SECTION
+    PLATFORM, SECTION, TEST
 }
 
 enum class SignalValue {
@@ -24,14 +24,16 @@ data class SignalMessage(
     val key: Pair<String, String>? = null,
     val line: String? = null,
     val commuterChannel: Channel<Commuter>? = null,
-    var timesStamp: Long = System.currentTimeMillis()
+    var timesStamp: Long = System.currentTimeMillis(),
+    val author: String = "TEST",
+    val init: Boolean = false,
 )
 
 data class Signal(
     var section: Pair<String, String>,
-    var status: SignalMessage = SignalMessage(signalValue = SignalValue.GREEN, key = section),
     val type: SignalType = SignalType.SECTION,
-    val timeStep: Long = 10
+    var status: SignalMessage = SignalMessage(signalValue = SignalValue.GREEN, key = section, author = "$type", init = true),
+    val timeStep: Long = 10,
 ) {
     suspend fun start(channelIn: Channel<SignalMessage>, channelOut: Channel<SignalMessage>) = coroutineScope {
         launch { receive(channelIn) }
@@ -46,7 +48,9 @@ data class Signal(
                     signalValue = msg.signalValue,
                     id = msg.id,
                     key = msg.key,
-                    line = msg.line
+                    line = msg.line,
+                    author = msg.author,
+                    commuterChannel = msg.commuterChannel,
                 )
             }
         } while (true)

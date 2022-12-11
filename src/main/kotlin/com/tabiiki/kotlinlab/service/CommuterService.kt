@@ -30,23 +30,24 @@ class CommuterServiceImpl(
         launch { routeService.listen() }
         launch { commuterMonitor.monitor(trackingChannel) }
 
+      //  for (i in 1 .. 1) {
         //  do {
         delay(timeStep)
         //release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)
-        //also what happens when they complete journey? need to track  them.
+        //also what happens when they complete journey? need to track  them.  and perhaps cap no of commuters once performance discovered
         val commuter = Commuter(
             commute = routeService.generate(),
             stationChannel = trackingChannel,
             timeStep = timeStep,
-            routeChannel = routeService.getChannel(),
         ) {
             launch { it.track() }
             launch { commuterChannel.send(it) }
         }
 
         launch { commuter.initJourney() }
+   // }
 
-        // } while (true)
+     //   } while (true)
 
     }
 

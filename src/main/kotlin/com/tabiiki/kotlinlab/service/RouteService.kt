@@ -14,9 +14,8 @@ data class RouteEnquiry(val route: Pair<String, String>, val channel: Channel<Av
 
 
 interface RouteService {
-    fun generate(): Pair<String, String>
+    fun generate(): Pair<Pair<String, String>, Channel<RouteEnquiry>>
     suspend fun listen()
-    fun getChannel(): Channel<RouteEnquiry>
 }
 
 @Service
@@ -25,10 +24,13 @@ class RouteServiceImpl(
     private val routeFactory: RouteFactory
 ) : RouteService {
     private val channel: Channel<RouteEnquiry> = Channel()
-    override fun generate(): Pair<String, String> {
+    override fun generate(): Pair<Pair<String, String>, Channel<RouteEnquiry>> {
         val stations = stationRepo.get()
         val from = generateStation(stations)
-        return Pair(from, generateStation(stations, from))
+        return Pair(
+            Pair(from,
+                generateStation(stations, from))
+            , channel)
     }
 
     override suspend fun listen() = coroutineScope {
@@ -38,7 +40,6 @@ class RouteServiceImpl(
         } while (true)
     }
 
-    override fun getChannel(): Channel<RouteEnquiry> = channel
 
     private fun generateStation(stations: List<Station>, from: String? = null): String {
         var station: String? = null

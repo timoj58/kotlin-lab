@@ -57,21 +57,23 @@ class PlatformMonitor(
     fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms.atPlatform(key)
     fun accept(key: Pair<String, String>, transport: Transport) = platforms.accept(key, transport)
     fun release(key: Pair<String, String>) = platforms.release(key)
-    fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)]!!
+    fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)] ?: throw Exception("no channel for ${transport.platformKey()} ")
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
         var previousSignal: SignalMessage? = null
-        val isTerminal = key.first.contains(LineDirection.TERMINAL.toString())
-        //TODO tidy this up.
-        val terminalSection = terminalSection(key)
+        var terminalSection: Pair<String, String>? = null
+
+        if (key.first.contains(LineDirection.TERMINAL.toString()))
+            terminalSection = terminalSection(key)
+
         do {
             signalService.receive(key)?.let {
                 if (previousSignal == null || it != previousSignal) {
                     previousSignal = it
 
                     when (it.signalValue) {
-                        SignalValue.RED -> processRed(it, key, isTerminal, terminalSection)
-                        SignalValue.GREEN -> processGreen(it, key, isTerminal, terminalSection)
+                        SignalValue.RED -> processRed(it, key, terminalSection)
+                        SignalValue.GREEN -> processGreen(it, key, terminalSection)
                     }
                 }
             }
@@ -100,16 +102,17 @@ class PlatformMonitor(
     private suspend fun processGreen(
         signal: SignalMessage,
         key: Pair<String, String>,
-        isTerminal: Boolean,
-        terminalSection: Pair<String, String>
+        terminalSection: Pair<String, String>?
     ) =
         coroutineScope {
-            val sections = if (isTerminal) listOf(
-                Pair(
-                    terminalSection,
-                    sectionService.isClearWithPriority(terminalSection)
+            val author = "PLATFORM_MONITOR - ${SignalValue.GREEN}"
+            val sections: List<Pair<Pair<String, String>, Pair<Boolean, Int>>> = if (terminalSection != null)
+                listOf(
+                    Pair(
+                        terminalSection,
+                        sectionService.isClearWithPriority(terminalSection)
+                    )
                 )
-            )
             else lineRepo.getPreviousSections(key).map { Pair(it, sectionService.isClearWithPriority(it)) }
 
             val priority = sections.filter { it.second.second != 0 }.sortedByDescending { it.second.second }
@@ -119,7 +122,7 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         it.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
+                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, author = author)
                     )
                 }
             }
@@ -128,7 +131,7 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         section.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
+                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, author = author)
                     )
                 }
             }
@@ -137,17 +140,18 @@ class PlatformMonitor(
     private suspend fun processRed(
         signal: SignalMessage,
         key: Pair<String, String>,
-        isTerminal: Boolean,
-        terminalSection: Pair<String, String>
+        terminalSection: Pair<String, String>?
     ) =
         coroutineScope {
-            val sections = if (isTerminal) listOf(terminalSection) else lineRepo.getPreviousSections(key)
+            val author = "PLATFORM_MONITOR - ${SignalValue.RED}"
+            val sections: List<Pair<String, String>> =
+                if (terminalSection != null) listOf(terminalSection) else lineRepo.getPreviousSections(key)
 
             sections.forEach {
                 launch {
                     signalService.send(
                         it,
-                        SignalMessage(signalValue = SignalValue.RED, key = signal.key, id = signal.id)
+                        SignalMessage(signalValue = SignalValue.RED, key = signal.key, id = signal.id, author = author)
                     )
                 }
             }

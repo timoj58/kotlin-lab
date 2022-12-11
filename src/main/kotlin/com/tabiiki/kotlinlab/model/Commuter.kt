@@ -11,28 +11,31 @@ import java.util.function.Consumer
 
 data class Commuter(
     val id: UUID = UUID.randomUUID(),
-    val commute: Pair<String, String>, //TODO destroy commuter once completed?  makes sense.
+    val commute: Pair<Pair<String, String>, Channel<RouteEnquiry>>, //TODO destroy commuter once completed?  makes sense.
     val stationChannel: Channel<Commuter>,
     val timeStep: Long,
-    val routeChannel: Channel<RouteEnquiry>,
     val ready: Consumer<Commuter>,
 ) {
 
     val channel: Channel<AvailableRoute> = Channel()
-    val route: MutableList<AvailableRoute> = mutableListOf()
+    private val route: MutableList<AvailableRoute> = mutableListOf()
+    private val history: MutableList<Pair<String, String>> = mutableListOf()
 
     fun peekNextJourneyStage(): Pair<String, String> =
-        route.first().route.first()
+        route.first().route.firstOrNull() ?: throw Exception("empty: $history")
 
-    fun completeJourneyStage(): Pair<String, String> =
-        route.first().route.removeFirstOrNull() ?: throw Exception("route is already complete")
+    fun completeJourneyStage(): Pair<String, String> {
+        val travelled = route.first().route.removeFirstOrNull() ?: throw Exception("route is already complete")
+        history.add(travelled)
+        return travelled
+    }
 
-    fun getCurrentStation(): String = commute.first
+    fun getCurrentStation(): String = commute.first.first
 
     suspend fun initJourney() = coroutineScope {
         launch {
-            routeChannel.send(
-                RouteEnquiry(route = commute, channel = channel)
+            commute.second.send(
+                RouteEnquiry(route = commute.first, channel = channel)
             )
         }
 

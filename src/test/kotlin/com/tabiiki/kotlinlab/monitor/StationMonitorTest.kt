@@ -19,7 +19,7 @@ import java.util.UUID
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class StationMonitorTest {
 
-    private val stationMonitor = StationMonitor()
+    private val stationMonitor = StationMonitor(timeStep = 10, stations = listOf("A", "B"))
 
     @Test
     fun `commuter embark test`() = runBlocking {
@@ -36,10 +36,9 @@ class StationMonitorTest {
 
         //add a commuter.
         val commuter = Commuter(
-            commute = Pair("A", "B"),
+            commute = Pair(Pair("A", "B"), routeEnquiryChannel),
             stationChannel = Channel(),
             timeStep = 10,
-            routeChannel = routeEnquiryChannel
         ) {
         }
         val job3 = launch { commuter.initJourney() }

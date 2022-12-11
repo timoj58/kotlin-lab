@@ -20,10 +20,9 @@ class CarriageTest {
         val routeEnquiryChannel = Channel<RouteEnquiry>()
 
         val commuter = Commuter(
-            commute = Pair("B", "A"),
+            commute = Pair(Pair("B", "A"), routeEnquiryChannel),
             stationChannel = Channel(),
             timeStep = 10,
-            routeChannel = routeEnquiryChannel
         ) {}
 
         val init = launch { commuter.initJourney() }

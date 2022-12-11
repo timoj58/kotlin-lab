@@ -58,9 +58,6 @@ class PlatformServiceImpl(
     }
 
     override fun canLaunch(transport: Transport): Boolean {
-        //this is the offending item related to city line.
-        //if (lineRepo.getLineStations(transport).size == 2) return true
-
         var response = true
         val line = transport.section().first.substringBefore(":")
         val stations = stationRepo.getPreviousStationsOnLine(
@@ -93,6 +90,7 @@ class PlatformServiceImpl(
     override suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {
+        val author = "PLATFORM_SERVICE - ${SignalValue.RED}"
         val lineInstructions = lineRepo.getLineInstructions(transport)
         var key = platformKey(transport, lineInstructions)
 
@@ -107,7 +105,8 @@ class PlatformServiceImpl(
                     id = transport.id,
                     key = key,
                     line = transport.line.id,
-                    commuterChannel = transport.carriage.channel
+                    commuterChannel = transport.carriage.channel,
+                    author = author,
                 )
             )
         }

@@ -173,6 +173,7 @@ class SectionServiceImpl(
     }
 
     private suspend fun release(transport: Transport, jobs: List<Job>?) = coroutineScope {
+        val author = "SECTION_SERVICE - ${SignalValue.GREEN}"
         val job = launch { transport.signal(signalService.getChannel(transport.section())!!) }
 
         if (switchService.isSwitchSection(transport))
@@ -188,7 +189,9 @@ class SectionServiceImpl(
                     signalValue = SignalValue.GREEN,
                     id = transport.id,
                     key = transport.section(),
-                    line = transport.line.id
+                    line = transport.line.id,
+                    author = author,
+                    commuterChannel = transport.carriage.channel,
                 )
             )
 

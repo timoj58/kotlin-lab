@@ -12,7 +12,6 @@ class RouteFactoryTest {
     private val routeFactory = RouteFactory(InterchangeFactoryBuilder().build())
 
     @Test
-    // @Disabled
     fun `calculate route including circle line Bayswater to Stratford `() =
         runBlocking {
             val channel = Channel<AvailableRoute>()
@@ -42,7 +41,6 @@ class RouteFactoryTest {
         }
 
     @Test
-    //@Disabled
     fun `calculate routes via connected line on itself  from West Ealing to Goodge St `() = runBlocking {
         val channel = Channel<AvailableRoute>()
         val job = launch {
@@ -105,7 +103,6 @@ class RouteFactoryTest {
     }
 
     @Test
-    //@Disabled
     fun `calculate route with virtual interchange from Emirates Royal Docks to Bermondsey `() = runBlocking {
         val channel = Channel<AvailableRoute>()
         val job = launch {
@@ -130,7 +127,6 @@ class RouteFactoryTest {
         val enquiries: MutableList<List<Pair<String, String>>> = mutableListOf()
         do {
             val enquiry = channel.receive()
-            println("$enquiry")
             enquiries.add(enquiry.route)
         } while (!enquiries.containsAll(test))
 

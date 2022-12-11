@@ -6,8 +6,8 @@ import kotlinx.coroutines.coroutineScope
 interface ICarriage {
 
     fun isEmpty(): Boolean
-    suspend fun embark(channel: Channel<Commuter>)
-    suspend fun disembark(station: String, channel: Channel<Commuter>)
+    suspend fun embark(stationChannel: Channel<Commuter>)
+    suspend fun disembark(station: String, stationChannel: Channel<Commuter>)
 }
 
 data class Carriage(
@@ -27,8 +27,8 @@ data class Carriage(
     }
 
     override suspend fun disembark(station: String, stationChannel: Channel<Commuter>) = coroutineScope {
-        commuters.filter { it.peekNextJourneyStage().second == station }.forEach {
-            it.let {
+        commuters.filter { it.peekNextJourneyStage().second.substringAfter(":") == station }.forEach { commuter ->
+            commuter.let {
                 it.completeJourneyStage()
                 commuters.remove(it)
                 stationChannel.send(it)

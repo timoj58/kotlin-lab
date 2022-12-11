@@ -27,14 +27,14 @@ class RouteServiceImplTest {
         }
 
         val route = routeServiceImpl.generate()
-        Assertions.assertThat(route.first.trim()).isNotEmpty
-        Assertions.assertThat(route.second.trim()).isNotEmpty
+        Assertions.assertThat(route.first.first.trim()).isNotEmpty
+        Assertions.assertThat(route.first.second.trim()).isNotEmpty
 
         Assertions.assertThat(route.first).isNotEqualTo(route.second)
 
 
-        Assertions.assertThat(stationRepo.get(route.first)).isNotNull
-        Assertions.assertThat(stationRepo.get(route.second)).isNotNull
+        Assertions.assertThat(stationRepo.get(route.first.first)).isNotNull
+        Assertions.assertThat(stationRepo.get(route.first.second)).isNotNull
     }
 
 }

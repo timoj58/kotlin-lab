@@ -21,7 +21,6 @@ class NetworkServiceTest @Autowired constructor(
     val networkService: NetworkService,
     private val lineFactory: LineFactory
 ) {
-
     val integrationControl = IntegrationControl()
 
     init {

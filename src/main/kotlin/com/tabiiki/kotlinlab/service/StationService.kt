@@ -39,7 +39,7 @@ class StationServiceImpl(
     private val stationFactory: StationFactory
 ) : StationService {
     private val stationChannels: ConcurrentHashMap<Station, Channel<SignalMessage>> = ConcurrentHashMap()
-    private val stationMonitor = StationMonitor()
+    private val stationMonitor = StationMonitor(timeStep = timeStep, stations = stationFactory.get())
 
     override suspend fun start(
         globalListener: Channel<StationMessage>,

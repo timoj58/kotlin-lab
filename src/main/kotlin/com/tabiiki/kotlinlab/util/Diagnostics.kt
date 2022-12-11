@@ -19,9 +19,11 @@ class Diagnostics {
             }
         }
 
-        queues?.keys()!!.toList().forEach { queue ->
-            queues[queue]!!.second.forEach {
-                log.info("${it.id} current instruction ${it.line.id} ${it.getCurrentInstruction()} in ${it.section()} ${it.getPosition()}")
+        queues?.keys()?.let {
+            it.toList().forEach { queue ->
+                queues[queue]!!.second.forEach {
+                    log.info("${it.id} current instruction ${it.line.id} ${it.getCurrentInstruction()} in ${it.section()} ${it.getPosition()}")
+                }
             }
         }
     }

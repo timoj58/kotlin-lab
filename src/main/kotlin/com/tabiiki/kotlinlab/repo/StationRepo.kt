@@ -69,7 +69,7 @@ class StationRepoImpl(
     }
 
     override fun get(): List<Station> = stations.toList()
-    override fun get(id: String): Station = stations.first { it.id == id }
+    override fun get(id: String): Station = stations.firstOrNull { it.id == id } ?: throw Exception("missing details for $id") //672?
 
     private fun getConfig(lineStations: List<String>, section: Pair<String, String>): Triple<Int, Int, Int> {
         var fromStationIdx = lineStations.indexOf(section.first.substringAfter(":"))
