@@ -122,7 +122,7 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         it.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, author = author)
+                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, producer = author)
                     )
                 }
             }
@@ -131,7 +131,7 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         section.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, author = author)
+                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, producer = author)
                     )
                 }
             }
@@ -151,7 +151,7 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         it,
-                        SignalMessage(signalValue = SignalValue.RED, key = signal.key, id = signal.id, author = author)
+                        SignalMessage(signalValue = SignalValue.RED, key = signal.key, id = signal.id, producer = author)
                     )
                 }
             }

@@ -30,7 +30,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         var previousSignal: SignalValue? = null
         do {
             val msg = platformChannel.receive()
-            if(msg.commuterChannel == null && !msg.init) throw Exception("no channel from ${msg.author}")
+            if(msg.commuterChannel == null && !msg.init) throw Exception("no channel from ${msg.producer}")
             msg.commuterChannel?.let {
                 when (msg.signalValue) {
                     SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch { embark(msg.key!!, it) }
@@ -71,7 +71,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         do {
             val msg = channel.receive()
             val station = msg.getCurrentStation()
-            stationCommuters[station]!!.add(msg)
+            stationCommuters[station]?.add(msg) ?: throw Exception("missing channel for $station")
         } while (true)
     }
 

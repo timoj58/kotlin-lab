@@ -106,7 +106,7 @@ class PlatformServiceImpl(
                     key = key,
                     line = transport.line.id,
                     commuterChannel = transport.carriage.channel,
-                    author = author,
+                    producer = author,
                 )
             )
         }

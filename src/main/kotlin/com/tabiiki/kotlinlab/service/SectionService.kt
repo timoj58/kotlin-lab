@@ -190,7 +190,7 @@ class SectionServiceImpl(
                     id = transport.id,
                     key = transport.section(),
                     line = transport.line.id,
-                    author = author,
+                    producer = author,
                     commuterChannel = transport.carriage.channel,
                 )
             )

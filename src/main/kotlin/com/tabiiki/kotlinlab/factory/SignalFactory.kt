@@ -25,14 +25,14 @@ data class SignalMessage(
     val line: String? = null,
     val commuterChannel: Channel<Commuter>? = null,
     var timesStamp: Long = System.currentTimeMillis(),
-    val author: String = "TEST",
+    val producer: String = "TEST",
     val init: Boolean = false,
 )
 
 data class Signal(
     var section: Pair<String, String>,
     val type: SignalType = SignalType.SECTION,
-    var status: SignalMessage = SignalMessage(signalValue = SignalValue.GREEN, key = section, author = "$type", init = true),
+    var status: SignalMessage = SignalMessage(signalValue = SignalValue.GREEN, key = section, producer = "$type", init = true),
     val timeStep: Long = 10,
 ) {
     suspend fun start(channelIn: Channel<SignalMessage>, channelOut: Channel<SignalMessage>) = coroutineScope {
@@ -49,7 +49,7 @@ data class Signal(
                     id = msg.id,
                     key = msg.key,
                     line = msg.line,
-                    author = msg.author,
+                    producer = msg.producer,
                     commuterChannel = msg.commuterChannel,
                 )
             }

@@ -81,9 +81,8 @@ internal class PlatformServiceTest {
 
         val routeEnquiryChannel = Channel<RouteEnquiry>()
 
-        //add a commuter. TODO fix this.  needs to get journey
         val commuter = Commuter(
-            commute = Pair(Pair("TEST:26", "TEST:94"), routeEnquiryChannel),
+            commute = Pair(Pair("26", "94"), routeEnquiryChannel),
             stationChannel = Channel(),
             timeStep = 10,
         ) {}
