@@ -39,7 +39,7 @@ interface ITransport {
     fun platformFromKey(): Pair<String, String>
     fun platformToKey(terminal: Boolean = false): Pair<String, String>?
     fun platformKey(): Pair<String, String>
-    fun addSection(section: Pair<String, String>)
+    fun addSection(section: Pair<String, String>? = null)
     fun addSwitchSection(section: Pair<String, String>)
     fun lineDirection(): LineDirection
     fun getJourneyTime(): Triple<Pair<String, String>, Int, Double>
@@ -48,6 +48,11 @@ interface ITransport {
     fun getSectionStationCode(): String
     fun getCurrentInstruction(): Instruction
     fun getPosition(): Double
+    fun setHoldChannel(holdChannel: Channel<Transport>)
+
+    suspend fun arrived()
+
+    fun switchSection(section: Pair<String, String>)
 }
 
 data class Transport(
@@ -56,24 +61,38 @@ data class Transport(
     val timeStep: Long
 ) : ITransport {
 
-    var id: UUID = UUID.randomUUID()
+    val id: UUID = UUID.randomUUID()
     val transportId = config.transportId
     val carriage = Carriage(config.capacity)
     private val physics = Physics(config)
 
     var status = Status.DEPOT
-    private var instruction = Instruction.STATIONARY
-    var actualSection: Pair<String, String>? = null
+    var instruction = Instruction.STATIONARY
+    private var actualSection: Pair<String, String>? = null
     private var journey: LineInstructions? = null
     private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
+    private var holdChannel: Channel<Transport>? = null
 
     override fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
-    override fun getSectionStationCode(): String = section().first.substringAfter(":").replace("|", ":")
+    override fun getSectionStationCode(): String = section().first.substringAfter(":").replace("|", "")
     override fun getCurrentInstruction(): Instruction = this.instruction
     override fun getPosition(): Double = this.physics.displacement
+    override fun setHoldChannel(holdChannel: Channel<Transport>) {
+        this.holdChannel = holdChannel
+    }
+
+    override suspend fun arrived() {
+        holdChannel!!.send(this)
+        holdChannel = null
+    }
+
+    override fun switchSection(section: Pair<String, String>) {
+        if(this.actualSection == null)
+            this.actualSection = section
+    }
 
     override fun platformKey(): Pair<String, String> =
         Pair("${line.name}:${this.lineDirection()}", section().first.substringBefore("|"))
@@ -96,14 +115,15 @@ data class Transport(
         return Pair("$line:$dir", "$line:${journey!!.to.id}")
     }
 
-    override fun addSection(section: Pair<String, String>) {
-        assert(section.first.contains(":")) { "section is wrong $section" }
-        sectionData = Pair(section, null)
+    override fun addSection(section: Pair<String, String>?) {
+        val actualSection = section ?: actualSection!!
+        assert(actualSection.first.contains(":")) { "section is wrong $actualSection" }
+        sectionData = Pair(actualSection, null)
     }
 
     override fun addSwitchSection(section: Pair<String, String>) {
         actualSection = section()
-        addSection(section)
+        addSection()
     }
 
     override suspend fun track(channel: SendChannel<Transport>) {
@@ -116,9 +136,9 @@ data class Transport(
         } while (true)
     }
 
-    override suspend fun release(instruction: LineInstructions): Unit = coroutineScope {
-        launch { startJourney(instruction) }
-        launch { motionLoop(Instruction.STATIONARY) }
+    override suspend fun release(lineInstructions: LineInstructions): Unit = coroutineScope {
+        launch { startJourney(lineInstructions) }
+        launch { motionLoop() }
     }
 
     override suspend fun signal(channel: Channel<SignalMessage>) {
@@ -177,21 +197,20 @@ data class Transport(
         it + 1 == idx || it - 1 == idx
     }
 
-    private suspend fun motionLoop(newInstruction: Instruction) = coroutineScope {
-        instruction = newInstruction
+    private suspend fun motionLoop() = coroutineScope {
         do {
             delay(timeStep)
             if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
             physics.calcTimeStep(instruction)
-            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
-                Instruction.SCHEDULED_STOP
+            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction = Instruction.SCHEDULED_STOP
         } while (physics.displacement <= physics.distance)
 
         launch { stopJourney() }
     }
 
-    private fun startJourney(instruction: LineInstructions) {
-        journey = instruction
+    private fun startJourney(lineInstructions: LineInstructions) {
+        instruction = Instruction.STATIONARY
+        journey = lineInstructions
         status = Status.ACTIVE
 
         journey!!.let {

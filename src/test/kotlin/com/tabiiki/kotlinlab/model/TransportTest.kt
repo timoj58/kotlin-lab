@@ -7,6 +7,7 @@ import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.LineBuilder
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -162,12 +163,41 @@ internal class TransportTest {
         res.cancel()
     }
 
+    @Test
+    fun `issue a red signal during a scheduled stop ` () = runBlocking {
+        launch { launch() }
+        val channel = Channel<SignalMessage>()
+        val res = launch { train.signal(channel) }
+
+        delay(50)
+
+        channel.send(SignalMessage(SignalValue.GREEN))
+
+        do {
+            delay(10)
+        } while (train.instruction != Instruction.SCHEDULED_STOP)
+
+        channel.send(SignalMessage(SignalValue.RED))
+
+        delay(1000)
+
+        assertThat(train.atPlatform()).isEqualTo(false)
+
+        channel.send(SignalMessage(SignalValue.GREEN))
+
+        do {
+            delay(1000)
+        } while (!train.atPlatform())
+
+        res.cancel()
+    }
+
     private fun launch() = runBlocking {
         val stratford = Pair(51.541692575874, -0.00375164102719075)
         val westHam = Pair(51.528525530727, 0.00531739383278791)
         val northGreenwich = Pair(51.628525530727, 0.00531739383278791)
 
-        async {
+        launch {
             train.release(
                 LineInstructions(
                     from = Station(

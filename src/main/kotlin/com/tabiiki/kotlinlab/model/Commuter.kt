@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.factory.AvailableRoute
 import com.tabiiki.kotlinlab.service.RouteEnquiry
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.function.Consumer
@@ -12,7 +11,6 @@ import java.util.function.Consumer
 data class Commuter(
     val id: UUID = UUID.randomUUID(),
     val commute: Pair<Pair<String, String>, Channel<RouteEnquiry>>, //TODO destroy commuter once completed?  makes sense.
-    val stationChannel: Channel<Commuter>,
     val timeStep: Long,
     val ready: Consumer<Commuter>,
 ) {
@@ -21,12 +19,13 @@ data class Commuter(
     private val route: MutableList<AvailableRoute> = mutableListOf()
     private val history: MutableList<Pair<String, String>> = mutableListOf()
 
-    fun peekNextJourneyStage(): Pair<String, String> =
-        route.first().route.firstOrNull() ?: throw Exception("empty: $history")
+    fun peekNextJourneyStage(): Pair<String, String>? =
+        route.first().route.firstOrNull()
 
     fun completeJourneyStage(): Pair<String, String> {
         val travelled = route.first().route.removeFirstOrNull() ?: throw Exception("route is already complete")
         history.add(travelled)
+        peekNextJourneyStage() ?: println("completed $history for $id")
         return travelled
     }
 
@@ -44,15 +43,8 @@ data class Commuter(
             if (enquiry.route.isEmpty()) throw RuntimeException("no routes for $commute")
             route.add(enquiry)
             if (route.size == 1) ready.accept(this@Commuter)
-        } while (true)
+        } while (true) //this needs to exit as well. TODO
 
-    }
-
-    suspend fun track() {
-        do {
-            stationChannel.send(this)
-            delay(timeStep)
-        } while (route.isNotEmpty())
     }
 
     companion object {

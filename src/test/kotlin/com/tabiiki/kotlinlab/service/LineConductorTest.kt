@@ -35,7 +35,7 @@ internal class LineConductorTest {
     @Test
     fun `start test to ensure for multiple lines only one transport is scheduled to depart a given depot`() {
 
-        val transporters = lineConductor.getFirstTransportersToDispatch(
+        val transporters = lineConductor.getTransportersToDispatch(
             listOf(LineBuilder().getLine(), LineBuilder().getLine2())
         )
 

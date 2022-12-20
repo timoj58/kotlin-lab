@@ -38,7 +38,6 @@ class LineControllerTest(
 ) {
     private val integrationControl = IntegrationControl()
 
-
     suspend fun test(lineType: String, lineName: String, timeout: Int) = runBlocking {
         val signalService = SignalServiceImpl(signalFactory)
         val sectionService = SectionServiceImpl(45, switchService, signalService, journeyRepo)

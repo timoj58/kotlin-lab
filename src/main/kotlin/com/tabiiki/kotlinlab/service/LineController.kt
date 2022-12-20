@@ -30,7 +30,6 @@ class LineControllerImpl(
     @Value("\${network.start-delay}") private val startDelay: Long,
     private val conductor: LineConductor
 ) : LineController {
-
     private val channel: Channel<Transport> = Channel()
     private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> =
         ConcurrentHashMap() //TODO something with this
@@ -45,19 +44,32 @@ class LineControllerImpl(
     }
 
     override suspend fun start(line: List<Line>) = coroutineScope {
-        conductor.getFirstTransportersToDispatch(line).forEach {
-            launch { release(it, channel) }
-        }
-        do {
-            delay(startDelay)
-            conductor.getNextTransportersToDispatch(line)
-                .forEach { transport ->
-                    if (conductor.isClear(transport)) {
-                        launch { hold(transport, channel) }
-                    }
-                }
+        val released = mutableListOf<UUID>()
+        val transportersToDispatch = conductor.getTransportersToDispatch(line)
 
-        } while (line.flatMap { it.transporters }.any { it.status == Status.DEPOT })
+        transportersToDispatch.distinctBy { it.section() }.forEach {
+            launch { release(it, channel) }
+            released.add(it.id)
+        }
+
+        transportersToDispatch.removeAll { released.contains(it.id) }
+
+        do {
+            released.clear()
+            delay(startDelay)
+
+            transportersToDispatch.groupBy { it.section() }.forEach { (_, transporters) ->
+
+                val transport = transporters.first()
+                if(conductor.isClear(transport)) {
+                    launch { hold(transport, channel) }
+                    released.add(transport.id)
+                }
+            }
+            transportersToDispatch.removeAll { released.contains(it.id) }
+
+        } while (transportersToDispatch.isNotEmpty())
+
     }
 
     private suspend fun release(transport: Transport, channel: Channel<Transport>) = coroutineScope {

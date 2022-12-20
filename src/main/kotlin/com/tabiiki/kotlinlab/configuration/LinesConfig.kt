@@ -35,7 +35,6 @@ class LinesConfig(linesAdapter: LinesAdapter) {
     companion object
     class Config(@JsonProperty("lines") val lines: List<LineConfig>)
 
-    val defaultLineCapacity: Int? = linesAdapter.defaultLineCapacity
     private val loadLines = mutableListOf<LineConfig>()
     val lines
         get() = loadLines.toList()

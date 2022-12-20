@@ -42,7 +42,8 @@ class SwitchServiceImpl(
         val lastStation = transport.line.stations.last()
 
         return listOf(firstStation, lastStation).contains(
-            if (destination) section.second else section.first.substringAfter(":")
+            if (destination) section.second
+            else section.first.substringAfter(":").replace("|", "")
         )
     }
 

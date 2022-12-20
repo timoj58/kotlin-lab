@@ -11,7 +11,6 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "network.lines")
 public class LinesAdapter {
 
-    private Integer defaultLineCapacity;
     private List<String> underground;
     private List<String> overground;
     private List<String> cable;
@@ -62,14 +61,6 @@ public class LinesAdapter {
 
     public void setTram(List<String> tram) {
         this.tram = tram;
-    }
-
-    public Integer getDefaultLineCapacity() {
-        return defaultLineCapacity;
-    }
-
-    public void setDefaultLineCapacity(Integer defaultLineCapacity) {
-        this.defaultLineCapacity = defaultLineCapacity;
     }
 
     public Map<LineType, List<String>> getLines() {

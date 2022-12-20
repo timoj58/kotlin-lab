@@ -71,7 +71,9 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         do {
             val msg = channel.receive()
             val station = msg.getCurrentStation()
-            stationCommuters[station]?.add(msg) ?: throw Exception("missing channel for $station")
+            msg.peekNextJourneyStage()?.let {
+                stationCommuters[station]?.add(msg) ?: throw Exception("missing channel for $station")
+            }
         } while (true)
     }
 
@@ -79,7 +81,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         val station = journey.second.substringAfter(":")
         do {
             stationCommuters[station]?.let {
-                it.filter { commuter ->  commuter.peekNextJourneyStage().first == journey.second }.forEach { embark ->
+                it.filter { commuter ->  commuter.peekNextJourneyStage()!!.first == journey.second }.forEach { embark ->
                     stationCommuters[station]!!.remove(embark)
                     launch { carriageChannel.send(embark) }
                 }

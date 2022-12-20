@@ -18,9 +18,6 @@ internal class LineFactoryTest {
 
     @BeforeEach
     fun init() {
-        Mockito.`when`(linesConfig.defaultLineCapacity).thenReturn(
-            10
-        )
 
         Mockito.`when`(transportsConfig.get()).thenReturn(
             listOf(

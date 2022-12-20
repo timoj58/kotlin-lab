@@ -1,8 +1,7 @@
 network:
-  time-step: 15
-  start-delay: 3000
+  time-step: 7
+  start-delay: 2000
   lines:
-    default-line-capacity: 2
     river:
       - src/main/resources/network/river/river.yml
     tram:

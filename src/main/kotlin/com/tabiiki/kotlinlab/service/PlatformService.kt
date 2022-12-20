@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
 interface PlatformService {
@@ -97,7 +98,6 @@ class PlatformServiceImpl(
         if (sectionService.isSwitchPlatform(transport, transport.section()))
             key = platformTerminalKey(transport, key)
 
-        platformMonitor.accept(key, transport)
         launch {
             signalService.send(
                 key, SignalMessage(
@@ -108,56 +108,54 @@ class PlatformServiceImpl(
                     commuterChannel = transport.carriage.channel,
                     producer = author,
                 )
-            )
+            ).also {
+                launch { platformHold(
+                    transport = transport,
+                    key = key,
+                    lineInstructions = lineInstructions
+                ) }
+            }
         }
 
-        val counter = AtomicInteger(0)
-        val embarkJob = launch { transport.carriage.embark(commuterChannel!!) }
-        val disembarkJob = launch { transport.carriage.disembark(key.second.substringAfter(":"), commuterChannel!!) }
-
-        do {
-            delay(transport.timeStep)
-
-        } while (counter.incrementAndGet() < minimumHold
-            || !sectionService.isClear(transport)
-            || !sectionService.areSectionsClear(transport, lineInstructions) { k -> lineRepo.getPreviousSections(k) }
-        )
-        dispatch(transport, lineInstructions, key, listOf(embarkJob, disembarkJob))
     }
 
     override suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
         val instructions = lineRepo.getLineInstructions(transport)
-        dispatch(transport, instructions, null, null)
+        dispatch(transport, instructions, null)
+    }
+
+    private suspend fun platformHold(transport: Transport, key: Pair<String, String>, lineInstructions: LineInstructions) = coroutineScope {
+        val counter = AtomicInteger(0)
+        val embarkJob = launch { transport.carriage.embark(commuterChannel!!) }
+        val disembarkJob = launch { transport.carriage.disembark(key.second.substringAfter(":"), commuterChannel!!) }
+
+        do {
+            delay(transport.timeStep)
+        } while (counter.incrementAndGet() < minimumHold
+            || !sectionService.isClear(transport)
+            || !sectionService.areSectionsClear(transport, lineInstructions) { k -> lineRepo.getPreviousSections(k) }
+        )
+        dispatch(transport, lineInstructions, listOf(embarkJob, disembarkJob))
     }
 
     private suspend fun dispatch(
         transport: Transport,
         instructions: LineInstructions,
-        key: Pair<String, String>?,
         jobs: List<Job>?
     ) = coroutineScope {
-        var actualKey = key ?: platformKey(transport, instructions)
-        actualKey = testForDepartureTerminal(transport, actualKey)
 
-        launch { transport.release(instructions) }
-        launch { addToSection(actualKey, transport, jobs) }
-
-        platformMonitor.release(actualKey)
-    }
-
-    private fun testForDepartureTerminal(transport: Transport, key: Pair<String, String>): Pair<String, String> {
-        if (sectionService.isSwitchPlatform(transport, transport.section())) {
+        if (sectionService.isSwitchPlatform(transport, transport.section()))
             transport.addSwitchSection(
                 Pair(
                     "${transport.section().first}|",
                     transport.section().first.substringAfter(":")
                 )
             )
-            return platformTerminalKey(transport, key)
-        }
-        return key
+
+        launch { transport.release(instructions) }
+        launch { addToSection(transport, jobs) }
     }
 
     private suspend fun init(key: Pair<String, String>) = coroutineScope {
@@ -166,14 +164,12 @@ class PlatformServiceImpl(
     }
 
     private suspend fun addToSection(
-        key: Pair<String, String>,
         transport: Transport,
         jobs: List<Job>?
     ) = coroutineScope {
-        do {
-            delay(transport.timeStep)
-        } while (!platformMonitor.atPlatform(key).isEmpty)
-        launch { sectionService.accept(transport, platformMonitor.getHoldChannel(transport), jobs) }
+        launch { sectionService.accept(transport.also {
+           it.setHoldChannel(platformMonitor.getHoldChannel(it))
+        }, jobs) }
     }
 
     companion object {

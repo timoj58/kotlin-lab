@@ -16,12 +16,11 @@ class SwitchMonitor {
         } while (distance >= transport.getPosition())
 
         val sectionLeft = transport.section()
-        if (transport.actualSection == null) {
-            transport.actualSection =
-                Pair("${sectionLeft.first.substringBefore(":")}:${sectionLeft.second}", "${sectionLeft.second}|")
-        }
-        //println("switching ${transport.id} ${transport.actualSection} ${transport.section()}")
-        completeSection.accept(Pair(transport.also { it.addSection(it.actualSection!!) }, sectionLeft))
+        transport.switchSection(
+            section =  Pair("${sectionLeft.first.substringBefore(":")}:${sectionLeft.second}", "${sectionLeft.second}|")
+        )
+        println("switching ${transport.id} ${transport.section()}")
+        completeSection.accept(Pair(transport.also { it.addSection() }, sectionLeft))
     }
 
     companion object {

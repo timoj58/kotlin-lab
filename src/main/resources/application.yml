@@ -46,7 +46,6 @@ network:
         top-speed: 35
         power: 75
   lines:
-    default-line-capacity:
     underground:
       - src/main/resources/network/underground/city.yml
       - src/main/resources/network/underground/jubilee.yml

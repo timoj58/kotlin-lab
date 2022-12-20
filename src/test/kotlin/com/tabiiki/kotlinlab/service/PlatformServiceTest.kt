@@ -6,6 +6,7 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
+import com.tabiiki.kotlinlab.factory.AvailableRoute
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
@@ -21,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -83,10 +85,21 @@ internal class PlatformServiceTest {
 
         val commuter = Commuter(
             commute = Pair(Pair("26", "94"), routeEnquiryChannel),
-            stationChannel = Channel(),
             timeStep = 10,
-        ) {}
-        globalCommuterChannel.send(commuter)
+        ) {
+           jobs.add( launch { globalCommuterChannel.send(it) } )
+        }
+
+        val init = launch { commuter.initJourney() }
+
+        jobs.add(init)
+
+        val enquiry = launch { commuter.channel.send(
+            AvailableRoute(
+                route = mutableListOf(Pair("29", "94"))))
+        }
+
+        jobs.add(enquiry)
 
         val tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>> = ConcurrentHashMap()
         val lineData = mutableListOf<Triple<String, Int, List<UUID>>>()

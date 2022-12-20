@@ -1,5 +1,5 @@
 network:
-  time-step: 12
+  time-step: 7
   start-delay: 2000
   lines:
     river:

@@ -10,7 +10,6 @@ data class Line(
     val timeStep: Long,
     private val config: LineConfig,
     private val transportConfig: List<TransportConfig>,
-    private val defaultLineCapacity: Int? = null,
 ) {
     val id = config.id
     val name = config.name
@@ -25,7 +24,7 @@ data class Line(
                 )
             }.first { it.transportId == config.transportId }
         }.take(
-            defaultLineCapacity ?: config.lineCapacity
+            config.lineCapacity
         ).toList()
     private val depots = config.depots
 

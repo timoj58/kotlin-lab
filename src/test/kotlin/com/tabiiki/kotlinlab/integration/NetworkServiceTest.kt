@@ -31,7 +31,7 @@ class NetworkServiceTest @Autowired constructor(
     fun `test all trains travel the line route`() = runBlocking()
     {
         val init = async { networkService.init() }
-        delay(1000)
+        delay(2000)
         val channel = Channel<StationMessage>()
         val res = async { networkService.start(channel) }
         val running =

@@ -49,9 +49,9 @@ class OvergroundLineControllerTest @Autowired constructor(
         "romford",
         "london-liverpool-st",
         "stratford",
-        //"elizabeth" TODO review this, likely around FATAL - already holding 47fb4cab-aaca-4c46-bf25-0a05b79c289c for (Elizabeth:POSITIVE, Elizabeth:418) next a4692531-0bab-44e0-a7ef-0f38299fa889
+        "elizabeth"
     )
     fun `test all transports complete a full journey on an overground line`(lineName: String) = runBlocking {
-        lineControllerTest.test("overground", lineName, 15)
+        lineControllerTest.test("overground", lineName, 10)
     }
 }

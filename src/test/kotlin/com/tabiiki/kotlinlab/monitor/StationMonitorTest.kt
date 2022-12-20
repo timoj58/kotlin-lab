@@ -37,7 +37,6 @@ class StationMonitorTest {
         //add a commuter.
         val commuter = Commuter(
             commute = Pair(Pair("A", "B"), routeEnquiryChannel),
-            stationChannel = Channel(),
             timeStep = 10,
         ) {
         }

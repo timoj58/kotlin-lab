@@ -71,7 +71,7 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
 
     fun release(key: Pair<String, String>, transport: Transport) {
         if (queues[key]!!.second.size >= 2) {
-            diagnostics.dump(null, queues)
+            diagnostics.dump( queues)
             throw RuntimeException("Only two transporters allowed in $key")
         }
         queues[key]!!.second.addLast(transport)
@@ -86,7 +86,7 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
 
 
 interface SectionService {
-    suspend fun accept(transport: Transport, channel: Channel<Transport>, jobs: List<Job>?)
+    suspend fun accept(transport: Transport, jobs: List<Job>?)
     suspend fun init(line: String)
     fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean
     fun isClear(transport: Transport, incoming: Boolean = false): Boolean
@@ -109,18 +109,16 @@ class SectionServiceImpl(
 ) : SectionService {
 
     private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
-    private val holdChannels: ConcurrentHashMap<UUID, Channel<Transport>> = ConcurrentHashMap()
     private val queues = Queues(minimumHold, journeyRepo)
     private val sectionMonitor = SectionMonitor()
 
-    override suspend fun accept(transport: Transport, channel: Channel<Transport>, jobs: List<Job>?): Unit =
+    override suspend fun accept(transport: Transport, jobs: List<Job>?): Unit =
         coroutineScope {
             if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id }) {
-                diagnostics.dump(null, queues.queues)
+                diagnostics.dump(queues.queues)
                 throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
             }
 
-            holdChannels[transport.id] = channel
             prepareRelease(transport) { t -> launch { release(t, jobs) } }
         }
 
@@ -169,7 +167,7 @@ class SectionServiceImpl(
     private suspend fun arrive(transport: Transport) = coroutineScope {
         jobs[transport.id]!!.cancel()
         journeyRepo.addJourneyTime(transport.getJourneyTime())
-        holdChannels[transport.id]!!.send(transport)
+        launch { transport.arrived() }
     }
 
     private suspend fun release(transport: Transport, jobs: List<Job>?) = coroutineScope {

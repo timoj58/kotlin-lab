@@ -31,12 +31,8 @@ internal class LineControllerTest {
     @Test
     fun `start line and expect all trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
-            listOf(line.transporters[0], line.transporters[1])
-        )
-
-        `when`(conductor.getNextTransportersToDispatch(listOf(line))).thenReturn(
-            listOf(line.transporters[2], line.transporters[3], line.transporters[4], line.transporters[5])
+        `when`(conductor.getTransportersToDispatch(listOf(line))).thenReturn(
+            mutableListOf(line.transporters[0], line.transporters[1], line.transporters[2], line.transporters[3], line.transporters[4], line.transporters[5])
         )
 
         listOf(line.transporters[0], line.transporters[1])
@@ -63,8 +59,8 @@ internal class LineControllerTest {
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
-        `when`(conductor.getFirstTransportersToDispatch(listOf(line))).thenReturn(
-            listOf(line.transporters[0], line.transporters[1])
+        `when`(conductor.getTransportersToDispatch(listOf(line))).thenReturn(
+            mutableListOf(line.transporters[0], line.transporters[1])
         )
         val lineControllerService =
             LineControllerImpl(1000, conductor)

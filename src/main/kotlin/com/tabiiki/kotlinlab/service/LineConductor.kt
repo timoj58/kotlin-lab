@@ -11,8 +11,7 @@ import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
 interface LineConductor {
-    fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport>
-    fun getNextTransportersToDispatch(lines: List<Line>): List<Transport>
+    fun getTransportersToDispatch(lines: List<Line>): MutableList<Transport>
     suspend fun release(transport: Transport)
     suspend fun hold(transport: Transport)
     suspend fun init(line: String, lines: List<Line>, channel: Channel<Commuter>)
@@ -23,14 +22,8 @@ interface LineConductor {
 class LineConductorImpl(
     private val platformService: PlatformService
 ) : LineConductor {
-
-    override fun getFirstTransportersToDispatch(lines: List<Line>): List<Transport> =
-        lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten()
-            .distinctBy { it.section().first }
-
-    override fun getNextTransportersToDispatch(lines: List<Line>): List<Transport> =
-        lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }
-            .groupBy { it.section() }.values.flatten().distinctBy { it.section().first }
+    override fun getTransportersToDispatch(lines: List<Line>): MutableList<Transport> =
+        lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten().toMutableList()
 
     override suspend fun release(
         transport: Transport

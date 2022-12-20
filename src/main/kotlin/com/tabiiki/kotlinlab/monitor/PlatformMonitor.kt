@@ -7,40 +7,32 @@ import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.service.SectionService
 import com.tabiiki.kotlinlab.service.SignalService
-import com.tabiiki.kotlinlab.util.Diagnostics
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
 
 private class Platforms {
-    private val platforms: ConcurrentHashMap<Pair<String, String>, AtomicReference<Optional<Transport>>> =
+    private val platforms: ConcurrentHashMap<Pair<String, String>, AtomicBoolean> =
         ConcurrentHashMap()
 
     fun init(key: Pair<String, String>) {
-        platforms[key] = AtomicReference(Optional.empty())
+        platforms[key] = AtomicBoolean(false)
     }
-
-    fun isClear(key: Pair<String, String>): Boolean = platforms[key]?.get()?.isEmpty ?: true
+    fun isClear(key: Pair<String, String>): Boolean = (platforms[key] ?: throw Exception("missing $key")).get()
     fun getPlatformKeys(): List<Pair<String, String>> = platforms.keys().toList()
-
-    fun accept(key: Pair<String, String>, transport: Transport) {
-        if (!platforms[key]!!.get().isEmpty) {
-            throw RuntimeException(
-                "FATAL - already holding ${
-                    platforms[key]!!.get().get().id
-                } for $key next ${transport.id}"
-            )
+    fun lock(signalValue: SignalValue, key: Pair<String, String>) {
+        val new = when(signalValue){
+            SignalValue.GREEN -> true
+            SignalValue.RED -> false
         }
-        platforms[key]!!.set(Optional.of(transport))
+        val current = platforms[key]!!.acquire
+        if(current == new) throw RuntimeException("setting $key to same signal $signalValue")
+        platforms[key]!!.set(new)
     }
-
-    fun release(key: Pair<String, String>) = platforms[key]!!.set(Optional.empty())
-    fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms[key]!!.get()
 }
 
 
@@ -54,10 +46,7 @@ class PlatformMonitor(
     fun getPlatformKeys(): List<Pair<String, String>> = platforms.getPlatformKeys()
     fun isClear(key: Pair<String, String>): Boolean = platforms.isClear(key)
     fun init(key: Pair<String, String>) = platforms.init(key)
-    fun atPlatform(key: Pair<String, String>): Optional<Transport> = platforms.atPlatform(key)
-    fun accept(key: Pair<String, String>, transport: Transport) = platforms.accept(key, transport)
-    fun release(key: Pair<String, String>) = platforms.release(key)
-    fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)] ?: throw Exception("no channel for ${transport.platformKey()} ")
+    fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)] ?: throw Exception("no channel for ${transport.id} ${platformToKey(transport)}")
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
         var previousSignal: SignalMessage? = null
@@ -69,12 +58,14 @@ class PlatformMonitor(
         do {
             signalService.receive(key)?.let {
                 if (previousSignal == null || it != previousSignal) {
-                    previousSignal = it
+                    platforms.lock(it.signalValue, key)
 
                     when (it.signalValue) {
                         SignalValue.RED -> processRed(it, key, terminalSection)
                         SignalValue.GREEN -> processGreen(it, key, terminalSection)
                     }
+
+                    previousSignal = it
                 }
             }
 
@@ -87,15 +78,11 @@ class PlatformMonitor(
         do {
             val msg = channel.receive()
             platformToKey(msg).let {
-                val atPlatform = platforms.atPlatform(it)
-                if (!atPlatform.isEmpty) {
-                    diagnostics.dump(this@PlatformMonitor)
-                    throw RuntimeException(
-                        "${msg.id} arrived too quickly from ${msg.getJourneyTime().first} $it , already holding ${atPlatform.get().id} "
-                    )
+                if (!platforms.isClear(it)) {
+                    throw RuntimeException("${msg.id} arrived too quickly from ${msg.getJourneyTime().first} $it")
                 }
+                launch { holdConsumer.accept(msg) }
             }
-            holdConsumer.accept(msg)
         } while (true)
     }
 
@@ -159,15 +146,13 @@ class PlatformMonitor(
 
     private fun platformToKey(transport: Transport): Pair<String, String> {
         var switchStation = false
-        if (!transport.platformKey().first.contains(LineDirection.TERMINAL.toString()))
+        if (!transport.platformKey().first.contains(LineDirection.TERMINAL.name))
             switchStation = sectionService.isSwitchPlatform(transport, transport.getJourneyTime().first, true)
 
         return transport.platformToKey(switchStation)!!
     }
 
     companion object {
-        private val diagnostics = Diagnostics()
-
         private fun terminalSection(key: Pair<String, String>) = Pair(
             "${key.first.substringBefore(":")}:${key.second.substringAfter(":")}",
             "${key.second.substringAfter(":")}|"

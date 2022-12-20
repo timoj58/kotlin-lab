@@ -17,7 +17,7 @@ class LineFactory(
     private val lineNetworks: MutableMap<String, LineNetwork> = mutableMapOf()
 
     init {
-        if (timeStep < 5) throw ConfigurationException("timestep is too small, minimum 10 ms")
+        if (timeStep < 7) throw ConfigurationException("timestep is too small, minimum 7 ms")
     }
 
     private val lines =
@@ -26,7 +26,6 @@ class LineFactory(
                 timeStep = timeStep,
                 config = it,
                 transportConfig = transportConfig.get(),
-                defaultLineCapacity = linesConfig.defaultLineCapacity,
             )
         }
 
@@ -41,7 +40,8 @@ class LineFactory(
     fun isSwitchStation(line: String, station: String): Boolean {
         val network = getNetwork(line) ?: return false
         return network.getNodes().any {
-            (it.station == station.replace("|", "")) && it.linked.contains("*") && it.linked.size > 1
+            (it.station == station.replace("|", "")) &&
+                    it.linked.contains("*")  && it.linked.size > 1
         }
     }
 
