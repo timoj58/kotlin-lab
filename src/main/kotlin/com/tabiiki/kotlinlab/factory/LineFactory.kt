@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.LineNetwork
+import com.tabiiki.kotlinlab.monitor.SwitchMonitor
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import javax.naming.ConfigurationException
@@ -40,7 +41,7 @@ class LineFactory(
     fun isSwitchStation(line: String, station: String): Boolean {
         val network = getNetwork(line) ?: return false
         return network.getNodes().any {
-            (it.station == station.replace("|", "")) &&
+            (it.station == SwitchMonitor.replaceSwitch(station)) &&
                     it.linked.contains("*") && it.linked.size > 1
         }
     }

@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.model
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
+import com.tabiiki.kotlinlab.monitor.SwitchMonitor
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.HaversineCalculator
@@ -77,7 +78,7 @@ data class Transport(
     override fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
-    override fun getSectionStationCode(): String = section().first.substringAfter(":").replace("|", "")
+    override fun getSectionStationCode(): String = SwitchMonitor.replaceSwitch(Line.getStation(section().first))
     override fun getCurrentInstruction(): Instruction = this.instruction
     override fun getPosition(): Double = this.physics.displacement
     override fun setHoldChannel(holdChannel: Channel<Transport>) {
@@ -102,7 +103,7 @@ data class Transport(
     override fun platformFromKey(): Pair<String, String> {
         val line = line.name
         val dir = journey?.direction ?: this.lineDirection()
-        val stationId = journey?.from?.id ?: section().first.substringAfter(":")
+        val stationId = journey?.from?.id ?: Line.getStation(section().first)
 
         return Pair("$line:$dir", "$line:$stationId")
     }

@@ -80,7 +80,7 @@ class InterchangeFactory(
         val stationsToTestAgainst =
             stationsAndLines.filter { station ->
                 stationsToTest.none {
-                    it.substringAfter(":") == station.substringAfter(
+                    Line.getStation(it) == station.substringAfter(
                         ":"
                     )
                 }
@@ -88,16 +88,16 @@ class InterchangeFactory(
 
         stationsToTest.forEach { toTest ->
             outer@ for (testAgainst in stationsToTestAgainst) {
-                val fromStation = toTest.substringAfter(":")
-                val toStation = testAgainst.substringAfter(":")
+                val fromStation = Line.getStation(toTest)
+                val toStation = Line.getStation(testAgainst)
 
                 if (haversineCalculator.distanceBetween(
                         start = stationFactory.get(fromStation).position,
                         end = stationFactory.get(toStation).position,
                     ) < 500.0
                 ) {
-                    val lineFrom = toTest.substringBefore(":")
-                    val lineTo = testAgainst.substringBefore(":")
+                    val lineFrom = Line.getLine(toTest)
+                    val lineTo = Line.getLine(testAgainst)
 
                     val linkTo = Pair(lineTo, toStation)
                     val linkFrom = Pair(lineFrom, fromStation)

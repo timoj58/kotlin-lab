@@ -59,7 +59,7 @@ class PlatformServiceImpl(
 
     override fun canLaunch(transport: Transport): Boolean {
         var response = true
-        val line = transport.section().first.substringBefore(":")
+        val line = Line.getLine(transport.section().first)
         val stations = stationRepo.getPreviousStationsOnLine(
             lineRepo.getLineStations(line),
             transport.getSectionStationCode(),
@@ -134,7 +134,7 @@ class PlatformServiceImpl(
     ) = coroutineScope {
         val counter = AtomicInteger(0)
         val embarkJob = launch { transport.carriage.embark(commuterChannel!!) }
-        val disembarkJob = launch { transport.carriage.disembark(key.second.substringAfter(":"), commuterChannel!!) }
+        val disembarkJob = launch { transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!) }
 
         do {
             delay(transport.timeStep)
@@ -155,7 +155,7 @@ class PlatformServiceImpl(
             transport.addSwitchSection(
                 Pair(
                     "${transport.section().first}|",
-                    transport.section().first.substringAfter(":")
+                    Line.getStation(transport.section().first)
                 )
             )
 

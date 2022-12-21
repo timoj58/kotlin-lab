@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Commuter
+import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.monitor.StationMonitor
 import kotlinx.coroutines.channels.Channel
@@ -53,7 +54,7 @@ class StationServiceImpl(
             val station = stationFactory.get(code)
             stationChannels[station] = channel
             signalService.getPlatformSignals().filter { line == null || it.first.contains(line) }
-                .filter { it.second.substringAfter(":") == code }
+                .filter { Line.getStation(it.second) == code }
                 .map { signalService.getChannel(it) }.forEach { possibleChannel ->
                     possibleChannel?.let {
                         launch { stationMonitor.monitorPlatform(it, channel) }

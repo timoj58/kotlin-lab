@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.LineFactory
+import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.monitor.SwitchMonitor
 import org.springframework.stereotype.Service
@@ -27,8 +28,8 @@ class SwitchServiceImpl(
         val firstStation = transport.line.stations.first()
         val lastStation = transport.line.stations.last()
 
-        return firstStation == section.first.replace("|", "") && isPossibleSwitch.first
-                || lastStation == section.second.replace("|", "") && isPossibleSwitch.second
+        return firstStation == SwitchMonitor.replaceSwitch(section.first) && isPossibleSwitch.first
+                || lastStation == SwitchMonitor.replaceSwitch(section.second) && isPossibleSwitch.second
     }
 
     override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean {
@@ -43,7 +44,7 @@ class SwitchServiceImpl(
 
         return listOf(firstStation, lastStation).contains(
             if (destination) section.second
-            else section.first.substringAfter(":").replace("|", "")
+            else SwitchMonitor.replaceSwitch(Line.getStation(section.first))
         )
     }
 
@@ -54,7 +55,7 @@ class SwitchServiceImpl(
 
     companion object {
         private fun getSection(section: Pair<String, String>): Pair<String, String> =
-            Pair(section.first.substringAfter(":"), section.second)
+            Pair(Line.getStation(section.first), section.second)
     }
 
 }

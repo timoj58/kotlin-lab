@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.monitor
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
+import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
@@ -78,7 +79,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
     }
 
     private suspend fun embark(journey: Pair<String, String>, carriageChannel: Channel<Commuter>) = coroutineScope {
-        val station = journey.second.substringAfter(":")
+        val station = Line.getStation(journey.second)
         do {
             stationCommuters[station]?.let {
                 it.filter { commuter -> commuter.peekNextJourneyStage()!!.first == journey.second }.forEach { embark ->

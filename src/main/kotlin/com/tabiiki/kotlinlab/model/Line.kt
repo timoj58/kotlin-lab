@@ -69,4 +69,9 @@ data class Line(
     private fun nextStationFromMultiDepot(currentStation: String): String =
         stations[stations.indexOfFirst { it == currentStation } + 1]
 
+    companion object {
+        fun getStation(details: String): String =  details.substringAfter(":")
+        fun getLine(details: String): String = Line.getLine(details)
+    }
+
 }

@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.monitor
 
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
+import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineRepo
@@ -165,8 +166,8 @@ class PlatformMonitor(
 
     companion object {
         private fun terminalSection(key: Pair<String, String>) = Pair(
-            "${key.first.substringBefore(":")}:${key.second.substringAfter(":")}",
-            "${key.second.substringAfter(":")}|"
+            "${Line.getLine(key.first)}:${Line.getStation(key.second)}",
+            "${Line.getStation(key.second)}|"
         )
     }
 }

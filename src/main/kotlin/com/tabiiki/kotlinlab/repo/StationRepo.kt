@@ -73,12 +73,12 @@ class StationRepoImpl(
         stations.firstOrNull { it.id == id } ?: throw Exception("missing details for $id") //672:?
 
     private fun getConfig(lineStations: List<String>, section: Pair<String, String>): Triple<Int, Int, Int> {
-        var fromStationIdx = lineStations.indexOf(section.first.substringAfter(":"))
+        var fromStationIdx = lineStations.indexOf(Line.getStation(section.first))
         var toStationIdx = lineStations.indexOf(section.second)
         if (abs(fromStationIdx - toStationIdx) > 1)
             if (fromStationIdx > toStationIdx)
                 toStationIdx = lineStations.lastIndexOf(section.second)
-            else fromStationIdx = lineStations.lastIndexOf(section.first.substringAfter(":"))
+            else fromStationIdx = lineStations.lastIndexOf(Line.getStation(section.first))
         val direction = fromStationIdx - toStationIdx
 
         return Triple(fromStationIdx, toStationIdx, direction)
