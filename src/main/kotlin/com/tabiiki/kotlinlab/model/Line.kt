@@ -71,7 +71,7 @@ data class Line(
 
     companion object {
         fun getStation(details: String): String =  details.substringAfter(":")
-        fun getLine(details: String): String = Line.getLine(details)
+        fun getLine(details: String): String = details.substringBefore(":")
     }
 
 }
