@@ -17,7 +17,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
 interface PlatformService {
@@ -109,11 +108,13 @@ class PlatformServiceImpl(
                     producer = author,
                 )
             ).also {
-                launch { platformHold(
-                    transport = transport,
-                    key = key,
-                    lineInstructions = lineInstructions
-                ) }
+                launch {
+                    platformHold(
+                        transport = transport,
+                        key = key,
+                        lineInstructions = lineInstructions
+                    )
+                }
             }
         }
 
@@ -126,7 +127,11 @@ class PlatformServiceImpl(
         dispatch(transport, instructions, null)
     }
 
-    private suspend fun platformHold(transport: Transport, key: Pair<String, String>, lineInstructions: LineInstructions) = coroutineScope {
+    private suspend fun platformHold(
+        transport: Transport,
+        key: Pair<String, String>,
+        lineInstructions: LineInstructions
+    ) = coroutineScope {
         val counter = AtomicInteger(0)
         val embarkJob = launch { transport.carriage.embark(commuterChannel!!) }
         val disembarkJob = launch { transport.carriage.disembark(key.second.substringAfter(":"), commuterChannel!!) }
@@ -167,9 +172,11 @@ class PlatformServiceImpl(
         transport: Transport,
         jobs: List<Job>?
     ) = coroutineScope {
-        launch { sectionService.accept(transport.also {
-           it.setHoldChannel(platformMonitor.getHoldChannel(it))
-        }, jobs) }
+        launch {
+            sectionService.accept(transport.also {
+                it.setHoldChannel(platformMonitor.getHoldChannel(it))
+            }, jobs)
+        }
     }
 
     companion object {

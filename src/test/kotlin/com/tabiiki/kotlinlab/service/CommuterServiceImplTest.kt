@@ -17,7 +17,7 @@ class CommuterServiceImplTest {
     @Test
     fun `commuter service test check commuter added to channel`() = runBlocking {
         val routeChannel = Channel<RouteEnquiry>()
-        Mockito.`when`(routeService.generate()).thenReturn(Pair(Pair("A", "B"),routeChannel))
+        Mockito.`when`(routeService.generate()).thenReturn(Pair(Pair("A", "B"), routeChannel))
 
         val channelJob = launch {
             do {

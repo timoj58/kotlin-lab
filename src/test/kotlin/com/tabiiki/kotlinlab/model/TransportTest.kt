@@ -7,7 +7,6 @@ import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.LineBuilder
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -164,7 +163,7 @@ internal class TransportTest {
     }
 
     @Test
-    fun `issue a red signal during a scheduled stop ` () = runBlocking {
+    fun `issue a red signal during a scheduled stop `() = runBlocking {
         launch { launch() }
         val channel = Channel<SignalMessage>()
         val res = launch { train.signal(channel) }

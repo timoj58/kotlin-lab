@@ -22,15 +22,16 @@ private class Platforms {
     fun init(key: Pair<String, String>) {
         platforms[key] = AtomicBoolean(false)
     }
+
     fun isClear(key: Pair<String, String>): Boolean = (platforms[key] ?: throw Exception("missing $key")).get()
     fun getPlatformKeys(): List<Pair<String, String>> = platforms.keys().toList()
     fun lock(signalValue: SignalValue, key: Pair<String, String>) {
-        val new = when(signalValue){
+        val new = when (signalValue) {
             SignalValue.GREEN -> true
             SignalValue.RED -> false
         }
         val current = platforms[key]!!.acquire
-        if(current == new) throw RuntimeException("setting $key to same signal $signalValue")
+        if (current == new) throw RuntimeException("setting $key to same signal $signalValue")
         platforms[key]!!.set(new)
     }
 }
@@ -46,7 +47,12 @@ class PlatformMonitor(
     fun getPlatformKeys(): List<Pair<String, String>> = platforms.getPlatformKeys()
     fun isClear(key: Pair<String, String>): Boolean = platforms.isClear(key)
     fun init(key: Pair<String, String>) = platforms.init(key)
-    fun getHoldChannel(transport: Transport): Channel<Transport> = holdChannels[platformToKey(transport)] ?: throw Exception("no channel for ${transport.id} ${platformToKey(transport)}")
+    fun getHoldChannel(transport: Transport): Channel<Transport> =
+        holdChannels[platformToKey(transport)] ?: throw Exception(
+            "no channel for ${transport.id} ${
+                platformToKey(transport)
+            }"
+        )
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
         var previousSignal: SignalMessage? = null
@@ -138,7 +144,12 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         it,
-                        SignalMessage(signalValue = SignalValue.RED, key = signal.key, id = signal.id, producer = author)
+                        SignalMessage(
+                            signalValue = SignalValue.RED,
+                            key = signal.key,
+                            id = signal.id,
+                            producer = author
+                        )
                     )
                 }
             }

@@ -32,7 +32,12 @@ data class SignalMessage(
 data class Signal(
     var section: Pair<String, String>,
     val type: SignalType = SignalType.SECTION,
-    var status: SignalMessage = SignalMessage(signalValue = SignalValue.GREEN, key = section, producer = "$type", init = true),
+    var status: SignalMessage = SignalMessage(
+        signalValue = SignalValue.GREEN,
+        key = section,
+        producer = "$type",
+        init = true
+    ),
     val timeStep: Long = 10,
 ) {
     suspend fun start(channelIn: Channel<SignalMessage>, channelOut: Channel<SignalMessage>) = coroutineScope {

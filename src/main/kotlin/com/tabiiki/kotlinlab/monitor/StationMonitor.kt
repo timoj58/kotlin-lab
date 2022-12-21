@@ -30,7 +30,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         var previousSignal: SignalValue? = null
         do {
             val msg = platformChannel.receive()
-            if(msg.commuterChannel == null && !msg.init) throw Exception("no channel from ${msg.producer}")
+            if (msg.commuterChannel == null && !msg.init) throw Exception("no channel from ${msg.producer}")
             msg.commuterChannel?.let {
                 when (msg.signalValue) {
                     SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch { embark(msg.key!!, it) }
@@ -81,7 +81,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         val station = journey.second.substringAfter(":")
         do {
             stationCommuters[station]?.let {
-                it.filter { commuter ->  commuter.peekNextJourneyStage()!!.first == journey.second }.forEach { embark ->
+                it.filter { commuter -> commuter.peekNextJourneyStage()!!.first == journey.second }.forEach { embark ->
                     stationCommuters[station]!!.remove(embark)
                     launch { carriageChannel.send(embark) }
                 }

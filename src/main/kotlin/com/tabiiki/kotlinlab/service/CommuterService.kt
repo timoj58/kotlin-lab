@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Commuter
-import com.tabiiki.kotlinlab.monitor.CommuterMonitor
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -20,14 +19,14 @@ class CommuterServiceImpl(
     private val routeService: RouteService,
 ) : CommuterService {
     private val commuterChannel = Channel<Commuter>()
-   // private val commuterMonitor = CommuterMonitor()
+    // private val commuterMonitor = CommuterMonitor()
 
     override fun getCommuterChannel(): Channel<Commuter> = commuterChannel
 
     override suspend fun generate(): Unit = coroutineScope {
 
         launch { routeService.listen() }
-       // launch { commuterMonitor.monitor(trackingChannel) }
+        // launch { commuterMonitor.monitor(trackingChannel) }
 
         do {
             delay(timeStep)

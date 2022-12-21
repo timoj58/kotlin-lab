@@ -39,9 +39,11 @@ class SectionServiceTest {
 
         launch { sectionService.initQueues(transport.section()) }
         delay(100)
-        val job = launch { sectionService.accept(transport.also {
-            it.setHoldChannel(Channel())
-        } , listOf(testJob)) }
+        val job = launch {
+            sectionService.accept(transport.also {
+                it.setHoldChannel(Channel())
+            }, listOf(testJob))
+        }
         delay(1000)
 
         assert(testJob.isCancelled)
@@ -56,13 +58,15 @@ class SectionServiceTest {
 
         launch { sectionService.initQueues(transport.section()) }
         delay(100)
-        val job = launch { sectionService.accept(transport.also {
-            it.setHoldChannel(Channel())
-        }, listOf()) }
+        val job = launch {
+            sectionService.accept(transport.also {
+                it.setHoldChannel(Channel())
+            }, listOf())
+        }
         delay(100)
         try {
             sectionService.accept(transport.also {
-                it.setHoldChannel( Channel())
+                it.setHoldChannel(Channel())
             }, listOf())
         } catch (e: RuntimeException) {
             assertThat(true).isEqualTo(true)

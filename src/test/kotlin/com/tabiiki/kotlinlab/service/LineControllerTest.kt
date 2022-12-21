@@ -8,8 +8,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.atLeast
+import org.mockito.Mockito.atMost
+import org.mockito.Mockito.atMostOnce
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import javax.naming.ConfigurationException
@@ -32,7 +34,14 @@ internal class LineControllerTest {
     fun `start line and expect all trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
         `when`(conductor.getTransportersToDispatch(listOf(line))).thenReturn(
-            mutableListOf(line.transporters[0], line.transporters[1], line.transporters[2], line.transporters[3], line.transporters[4], line.transporters[5])
+            mutableListOf(
+                line.transporters[0],
+                line.transporters[1],
+                line.transporters[2],
+                line.transporters[3],
+                line.transporters[4],
+                line.transporters[5]
+            )
         )
 
         listOf(line.transporters[0], line.transporters[1])
@@ -44,12 +53,21 @@ internal class LineControllerTest {
         val res = async { lineControllerService.start(listOf(line)) }
         delay(2000)
 
-        verify(conductor, atLeast(2)).release(
+        verify(conductor, atMost(2)).release(
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
-        verify(conductor, atLeast(4)).hold(
+        verify(conductor, atMost(4)).hold(
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
+        )
+
+        //ensure transporter only released once
+        verify(conductor, atMostOnce()).release(
+            line.transporters[0]
+        )
+
+        verify(conductor, never()).hold(
+            line.transporters[0]
         )
 
         res.cancel()
@@ -69,10 +87,11 @@ internal class LineControllerTest {
         val res = async { lineControllerService.start(listOf(line)/*, channel*/) }
         delay(2000)
 
-        verify(conductor, atLeast(2)).release(
+        verify(conductor, atMost(2)).release(
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
         res.cancel()
     }
+
 }

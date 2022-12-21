@@ -56,12 +56,12 @@ interface ITransport {
 }
 
 data class Transport(
+    val id: UUID = UUID.randomUUID(),
     private val config: TransportConfig,
     val line: Line,
     val timeStep: Long
 ) : ITransport {
 
-    val id: UUID = UUID.randomUUID()
     val transportId = config.transportId
     val carriage = Carriage(config.capacity)
     private val physics = Physics(config)
@@ -90,7 +90,7 @@ data class Transport(
     }
 
     override fun switchSection(section: Pair<String, String>) {
-        if(this.actualSection == null)
+        if (this.actualSection == null)
             this.actualSection = section
     }
 
@@ -202,7 +202,8 @@ data class Transport(
             delay(timeStep)
             if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
             physics.calcTimeStep(instruction)
-            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction = Instruction.SCHEDULED_STOP
+            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
+                Instruction.SCHEDULED_STOP
         } while (physics.displacement <= physics.distance)
 
         launch { stopJourney() }

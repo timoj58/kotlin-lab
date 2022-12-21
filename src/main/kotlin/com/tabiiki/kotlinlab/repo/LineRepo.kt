@@ -37,16 +37,15 @@ class LineRepoImpl(private val stationRepo: StationRepo) : LineRepo {
         lineDetails[key] = details
     }
 
-    override fun getLineInstructions(transport: Transport): LineInstructions
-        = LineInstructions(
-            from = stationRepo.get(transport.getSectionStationCode()),
-            to = stationRepo.get(transport.section().second),
-            next = stationRepo.getNextStationOnLine(
-                lineStations = getLineStations(transport),
-                section = Pair(transport.getSectionStationCode(), transport.section().second)
-            ),
-            direction = transport.lineDirection()
-        )
+    override fun getLineInstructions(transport: Transport): LineInstructions = LineInstructions(
+        from = stationRepo.get(transport.getSectionStationCode()),
+        to = stationRepo.get(transport.section().second),
+        next = stationRepo.getNextStationOnLine(
+            lineStations = getLineStations(transport),
+            section = Pair(transport.getSectionStationCode(), transport.section().second)
+        ),
+        direction = transport.lineDirection()
+    )
 
     override fun getLineStations(transport: Transport): List<String> {
         if (!lineStations.contains(transport.id))

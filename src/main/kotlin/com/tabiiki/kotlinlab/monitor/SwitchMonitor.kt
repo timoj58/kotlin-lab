@@ -17,7 +17,7 @@ class SwitchMonitor {
 
         val sectionLeft = transport.section()
         transport.switchSection(
-            section =  Pair("${sectionLeft.first.substringBefore(":")}:${sectionLeft.second}", "${sectionLeft.second}|")
+            section = Pair("${sectionLeft.first.substringBefore(":")}:${sectionLeft.second}", "${sectionLeft.second}|")
         )
         println("switching ${transport.id} ${transport.section()}")
         completeSection.accept(Pair(transport.also { it.addSection() }, sectionLeft))

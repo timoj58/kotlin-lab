@@ -22,14 +22,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 internal class PlatformServiceTest {
 
     private val minimumHold = 45
-    private val timeStep = 5L
+    private val timeStep = 7L
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
     private val linesAdapter = LinesAdapter(
         listOf("src/test/resources/network/test-line2.yml"),
@@ -87,16 +86,19 @@ internal class PlatformServiceTest {
             commute = Pair(Pair("26", "94"), routeEnquiryChannel),
             timeStep = 10,
         ) {
-           jobs.add( launch { globalCommuterChannel.send(it) } )
+            jobs.add(launch { globalCommuterChannel.send(it) })
         }
 
         val init = launch { commuter.initJourney() }
 
         jobs.add(init)
 
-        val enquiry = launch { commuter.channel.send(
-            AvailableRoute(
-                route = mutableListOf(Pair("29", "94"))))
+        val enquiry = launch {
+            commuter.channel.send(
+                AvailableRoute(
+                    route = mutableListOf(Pair("29", "94"))
+                )
+            )
         }
 
         jobs.add(enquiry)

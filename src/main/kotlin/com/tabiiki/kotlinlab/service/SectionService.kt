@@ -71,7 +71,7 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
 
     fun release(key: Pair<String, String>, transport: Transport) {
         if (queues[key]!!.second.size >= 2) {
-            diagnostics.dump( queues)
+            diagnostics.dump(queues)
             throw RuntimeException("Only two transporters allowed in $key")
         }
         queues[key]!!.second.addLast(transport)

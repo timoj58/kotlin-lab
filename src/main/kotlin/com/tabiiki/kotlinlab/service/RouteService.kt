@@ -28,9 +28,11 @@ class RouteServiceImpl(
         val stations = stationRepo.get()
         val from = generateStation(stations)
         return Pair(
-            Pair(from,
-                generateStation(stations, from))
-            , channel)
+            Pair(
+                from,
+                generateStation(stations, from)
+            ), channel
+        )
     }
 
     override suspend fun listen() = coroutineScope {
