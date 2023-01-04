@@ -4,7 +4,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import java.util.function.Consumer
 
-enum class SectionMessage{
+enum class SectionMessage {
     ARRIVED
 }
 

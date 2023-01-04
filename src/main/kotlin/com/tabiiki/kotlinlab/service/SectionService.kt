@@ -163,7 +163,8 @@ class SectionServiceImpl(
 
         if (switchService.isSwitchSection(transport))
             launch {
-                switchService.switch(transport) { launch { processSwitch(it, job) }
+                switchService.switch(transport) {
+                    launch { processSwitch(it, job) }
                 }
             }
 

@@ -18,6 +18,7 @@ import java.util.UUID
 class StationMonitorTest {
 
     private val stationMonitor = StationMonitor(timeStep = 10, stations = listOf("A", "B"))
+
     @Test
     fun `commuter embark test`() = runBlocking {
 

@@ -70,7 +70,7 @@ data class Line(
         stations[stations.indexOfFirst { it == currentStation } + 1]
 
     companion object {
-        fun getStation(details: String): String =  details.substringAfter(":")
+        fun getStation(details: String): String = details.substringAfter(":")
         fun getLine(details: String): String = details.substringBefore(":")
     }
 

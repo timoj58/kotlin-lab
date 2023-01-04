@@ -97,14 +97,14 @@ class PlatformMonitorTest {
     }
 
     @Test
-    fun `platform RED ` () = runBlocking {
+    fun `platform RED `() = runBlocking {
 
         val job = launch { initMonitor() }
 
         //no transporters for this.
         delay(1000)
         //this is the issue...has two stations, should be one.
-        sendSignal(key = Pair("River:NEGATIVE","River:672"), signalValue = SignalValue.RED)
+        sendSignal(key = Pair("River:NEGATIVE", "River:672"), signalValue = SignalValue.RED)
         platformMonitor.getHoldChannel(lines.first().transporters.first())
         //now test that the sections have received a red (670,671) (672,671)
         //mainly as its not a terminal....which is the issue.  tricky one.  (fix is dont include length of 2).
@@ -120,15 +120,15 @@ class PlatformMonitorTest {
     }
 
     @Test
-    fun `platform GREEN ` () = runBlocking {
+    fun `platform GREEN `() = runBlocking {
 
         val job = launch { initMonitor() }
         delay(1000)
 
-        sendSignal(key = Pair("River:NEGATIVE","River:672"), signalValue = SignalValue.RED)
+        sendSignal(key = Pair("River:NEGATIVE", "River:672"), signalValue = SignalValue.RED)
         delay(1000)
 
-        sendSignal(key = Pair("River:NEGATIVE","River:672"), signalValue = SignalValue.GREEN)
+        sendSignal(key = Pair("River:NEGATIVE", "River:672"), signalValue = SignalValue.GREEN)
         //test that the sections have received a green
 
         delay(10000)
@@ -143,7 +143,8 @@ class PlatformMonitorTest {
                 key = key,
                 line = "RIVER01",
                 commuterChannel = null,
-            ))
+            )
+        )
     }
 
     private suspend fun initMonitor() = coroutineScope {

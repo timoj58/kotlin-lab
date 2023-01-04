@@ -13,7 +13,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -202,7 +201,7 @@ data class Transport(
 
         } while (physics.displacement <= physics.distance)
 
-         stopJourney()
+        stopJourney()
     }
 
     private fun startJourney(lineInstructions: LineInstructions) {

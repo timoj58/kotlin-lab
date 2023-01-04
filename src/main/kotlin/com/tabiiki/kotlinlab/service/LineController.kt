@@ -2,7 +2,6 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
-import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -10,7 +9,6 @@ import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import javax.naming.ConfigurationException
 
 data class LineChannelMessage(
@@ -34,7 +32,7 @@ class LineControllerImpl(
         if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
     }
 
-    override fun init(commuterChannel: Channel<Commuter>)  = conductor.init(commuterChannel)
+    override fun init(commuterChannel: Channel<Commuter>) = conductor.init(commuterChannel)
 
     override suspend fun init(line: List<Line>): Unit = coroutineScope {
         launch { conductor.init(line.map { it.name }.distinct().first(), line) }
