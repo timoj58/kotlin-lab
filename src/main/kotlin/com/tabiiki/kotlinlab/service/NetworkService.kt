@@ -21,8 +21,10 @@ class NetworkServiceImpl(
 ) : NetworkService {
     private val lines = lineFactory.get().map { lineFactory.get(it) }
     override suspend fun init() = coroutineScope {
+        lineController.init(commuterService.getCommuterChannel())
+
         lines.groupBy { it.name }.values.forEach { line ->
-            launch { lineController.init(line, commuterService.getCommuterChannel()) }
+            launch { lineController.init(line) }
         }
     }
 

@@ -3,23 +3,22 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Transport
+import com.tabiiki.kotlinlab.monitor.SectionMessage
 import com.tabiiki.kotlinlab.monitor.SectionMonitor
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineInstructions
-import com.tabiiki.kotlinlab.util.Diagnostics
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 
 
 private class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
-    val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
+    val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SectionMessage>, ArrayDeque<Transport>>> =
         ConcurrentHashMap()
 
     fun getQueue(key: Pair<String, String>): ArrayDeque<Transport> = queues[key]!!.second
@@ -70,18 +69,11 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
     fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
 
     fun release(key: Pair<String, String>, transport: Transport) {
-        if (queues[key]!!.second.size >= 2) {
-            diagnostics.dump(queues)
-            throw RuntimeException("Only two transporters allowed in $key")
-        }
+        if (queues[key]!!.second.size >= 2) throw RuntimeException("Only two transporters allowed in $key")
         queues[key]!!.second.addLast(transport)
     }
 
-    fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
-
-    companion object {
-        private val diagnostics = Diagnostics()
-    }
+    fun getChannel(key: Pair<String, String>): Channel<SectionMessage> = queues[key]!!.first
 }
 
 
@@ -108,16 +100,13 @@ class SectionServiceImpl(
     private val journeyRepo: JourneyRepo,
 ) : SectionService {
 
-    private val jobs: ConcurrentHashMap<UUID, Job> = ConcurrentHashMap()
     private val queues = Queues(minimumHold, journeyRepo)
     private val sectionMonitor = SectionMonitor()
 
     override suspend fun accept(transport: Transport, jobs: List<Job>?): Unit =
         coroutineScope {
-            if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id }) {
-                diagnostics.dump(queues.queues)
+            if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id })
                 throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
-            }
 
             prepareRelease(transport) { t -> launch { release(t, jobs) } }
         }
@@ -165,19 +154,16 @@ class SectionServiceImpl(
     }
 
     private suspend fun arrive(transport: Transport) = coroutineScope {
-        jobs[transport.id]!!.cancel()
         journeyRepo.addJourneyTime(transport.getJourneyTime())
         launch { transport.arrived() }
     }
 
     private suspend fun release(transport: Transport, jobs: List<Job>?) = coroutineScope {
-        val author = "SECTION_SERVICE - ${SignalValue.GREEN}"
         val job = launch { transport.signal(signalService.getChannel(transport.section())!!) }
 
         if (switchService.isSwitchSection(transport))
             launch {
-                switchService.switch(transport) { details ->
-                    launch { processSwitch(details.first, details.second, job) }
+                switchService.switch(transport) { launch { processSwitch(it, job) }
                 }
             }
 
@@ -188,7 +174,6 @@ class SectionServiceImpl(
                     id = transport.id,
                     key = transport.section(),
                     line = transport.line.id,
-                    producer = author,
                     commuterChannel = transport.carriage.channel,
                 )
             )
@@ -198,22 +183,18 @@ class SectionServiceImpl(
 
     }
 
-    private suspend fun processSwitch(transport: Transport, section: Pair<String, String>, job: Job) = coroutineScope {
-        queues.getQueue(section).removeFirstOrNull()?.let {
-            jobs[it.id]!!.cancel()
-        }
+    private suspend fun processSwitch(details: Pair<Transport, Pair<String, String>>, job: Job) = coroutineScope {
+        val transport = details.first
+        val sectionLeft = details.second
+
+        queues.getQueue(sectionLeft).removeFirstOrNull()
         job.cancel()
         prepareRelease(transport) { t -> launch { transport.signal(signalService.getChannel(t.section())!!) } }
-
     }
 
     private suspend fun prepareRelease(transport: Transport, releaseConsumer: Consumer<Transport>) = coroutineScope {
         queues.release(transport.section(), transport)
-        jobs[transport.id] = launch { transport.track(queues.getChannel(transport.section())) }
+        transport.setChannel(queues.getChannel(transport.section()))
         releaseConsumer.accept(transport)
-    }
-
-    companion object {
-        private val diagnostics = Diagnostics()
     }
 }

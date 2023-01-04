@@ -25,7 +25,6 @@ data class SignalMessage(
     val line: String? = null,
     val commuterChannel: Channel<Commuter>? = null,
     var timesStamp: Long = System.currentTimeMillis(),
-    val producer: String = "TEST",
     val init: Boolean = false,
 )
 
@@ -35,7 +34,6 @@ data class Signal(
     var status: SignalMessage = SignalMessage(
         signalValue = SignalValue.GREEN,
         key = section,
-        producer = "$type",
         init = true
     ),
     val timeStep: Long = 10,
@@ -54,7 +52,6 @@ data class Signal(
                     id = msg.id,
                     key = msg.key,
                     line = msg.line,
-                    producer = msg.producer,
                     commuterChannel = msg.commuterChannel,
                 )
             }

@@ -20,7 +20,8 @@ data class LineChannelMessage(
 )
 
 interface LineController {
-    suspend fun init(line: List<Line>, channel: Channel<Commuter>)
+    fun init(commuterChannel: Channel<Commuter>)
+    suspend fun init(line: List<Line>)
     suspend fun start(line: List<Line>)
 }
 
@@ -29,17 +30,14 @@ class LineControllerImpl(
     @Value("\${network.start-delay}") private val startDelay: Long,
     private val conductor: LineConductor
 ) : LineController {
-    private val channel: Channel<Transport> = Channel()
-    private val tracker: ConcurrentHashMap<UUID, Pair<String, String>> =
-        ConcurrentHashMap() //TODO something with this
-
     init {
         if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
     }
 
-    override suspend fun init(line: List<Line>, channel: Channel<Commuter>): Unit = coroutineScope {
-        launch { monitor() }
-        launch { conductor.init(line.map { it.name }.distinct().first(), line, channel) }
+    override fun init(commuterChannel: Channel<Commuter>)  = conductor.init(commuterChannel)
+
+    override suspend fun init(line: List<Line>): Unit = coroutineScope {
+        launch { conductor.init(line.map { it.name }.distinct().first(), line) }
     }
 
     override suspend fun start(line: List<Line>) = coroutineScope {
@@ -47,7 +45,7 @@ class LineControllerImpl(
         val transportersToDispatch = conductor.getTransportersToDispatch(line)
 
         transportersToDispatch.distinctBy { it.section() }.forEach {
-            launch { release(it, channel) }
+            launch { conductor.release(it) }
             released.add(it.id)
         }
 
@@ -61,7 +59,7 @@ class LineControllerImpl(
 
                 val transport = transporters.first()
                 if (conductor.isClear(transport)) {
-                    launch { hold(transport, channel) }
+                    launch { conductor.hold(transport) }
                     released.add(transport.id)
                 }
             }
@@ -71,24 +69,4 @@ class LineControllerImpl(
 
     }
 
-    private suspend fun release(transport: Transport, channel: Channel<Transport>) = coroutineScope {
-        launch { conductor.release(transport) }
-        launch { track(transport, channel) }
-    }
-
-    private suspend fun hold(transport: Transport, channel: Channel<Transport>) = coroutineScope {
-        launch { conductor.hold(transport) }
-        launch { track(transport, channel) }
-    }
-
-    private suspend fun track(transport: Transport, channel: Channel<Transport>) = coroutineScope {
-        launch { transport.track(channel) }
-    }
-
-    private suspend fun monitor() = coroutineScope {
-        do {
-            val message = channel.receive()
-            tracker[message.id] = message.section()
-        } while (true)
-    }
 }

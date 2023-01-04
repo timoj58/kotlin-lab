@@ -77,8 +77,9 @@ class LineControllerTest(
         )
 
         val globalCommuterChannel = Channel<Commuter>()
+        controller.init(globalCommuterChannel)
 
-        val initJob = launch { controller.init(line, globalCommuterChannel) }
+        val initJob = launch { controller.init(line) }
 
         delay(1000)
 

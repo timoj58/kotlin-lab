@@ -17,12 +17,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 interface PlatformService {
-    suspend fun init(line: String, lineDetails: List<Line>, commuterChannel: Channel<Commuter>)
+    fun init(commuterChannel: Channel<Commuter>)
+    suspend fun init(line: String, lineDetails: List<Line>)
     suspend fun hold(transport: Transport)
-    suspend fun release(transport: Transport)
+    suspend fun dispatch(transport: Transport, jobs: List<Job>? = null, lineInstructions: LineInstructions? = null)
     fun isClear(transport: Transport): Boolean
     fun canLaunch(transport: Transport): Boolean
 }
@@ -75,9 +77,12 @@ class PlatformServiceImpl(
         return response
     }
 
-    override suspend fun init(line: String, lineDetails: List<Line>, channel: Channel<Commuter>): Unit =
+    override fun init(commuterChannel: Channel<Commuter>) {
+        this.commuterChannel = commuterChannel
+    }
+
+    override suspend fun init(line: String, lineDetails: List<Line>): Unit =
         coroutineScope {
-            commuterChannel = channel
             lineRepo.addLineDetails(line, lineDetails)
             launch { sectionService.init(line) }
 
@@ -90,7 +95,6 @@ class PlatformServiceImpl(
     override suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {
-        val author = "PLATFORM_SERVICE - ${SignalValue.RED}"
         val lineInstructions = lineRepo.getLineInstructions(transport)
         var key = platformKey(transport, lineInstructions)
 
@@ -105,11 +109,10 @@ class PlatformServiceImpl(
                     key = key,
                     line = transport.line.id,
                     commuterChannel = transport.carriage.channel,
-                    producer = author,
                 )
             ).also {
                 launch {
-                    platformHold(
+                    holdActions(
                         transport = transport,
                         key = key,
                         lineInstructions = lineInstructions
@@ -117,17 +120,30 @@ class PlatformServiceImpl(
                 }
             }
         }
-
     }
 
-    override suspend fun release(
-        transport: Transport
+    override suspend fun dispatch(
+        transport: Transport,
+        jobs: List<Job>?,
+        lineInstructions: LineInstructions?
     ): Unit = coroutineScope {
-        val instructions = lineRepo.getLineInstructions(transport)
-        dispatch(transport, instructions, null)
+        val instructions = lineInstructions ?: lineRepo.getLineInstructions(transport)
+        launch { transport.release(instructions) }
+        launch {
+            sectionService.accept(
+                transport
+                    .also {
+                        if (sectionService.isSwitchPlatform(it, it.section())) {
+                            val section = it.section()
+                            it.addSwitchSection(Pair("${section.first}|", Line.getStation(section.first)))
+                        }
+                        it.setHoldChannel(platformMonitor.getHoldChannel(it))
+                    }, jobs
+            )
+        }
     }
 
-    private suspend fun platformHold(
+    private suspend fun holdActions(
         transport: Transport,
         key: Pair<String, String>,
         lineInstructions: LineInstructions
@@ -142,41 +158,17 @@ class PlatformServiceImpl(
             || !sectionService.isClear(transport)
             || !sectionService.areSectionsClear(transport, lineInstructions) { k -> lineRepo.getPreviousSections(k) }
         )
-        dispatch(transport, lineInstructions, listOf(embarkJob, disembarkJob))
-    }
 
-    private suspend fun dispatch(
-        transport: Transport,
-        instructions: LineInstructions,
-        jobs: List<Job>?
-    ) = coroutineScope {
-
-        if (sectionService.isSwitchPlatform(transport, transport.section()))
-            transport.addSwitchSection(
-                Pair(
-                    "${transport.section().first}|",
-                    Line.getStation(transport.section().first)
-                )
-            )
-
-        launch { transport.release(instructions) }
-        launch { addToSection(transport, jobs) }
+        dispatch(
+            transport = transport,
+            jobs = listOf(embarkJob, disembarkJob),
+            lineInstructions = lineInstructions
+        )
     }
 
     private suspend fun init(key: Pair<String, String>) = coroutineScope {
         launch { signalService.init(key) }
         launch { platformMonitor.monitorPlatform(key) }
-    }
-
-    private suspend fun addToSection(
-        transport: Transport,
-        jobs: List<Job>?
-    ) = coroutineScope {
-        launch {
-            sectionService.accept(transport.also {
-                it.setHoldChannel(platformMonitor.getHoldChannel(it))
-            }, jobs)
-        }
     }
 
     companion object {

@@ -13,16 +13,14 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
-import org.springframework.test.annotation.DirtiesContext
 import java.util.UUID
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class StationMonitorTest {
 
     private val stationMonitor = StationMonitor(timeStep = 10, stations = listOf("A", "B"))
-
     @Test
     fun `commuter embark test`() = runBlocking {
+
         val transporterId = UUID.randomUUID()
 
         val platformChannel = Channel<SignalMessage>()
@@ -50,7 +48,11 @@ class StationMonitorTest {
             )
         }
 
+        delay(100)
+
         commuterChannel.send(commuter)
+
+        delay(100)
 
         //send a RED
         launch {

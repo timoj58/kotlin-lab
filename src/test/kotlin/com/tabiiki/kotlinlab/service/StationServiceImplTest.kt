@@ -51,7 +51,8 @@ class StationServiceImplTest {
                     signalValue = SignalValue.GREEN,
                     id = UUID.randomUUID(),
                     key = Pair("", ""),
-                    line = "test"
+                    line = "test",
+                    commuterChannel = globalCommuterChannel
                 )
             )
         }

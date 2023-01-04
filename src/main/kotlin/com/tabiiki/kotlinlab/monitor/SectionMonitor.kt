@@ -1,22 +1,23 @@
 package com.tabiiki.kotlinlab.monitor
 
-import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import java.util.function.Consumer
+
+enum class SectionMessage{
+    ARRIVED
+}
 
 class SectionMonitor {
 
     suspend fun monitor(
         key: Pair<String, String>,
-        channel: Channel<Transport>,
+        channel: Channel<SectionMessage>,
         queueConsumer: Consumer<Pair<String, String>>
     ) = coroutineScope {
         do {
-            val msg = channel.receive()
-            when (msg.atPlatform()) {
-                true -> queueConsumer.accept(key)
-                else -> {}
+            when (channel.receive()) {
+                SectionMessage.ARRIVED -> queueConsumer.accept(key)
             }
 
         } while (true)

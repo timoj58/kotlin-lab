@@ -13,7 +13,8 @@ interface LineConductor {
     fun getTransportersToDispatch(lines: List<Line>): MutableList<Transport>
     suspend fun release(transport: Transport)
     suspend fun hold(transport: Transport)
-    suspend fun init(line: String, lines: List<Line>, channel: Channel<Commuter>)
+    suspend fun init(line: String, lines: List<Line>)
+    fun init(commuterChannel: Channel<Commuter>)
     fun isClear(transport: Transport): Boolean
 }
 
@@ -28,16 +29,19 @@ class LineConductorImpl(
         transport: Transport
     ): Unit = coroutineScope {
         delay(transport.timeStep)
-        launch { platformService.release(transport) }
+        launch { platformService.dispatch(transport = transport) }
     }
 
     override suspend fun hold(transport: Transport): Unit = coroutineScope {
-        launch { platformService.hold(transport) }
+        launch { platformService.hold(transport = transport) }
     }
 
-    override suspend fun init(line: String, lines: List<Line>, channel: Channel<Commuter>): Unit = coroutineScope {
-        launch { platformService.init(line, lines, channel) }
+    override suspend fun init(line: String, lines: List<Line>): Unit = coroutineScope {
+        launch { platformService.init(line, lines) }
     }
+
+    override fun init(commuterChannel: Channel<Commuter>) = platformService.init(commuterChannel)
+
 
     override fun isClear(transport: Transport): Boolean =
         platformService.isClear(transport) && platformService.canLaunch(transport)

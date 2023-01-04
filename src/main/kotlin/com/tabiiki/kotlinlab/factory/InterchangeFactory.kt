@@ -80,9 +80,7 @@ class InterchangeFactory(
         val stationsToTestAgainst =
             stationsAndLines.filter { station ->
                 stationsToTest.none {
-                    Line.getStation(it) == station.substringAfter(
-                        ":"
-                    )
+                    Line.getStation(it) == Line.getStation(station)
                 }
             }
 

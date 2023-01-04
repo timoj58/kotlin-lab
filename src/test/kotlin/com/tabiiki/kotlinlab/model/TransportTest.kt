@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
+import com.tabiiki.kotlinlab.monitor.SectionMessage
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.LineBuilder
@@ -17,14 +18,22 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.mockito.Mockito
+import org.mockito.Mockito.atLeastOnce
+import org.mockito.Mockito.verify
 
 internal class TransportTest {
+
+    private val sectionChannel = Mockito.mock(Channel::class.java) as Channel<SectionMessage>
 
     private val train = Transport(
         config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
         line = LineBuilder().getLine(),
         timeStep = 10
-    ).also { it.addSection(Pair("1:A", "B")) }
+    ).also {
+        it.addSection(Pair("1:A", "B"))
+        it.setChannel(sectionChannel)
+    }
 
     @ParameterizedTest
     @CsvSource("1:A,B,POSITIVE", "1:D,A,POSITIVE", "1:A,D,NEGATIVE", "1:B,A,NEGATIVE")
@@ -158,6 +167,8 @@ internal class TransportTest {
         do {
             delay(1000)
         } while (!train.atPlatform())
+
+        verify(sectionChannel, atLeastOnce()).send(SectionMessage.ARRIVED)
 
         res.cancel()
     }

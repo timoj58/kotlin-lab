@@ -113,10 +113,11 @@ internal class PlatformServiceTest {
         lines.flatMap { it.transporters }.forEach {
             tracker[it.id] = mutableSetOf()
         }
+        platformService.init(globalCommuterChannel)
         //INIT start
         lines.groupBy { it.name }.values.forEach { line ->
             val startJob = launch {
-                platformService.init(line.map { it.name }.distinct().first(), line, globalCommuterChannel)
+                platformService.init(line.map { it.name }.distinct().first(), line)
             }
             jobs.add(startJob)
         }
@@ -124,7 +125,7 @@ internal class PlatformServiceTest {
         lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten()
             .distinctBy { it.section().first }.forEach {
                 tracker[it.id]!!.add(it.section())
-                val job = launch { platformService.release(it) }
+                val job = launch { platformService.dispatch(it) }
                 jobs.add(job)
             }
 

@@ -46,11 +46,12 @@ class StationRepoImpl(
     ): List<Station> {
         val stations = mutableListOf<Station>()
 
-        outer@ for (line in lineStations) {
+        outer@ for (line in lineStations.filter { it.stations.size > 2 }) { //TODO this filter removes 2 station lines
             val firstIdx = line.stations.indexOf(stationTo)
             val lastIdx = line.stations.lastIndexOf(stationTo)
             if (firstIdx == -1) continue@outer
             if (firstIdx == lastIdx) {
+                //TODO review this.  add exception to see if it gets called.
                 if (direction == LineDirection.TERMINAL && !listOf(
                         0,
                         line.stations.size - 1
@@ -70,7 +71,7 @@ class StationRepoImpl(
 
     override fun get(): List<Station> = stations.toList()
     override fun get(id: String): Station =
-        stations.firstOrNull { it.id == id } ?: throw Exception("missing details for $id") //672:?
+        stations.firstOrNull { it.id == id } ?: throw Exception("missing details for $id")
 
     private fun getConfig(lineStations: List<String>, section: Pair<String, String>): Triple<Int, Int, Int> {
         var fromStationIdx = lineStations.indexOf(Line.getStation(section.first))

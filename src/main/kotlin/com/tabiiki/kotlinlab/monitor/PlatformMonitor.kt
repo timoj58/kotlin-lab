@@ -50,9 +50,7 @@ class PlatformMonitor(
     fun init(key: Pair<String, String>) = platforms.init(key)
     fun getHoldChannel(transport: Transport): Channel<Transport> =
         holdChannels[platformToKey(transport)] ?: throw Exception(
-            "no channel for ${transport.id} ${
-                platformToKey(transport)
-            }"
+            "no channel for ${transport.id} ${transport.line.id} ${platformToKey(transport)}"
         )
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
@@ -99,7 +97,6 @@ class PlatformMonitor(
         terminalSection: Pair<String, String>?
     ) =
         coroutineScope {
-            val author = "PLATFORM_MONITOR - ${SignalValue.GREEN}"
             val sections: List<Pair<Pair<String, String>, Pair<Boolean, Int>>> = if (terminalSection != null)
                 listOf(
                     Pair(
@@ -116,7 +113,7 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         it.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, producer = author)
+                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
                     )
                 }
             }
@@ -125,7 +122,7 @@ class PlatformMonitor(
                 launch {
                     signalService.send(
                         section.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key, producer = author)
+                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
                     )
                 }
             }
@@ -137,7 +134,6 @@ class PlatformMonitor(
         terminalSection: Pair<String, String>?
     ) =
         coroutineScope {
-            val author = "PLATFORM_MONITOR - ${SignalValue.RED}"
             val sections: List<Pair<String, String>> =
                 if (terminalSection != null) listOf(terminalSection) else lineRepo.getPreviousSections(key)
 
@@ -149,7 +145,6 @@ class PlatformMonitor(
                             signalValue = SignalValue.RED,
                             key = signal.key,
                             id = signal.id,
-                            producer = author
                         )
                     )
                 }
