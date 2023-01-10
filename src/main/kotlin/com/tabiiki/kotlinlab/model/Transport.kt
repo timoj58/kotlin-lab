@@ -3,7 +3,6 @@ package com.tabiiki.kotlinlab.model
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
-import com.tabiiki.kotlinlab.monitor.SectionMessage
 import com.tabiiki.kotlinlab.monitor.SwitchMonitor
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
@@ -13,6 +12,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -32,7 +32,6 @@ enum class Instruction {
 }
 
 interface ITransport {
-    suspend fun release(instruction: LineInstructions)
     suspend fun signal(channel: Channel<SignalMessage>)
     fun section(): Pair<String, String>
     fun platformFromKey(): Pair<String, String>
@@ -40,7 +39,7 @@ interface ITransport {
     fun platformKey(): Pair<String, String>
     fun addSection(section: Pair<String, String>? = null)
     fun addSwitchSection(section: Pair<String, String>)
-    fun lineDirection(): LineDirection
+    fun lineDirection(ignoreTerminal: Boolean = false): LineDirection
     fun getJourneyTime(): Triple<Pair<String, String>, Int, Double>
     fun atPlatform(): Boolean
     fun isStationary(): Boolean
@@ -50,7 +49,10 @@ interface ITransport {
     fun setHoldChannel(holdChannel: Channel<Transport>)
     suspend fun arrived()
     fun switchSection(section: Pair<String, String>)
-    fun setChannel(sectionChannel: Channel<SectionMessage>)
+    fun setChannel(sectionChannel: Channel<Transport>)
+    fun startJourney(lineInstructions: LineInstructions)
+    suspend fun motionLoop()
+    fun isCurrentlySwitchSection(): Boolean
 }
 
 data class Transport(
@@ -71,7 +73,7 @@ data class Transport(
     private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
     private var holdChannel: Channel<Transport>? = null
-    private var sectionChannel: Channel<SectionMessage>? = null
+    private var sectionChannel: Channel<Transport>? = null
 
     override fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
     override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
@@ -85,7 +87,6 @@ data class Transport(
 
     override suspend fun arrived() {
         holdChannel!!.send(this)
-        holdChannel = null
     }
 
     override fun switchSection(section: Pair<String, String>) {
@@ -93,7 +94,7 @@ data class Transport(
             this.actualSection = section
     }
 
-    override fun setChannel(sectionChannel: Channel<SectionMessage>) {
+    override fun setChannel(sectionChannel: Channel<Transport>) {
         this.sectionChannel = sectionChannel
     }
 
@@ -129,16 +130,12 @@ data class Transport(
         addSection(section)
     }
 
-    override suspend fun release(lineInstructions: LineInstructions): Unit = coroutineScope {
-        startJourney(lineInstructions)
-        launch { motionLoop() }
-    }
-
     override suspend fun signal(channel: Channel<SignalMessage>) {
         val timeRegistered = System.currentTimeMillis()
         var previousMsg: SignalMessage? = null
         do {
             val msg = channel.receive()
+
             if (msg.timesStamp >= timeRegistered) {
                 if (previousMsg == null
                     || msg.signalValue != previousMsg.signalValue
@@ -156,8 +153,8 @@ data class Transport(
         } while (status.moving())
     }
 
-    override fun lineDirection(): LineDirection {
-        if (actualSection != null) return LineDirection.TERMINAL
+    override fun lineDirection(ignoreTerminal: Boolean): LineDirection {
+        if (actualSection != null && !ignoreTerminal) return LineDirection.TERMINAL
 
         val firstStation = getSectionStationCode()
         val fromCount = line.stations.count { it == firstStation }
@@ -183,14 +180,12 @@ data class Transport(
         }
     }
 
-    private fun getIndex(station: String, idx: Int) = listOf(
-        line.stations.indexOf(station),
-        line.stations.lastIndexOf(station)
-    ).first {
-        it + 1 == idx || it - 1 == idx
-    }
+    override suspend fun motionLoop(): Unit = coroutineScope {
 
-    private suspend fun motionLoop() = coroutineScope {
+        val emergencyStop = AtomicInteger(0)
+        val counter = AtomicInteger(0)
+        val logged = AtomicBoolean(false)
+
         do {
             delay(timeStep)
 
@@ -199,12 +194,24 @@ data class Transport(
             if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
                 Instruction.SCHEDULED_STOP
 
+            if(emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
+
+            if(counter.getAndIncrement() - (counter.get() - emergencyStop.get()) > 60 && !logged.get() ){
+                logged.set(true)
+                println("$id stopped for over 1 minutes at ${section()}")
+            }
+
         } while (physics.displacement <= physics.distance)
+
+        if(logged.get())
+            println("released $id")
 
         stopJourney()
     }
 
-    private fun startJourney(lineInstructions: LineInstructions) {
+    override fun isCurrentlySwitchSection(): Boolean = actualSection!= null
+
+    override fun startJourney(lineInstructions: LineInstructions) {
         instruction = Instruction.STATIONARY
         journey = lineInstructions
         status = Status.ACTIVE
@@ -213,6 +220,13 @@ data class Transport(
             journeyTime =
                 Triple(Pair("${line.name}:${it.from.id}", it.to.id), AtomicInteger(0), physics.init(it.from, it.to))
         }
+    }
+
+    private fun getIndex(station: String, idx: Int) = listOf(
+        line.stations.indexOf(station),
+        line.stations.lastIndexOf(station)
+    ).first {
+        it + 1 == idx || it - 1 == idx
     }
 
     private suspend fun stopJourney() = coroutineScope {
@@ -226,7 +240,7 @@ data class Transport(
         }
         status = Status.PLATFORM
 
-        launch { sectionChannel!!.send(SectionMessage.ARRIVED) }
+       launch {  sectionChannel!!.send(this@Transport) }
     }
 
     companion object {

@@ -6,7 +6,9 @@ import com.tabiiki.kotlinlab.service.StationMessage
 import com.tabiiki.kotlinlab.util.IntegrationControl
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,14 +30,13 @@ class NetworkServiceTest @Autowired constructor(
     }
 
     @Test
-    fun `test all trains travel the line route`() = runBlocking()
-    {
-        val init = async { networkService.init() }
+    fun `test all trains travel the line route`() = runBlocking{
+        val init = launch { networkService.init() }
         delay(2000)
         val channel = Channel<StationMessage>()
-        val res = async { networkService.start(channel) }
+        val res = launch { networkService.start(channel) }
+
         val running =
             async { integrationControl.status(channel, listOf(init, res), 20) }
     }
-
 }

@@ -20,13 +20,14 @@ class SwitchMonitor {
         transport.switchSection(
             section = Pair("${Line.getLine(sectionLeft.first)}:${sectionLeft.second}", "${sectionLeft.second}|")
         )
-        println("switching ${transport.id} ${transport.section()}")
         completeSection.accept(Pair(transport.also { it.addSection() }, sectionLeft))
+        println("switching ${transport.id} $sectionLeft to ${transport.section()}")
     }
 
     companion object {
+        private const val switchTrackDistance = 250.0
         fun replaceSwitch(station: String): String = station.replace("|", "")
         fun distanceToSwitch(transport: Transport): Double =
-            if (transport.section().first.contains("|")) 100.0 else transport.getJourneyTime().third - 100.0
+            if (transport.section().first.contains("|")) switchTrackDistance else transport.getJourneyTime().third - switchTrackDistance
     }
 }

@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -43,8 +44,8 @@ class LineControllerImpl(
         val transportersToDispatch = conductor.getTransportersToDispatch(line)
 
         transportersToDispatch.distinctBy { it.section() }.forEach {
-            launch { conductor.release(it) }
             released.add(it.id)
+            launch {  conductor.release(transport = it) }
         }
 
         transportersToDispatch.removeAll { released.contains(it.id) }
@@ -53,12 +54,10 @@ class LineControllerImpl(
             released.clear()
             delay(startDelay)
 
-            transportersToDispatch.groupBy { it.section() }.forEach { (_, transporters) ->
-
-                val transport = transporters.first()
-                if (conductor.isClear(transport)) {
-                    launch { conductor.hold(transport) }
-                    released.add(transport.id)
+            transportersToDispatch.distinctBy { it.section() }.forEach {
+                if (conductor.isClear(it)) {
+                    released.add(it.id)
+                    launch { conductor.release(transport = it) }
                 }
             }
             transportersToDispatch.removeAll { released.contains(it.id) }
@@ -66,5 +65,4 @@ class LineControllerImpl(
         } while (transportersToDispatch.isNotEmpty())
 
     }
-
 }

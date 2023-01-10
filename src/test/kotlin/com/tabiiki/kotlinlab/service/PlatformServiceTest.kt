@@ -125,7 +125,7 @@ internal class PlatformServiceTest {
         lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten()
             .distinctBy { it.section().first }.forEach {
                 tracker[it.id]!!.add(it.section())
-                val job = launch { platformService.dispatch(it) }
+                val job = launch { platformService.signalAndDispatch(it) }
                 jobs.add(job)
             }
 
@@ -139,7 +139,7 @@ internal class PlatformServiceTest {
                     if (platformService.isClear(it) && platformService.canLaunch(it)) {
                         tracker[it.id]!!.add(it.section())
                         val job = launch {
-                            platformService.hold(it)
+                            platformService.signalAndDispatch(it)
                         }
                         jobs.add(job)
                     }

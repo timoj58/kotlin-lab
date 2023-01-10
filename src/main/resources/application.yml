@@ -11,12 +11,12 @@ network:
       - transport-id: 1
         capacity: 200
         weight: 20000
-        top-speed: 15
+        top-speed: 20
         power: 5000
       - transport-id: 7
         capacity: 200
         weight: 20000
-        top-speed: 7
+        top-speed: 10
         power: 1000
     cable-cars:
       - transport-id: 2

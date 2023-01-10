@@ -11,32 +11,41 @@ import com.tabiiki.kotlinlab.service.SignalService
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
-
 
 private class Platforms {
     private val platforms: ConcurrentHashMap<Pair<String, String>, AtomicBoolean> =
         ConcurrentHashMap()
 
+    private val platformLockOwners: ConcurrentHashMap<Pair<String, String>, UUID> =
+        ConcurrentHashMap()
+
     fun init(key: Pair<String, String>) {
-        platforms[key] = AtomicBoolean(false)
+        platforms[key] = AtomicBoolean(true)
     }
 
     fun isClear(key: Pair<String, String>): Boolean = (platforms[key] ?: throw Exception("missing $key")).get()
     fun getPlatformKeys(): List<Pair<String, String>> = platforms.keys().toList()
-    fun lock(signalValue: SignalValue, key: Pair<String, String>) {
-        val new = when (signalValue) {
+    fun lock(signal: SignalMessage, key: Pair<String, String>) {
+        signal.id ?: return
+        val new = when (signal.signalValue) {
             SignalValue.GREEN -> true
             SignalValue.RED -> false
         }
+        if (new && (platformLockOwners[key]
+                ?: signal.id) != signal.id
+        ) throw RuntimeException("${signal.id} is not owner of $key lock, ${platformLockOwners[key]}")
+
         val current = platforms[key]!!.acquire
-        if (current == new) throw RuntimeException("setting $key to same signal $signalValue")
+        if (platformLockOwners[key] != null && current == new) throw RuntimeException("setting $key to same signal $signal.signalValue")
+        if (!new) platformLockOwners[key] = signal.id else platformLockOwners.remove(key)
         platforms[key]!!.set(new)
+       // println(" ${signal.signalValue} for $key by ${signal.id}")
     }
 }
-
 
 class PlatformMonitor(
     private val sectionService: SectionService,
@@ -50,7 +59,7 @@ class PlatformMonitor(
     fun init(key: Pair<String, String>) = platforms.init(key)
     fun getHoldChannel(transport: Transport): Channel<Transport> =
         holdChannels[platformToKey(transport)] ?: throw Exception(
-            "no channel for ${transport.id} ${transport.line.id} ${platformToKey(transport)}"
+            "no channel for ${transport.id} ${transport.line.id} ${platformToKey(transport)} ${transport.section()}"
         )
 
     suspend fun monitorPlatform(key: Pair<String, String>) = coroutineScope {
@@ -62,14 +71,13 @@ class PlatformMonitor(
 
         do {
             signalService.receive(key)?.let {
-                if (previousSignal == null || it != previousSignal) {
-                    platforms.lock(it.signalValue, key)
+                if (previousSignal == null || previousSignal != it) {
+                    platforms.lock(it, key)
 
                     when (it.signalValue) {
-                        SignalValue.RED -> processRed(it, key, terminalSection)
-                        SignalValue.GREEN -> processGreen(it, key, terminalSection)
+                        SignalValue.RED -> launch { processRed(it, key, terminalSection) }
+                        SignalValue.GREEN -> launch { processGreen(it, key, terminalSection) }
                     }
-
                     previousSignal = it
                 }
             }
@@ -86,7 +94,7 @@ class PlatformMonitor(
                 if (!platforms.isClear(it)) {
                     throw RuntimeException("${msg.id} arrived too quickly from ${msg.getJourneyTime().first} $it")
                 }
-                launch { holdConsumer.accept(msg) }
+                holdConsumer.accept(msg)
             }
         } while (true)
     }
@@ -97,6 +105,7 @@ class PlatformMonitor(
         terminalSection: Pair<String, String>?
     ) =
         coroutineScope {
+
             val sections: List<Pair<Pair<String, String>, Pair<Boolean, Int>>> = if (terminalSection != null)
                 listOf(
                     Pair(
@@ -110,21 +119,26 @@ class PlatformMonitor(
                 .firstOrNull { !it.second.first }
 
             priority?.let {
-                launch {
-                    signalService.send(
-                        it.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
-                    )
-                }
+           //     println("GREEN (platform $key) - ${it.first} by ${signal.id}")
+                signalService.send(
+                    key = it.first,
+                    signalMessage = SignalMessage(signalValue = signal.signalValue, key = signal.key, id = signal.id)
+                )
             }
 
             sections.filter { priority == null || it.second.first }.forEach { section ->
-                launch {
+             //   println("GREEN (platform $key) - ${section.first} by ${signal.id}")
+
+                if(sectionService.isStationTerminal(section.first.first))
                     signalService.send(
-                        section.first,
-                        SignalMessage(signalValue = SignalValue.GREEN, key = signal.key)
+                        key = Pair("${section.first.first}|", Line.getStation(section.first.first)),
+                        signalMessage = SignalMessage(signalValue = signal.signalValue, key = signal.key, id = signal.id)
                     )
-                }
+
+                signalService.send(
+                    key = section.first,
+                    signalMessage = SignalMessage(signalValue = signal.signalValue, key = signal.key, id = signal.id)
+                )
             }
         }
 
@@ -138,16 +152,21 @@ class PlatformMonitor(
                 if (terminalSection != null) listOf(terminalSection) else lineRepo.getPreviousSections(key)
 
             sections.forEach {
-                launch {
+             //   println("RED (platform $key) - $it by ${signal.id}")
+                if(sectionService.isStationTerminal(it.first))
                     signalService.send(
-                        it,
-                        SignalMessage(
-                            signalValue = SignalValue.RED,
-                            key = signal.key,
-                            id = signal.id,
-                        )
+                        key = Pair("${it.first}|", Line.getStation(it.first)),
+                        signalMessage = SignalMessage(signalValue = signal.signalValue, key = signal.key, id = signal.id)
                     )
-                }
+
+                signalService.send(
+                    key = it,
+                    signalMessage = SignalMessage(
+                        signalValue = signal.signalValue,
+                        key = signal.key,
+                        id = signal.id,
+                    )
+                )
             }
         }
 

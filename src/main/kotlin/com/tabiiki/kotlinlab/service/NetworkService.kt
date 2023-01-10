@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.factory.LineFactory
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
@@ -36,10 +37,7 @@ class NetworkServiceImpl(
             )
         }
 
-        lines.groupBy { it.name }.values.forEach { line ->
-            launch { lineController.start(line) }
-        }
-
+        lines.groupBy { it.name }.values.forEach { line -> launch { lineController.start(line) } }
         launch { commuterService.generate() }
     }
 }

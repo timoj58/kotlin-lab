@@ -2,8 +2,8 @@ package com.tabiiki.kotlinlab.service
 
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
+import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.monitor.SectionMessage
 import com.tabiiki.kotlinlab.monitor.SectionMonitor
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineInstructions
@@ -18,7 +18,7 @@ import java.util.function.Consumer
 
 
 private class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
-    val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<SectionMessage>, ArrayDeque<Transport>>> =
+    val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
         ConcurrentHashMap()
 
     fun getQueue(key: Pair<String, String>): ArrayDeque<Transport> = queues[key]!!.second
@@ -27,15 +27,15 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
         queues[key] = Pair(Channel(), ArrayDeque())
     }
 
-    fun isClear(section: Pair<String, String>, incoming: Boolean): Pair<Boolean, Int> =
-        Pair(
-            queues[section]!!.second.isEmpty()
-                    || (
-                    queues[section]!!.second.size < 2 //only 1 transporter per section currently.
-                            && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold
-                            && (if (incoming) incomingCheck(section) else defaultCheck(section))),
-            journeyTimeInSection(section)
-        )
+    //TODO for now disabled, ie one transporter per section only.
+    fun isClear(section: Pair<String, String>, incoming: Boolean, max: Int = 0): Pair<Boolean, Int> = Pair(
+        queues[section]!!.second.isEmpty()
+                || (
+                queues[section]!!.second.size < max
+                        && journeyRepo.getJourneyTime(section, minimumHold + 1).first > minimumHold
+                        && (if (incoming) incomingCheck(section) else defaultCheck(section))),
+        journeyTimeInSection(section)
+    )
 
     private fun defaultCheck(section: Pair<String, String>) =
         checkDistanceTravelled(
@@ -69,11 +69,14 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
     fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
 
     fun release(key: Pair<String, String>, transport: Transport) {
-        if (queues[key]!!.second.size >= 2) throw RuntimeException("Only two transporters allowed in $key")
+        //set to two for now, due to switch platform releases..other checks enforce no overlaps.
+        //and intention is to put back multiple transporters per section soon.
+        //and fix emirates given its stuck at 2 carts..TODO
+        if (queues[key]!!.second.size >= 2) throw RuntimeException("${transport.id} Only one transporter ${queues[key]!!.second.map { it.id }} allowed in $key")
         queues[key]!!.second.addLast(transport)
     }
 
-    fun getChannel(key: Pair<String, String>): Channel<SectionMessage> = queues[key]!!.first
+    fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
 }
 
 
@@ -81,15 +84,24 @@ interface SectionService {
     suspend fun accept(transport: Transport, jobs: List<Job>?)
     suspend fun init(line: String)
     fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean
-    fun isClear(transport: Transport, incoming: Boolean = false): Boolean
+    fun isClear(
+        transport: Transport,
+        switchFrom: Boolean,
+      //  switchTo: Pair<Boolean, Boolean>,
+        incoming: Boolean = false
+    ): Boolean
+
     fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int>
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
+    fun isSwitchSection(transport: Transport): Pair<Boolean, Boolean>
     fun initQueues(key: Pair<String, String>)
     fun areSectionsClear(
         transport: Transport,
         lineInstructions: LineInstructions,
         sections: (Pair<String, String>) -> List<Pair<String, String>>
     ): Boolean
+
+    fun isStationTerminal(station: String): Boolean
 }
 
 @Service
@@ -116,7 +128,7 @@ class SectionServiceImpl(
             launch { signalService.init(it) }
             launch {
                 sectionMonitor.monitor(it, queues.getChannel(it))
-                { k -> queues.getQueue(k).removeFirstOrNull()?.let { launch { arrive(it) } } }
+                { k -> queues.getQueue(k.second).removeFirstOrNull()?.let { launch { arrive(k.first) } } }
             }
         }
     }
@@ -124,14 +136,45 @@ class SectionServiceImpl(
     override fun isClear(section: Pair<String, String>, incoming: Boolean): Boolean =
         queues.isClear(section, incoming).first
 
-    override fun isClear(transport: Transport, incoming: Boolean): Boolean =
-        queues.isClear(transport.section(), incoming).first
+    override fun isClear(
+        transport: Transport,
+        switchFrom: Boolean,
+     //   switchTo: Pair<Boolean, Boolean>,
+        incoming: Boolean
+    ): Boolean {
+        val section = transport.section()
+        val max = 0 //only 1 per section now
+        val isSectionClear = queues.isClear(section, incoming, max).first
+        val isTerminalSectionFromClear = if (switchFrom) queues.isClear(
+            section = Pair("${section.first}|", Line.getStation(section.first)),
+            incoming = incoming,
+            max = max
+        ).first else true
+        //TODO review this - works better without it.  was experiment,
+  /*      val isTerminalSectionToClear = if (switchTo.first)
+            queues.isClear(
+                section = Pair(section.first, "${Line.getStation(section.first)}|"),
+                incoming = incoming,
+                max = max
+            ).first
+        else if (switchTo.second)
+            queues.isClear(
+                section = Pair("${transport.line.name}:${section.second}", "${Line.getStation(section.second)}|"),
+                incoming = incoming,
+                max = max
+            ).first else true */
+
+        return isSectionClear && isTerminalSectionFromClear //&& isTerminalSectionToClear
+    }
 
     override fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int> =
         queues.isClear(section, true)
 
     override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean =
         switchService.isSwitchPlatform(transport, section, destination)
+
+    override fun isSwitchSection(transport: Transport): Pair<Boolean, Boolean> =
+        switchService.isSwitchSectionByTerminal(transport)
 
     override fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
 
@@ -153,6 +196,8 @@ class SectionServiceImpl(
         return isClear
     }
 
+    override fun isStationTerminal(station: String): Boolean = switchService.isStationTerminal(station)
+
     private suspend fun arrive(transport: Transport) = coroutineScope {
         journeyRepo.addJourneyTime(transport.getJourneyTime())
         launch { transport.arrived() }
@@ -167,7 +212,6 @@ class SectionServiceImpl(
                     launch { processSwitch(it, job) }
                 }
             }
-
         launch {
             signalService.send(
                 transport.platformKey(), SignalMessage(
@@ -178,22 +222,28 @@ class SectionServiceImpl(
                     commuterChannel = transport.carriage.channel,
                 )
             )
-
             jobs?.forEach { it.cancel() }
         }
-
     }
 
     private suspend fun processSwitch(details: Pair<Transport, Pair<String, String>>, job: Job) = coroutineScope {
         val transport = details.first
         val sectionLeft = details.second
 
-        queues.getQueue(sectionLeft).removeFirstOrNull()
         job.cancel()
-        prepareRelease(transport) { t -> launch { transport.signal(signalService.getChannel(t.section())!!) } }
+
+        prepareRelease(transport) { t ->
+            launch {
+                queues.getQueue(sectionLeft).removeFirstOrNull()
+                transport.signal(signalService.getChannel(t.section())!!)
+            }
+        }
     }
 
-    private suspend fun prepareRelease(transport: Transport, releaseConsumer: Consumer<Transport>) = coroutineScope {
+    private suspend fun prepareRelease(
+        transport: Transport,
+        releaseConsumer: Consumer<Transport>
+    ) = coroutineScope {
         queues.release(transport.section(), transport)
         transport.setChannel(queues.getChannel(transport.section()))
         releaseConsumer.accept(transport)

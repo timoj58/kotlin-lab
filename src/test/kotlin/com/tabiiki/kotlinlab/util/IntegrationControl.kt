@@ -38,7 +38,6 @@ class IntegrationControl {
         diagnosticsCheck()
         jobs.forEach { it.cancel() }
         assert()
-
     }
 
     private fun diagnosticsCheck(): List<UUID> {

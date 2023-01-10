@@ -26,7 +26,22 @@ data class SignalMessage(
     val commuterChannel: Channel<Commuter>? = null,
     var timesStamp: Long = System.currentTimeMillis(),
     val init: Boolean = false,
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (other !is SignalMessage) return false
+        if(id == null && other.id != null) return false
+        if(id != null && other.id == null) return false
+        if (signalValue != other.signalValue || id != other.id) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + signalValue.hashCode()
+        return result
+    }
+}
 
 data class Signal(
     var section: Pair<String, String>,

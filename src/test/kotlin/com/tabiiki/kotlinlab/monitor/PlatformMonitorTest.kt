@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
-@Disabled
+//@Disabled
 //not really a test class yet, needs more work but useful to break into simulation when debugging lines
 class PlatformMonitorTest {
 
@@ -35,7 +35,7 @@ class PlatformMonitorTest {
     private val timeStep = 7L
 
     private val linesAdapter = LinesAdapter(
-        listOf("src/main/resources/network/river/river.yml"),
+        listOf("src/main/resources/network/dockland/dlr.yml"),
         listOf(),
         listOf(),
         listOf(),
@@ -47,7 +47,7 @@ class PlatformMonitorTest {
     private val transportersAdapter = TransportersAdapter(
         listOf(
             TransportConfig(
-                transportId = 1,
+                transportId = 5,
                 capacity = 1000,
                 weight = 1500,
                 topSpeed = 20,
@@ -97,6 +97,16 @@ class PlatformMonitorTest {
     }
 
     @Test
+    fun `testing sections` () {
+        //switching 4cb048ac-c156-4928-8e94-d1baea7377bc (DLR:619, 94) to (DLR:94, 94|)
+        val res = switchService.isSwitchSection(lines.filter { it.id == "DLR03" }.first().transporters.first().also {
+           it.addSection(Pair("DLR:438", "528"))
+        })
+        println("$res")
+    }
+
+    @Disabled
+    @Test
     fun `platform RED `() = runBlocking {
 
         val job = launch { initMonitor() }
@@ -119,6 +129,7 @@ class PlatformMonitorTest {
         job.cancel()
     }
 
+    @Disabled
     @Test
     fun `platform GREEN `() = runBlocking {
 

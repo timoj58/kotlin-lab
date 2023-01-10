@@ -25,7 +25,10 @@ data class Commuter(
     fun completeJourneyStage(): Pair<String, String> {
         val travelled = route.first().route.removeFirstOrNull() ?: throw Exception("route is already complete")
         history.add(travelled)
-        peekNextJourneyStage() ?: println("completed $history for $id")
+        peekNextJourneyStage()?.let {
+            println("next $it, completed $history for $id")
+        } ?: println("completed $history for $id")
+
         return travelled
     }
 

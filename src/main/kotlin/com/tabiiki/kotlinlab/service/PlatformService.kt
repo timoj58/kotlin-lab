@@ -17,13 +17,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 interface PlatformService {
     fun init(commuterChannel: Channel<Commuter>)
     suspend fun init(line: String, lineDetails: List<Line>)
-    suspend fun hold(transport: Transport)
-    suspend fun dispatch(transport: Transport, jobs: List<Job>? = null, lineInstructions: LineInstructions? = null)
+    suspend fun signalAndDispatch(transport: Transport)
     fun isClear(transport: Transport): Boolean
     fun canLaunch(transport: Transport): Boolean
 }
@@ -46,6 +46,7 @@ class PlatformServiceImpl(
 
     override fun isClear(transport: Transport): Boolean {
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
+        //val switchSection = sectionService.isSwitchSection(transport)
         val platformClear = if (switchPlatform)
             platformMonitor.isClear(
                 Pair(
@@ -55,7 +56,11 @@ class PlatformServiceImpl(
             )
         else platformMonitor.isClear(transport.platformKey())
 
-        return platformClear && sectionService.isClear(transport)
+        return platformClear && sectionService.isClear(
+            transport = transport,
+            switchFrom = switchPlatform,
+            //switchTo = switchSection
+        )
     }
 
     override fun canLaunch(transport: Transport): Boolean {
@@ -91,83 +96,133 @@ class PlatformServiceImpl(
             }
         }
 
-    override suspend fun hold(
-        transport: Transport
-    ): Unit = coroutineScope {
-        val lineInstructions = lineRepo.getLineInstructions(transport)
-        var key = platformKey(transport, lineInstructions)
+    override suspend fun signalAndDispatch(transport: Transport): Unit = coroutineScope {
+        val instructions = lineRepo.getLineInstructions(transport)
+        val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
+        val key = getPlatformSignalKey(transport, instructions, switchPlatform)
 
-        if (sectionService.isSwitchPlatform(transport, transport.section()))
-            key = platformTerminalKey(transport, key)
+        signalService.send(
+            key, SignalMessage(
+                signalValue = SignalValue.RED,
+                id = transport.id,
+                key = key,
+                line = transport.line.id,
+                commuterChannel = transport.carriage.channel,
+            )
+        )
 
         launch {
-            signalService.send(
-                key, SignalMessage(
-                    signalValue = SignalValue.RED,
-                    id = transport.id,
-                    key = key,
-                    line = transport.line.id,
-                    commuterChannel = transport.carriage.channel,
-                )
-            ).also {
-                launch {
-                    holdActions(
-                        transport = transport,
-                        key = key,
-                        lineInstructions = lineInstructions
-                    )
-                }
-            }
+            val counter = AtomicInteger(0)
+            do {
+                delay(transport.timeStep)
+            } while (counter.incrementAndGet() < minimumHold)
+
+            dispatch(
+                transport = transport,
+                lineInstructions = instructions,
+                switchPlatform = switchPlatform,
+            )
         }
     }
 
-    override suspend fun dispatch(
+    private suspend fun dispatch(
         transport: Transport,
-        jobs: List<Job>?,
-        lineInstructions: LineInstructions?
+        jobs: List<Job>? = null,
+        lineInstructions: LineInstructions,
+        switchPlatform: Boolean
     ): Unit = coroutineScope {
-        val instructions = lineInstructions ?: lineRepo.getLineInstructions(transport)
-        launch { transport.release(instructions) }
+        transport.startJourney(lineInstructions = lineInstructions)
+        launch { transport.motionLoop() }
+        sectionService.accept(
+            transport
+                .also {
+                    if (switchPlatform) {
+                        val section = it.section()
+                        it.addSwitchSection(Pair("${section.first}|", Line.getStation(section.first)))
+                    }
+                    it.setHoldChannel(platformMonitor.getHoldChannel(it)) }, jobs
+        )
+    }
+
+    private suspend fun hold(
+        transport: Transport
+    ): Unit = coroutineScope {
+        val lineInstructions = lineRepo.getLineInstructions(transport)
+        val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
+        val key = getPlatformSignalKey(transport, lineInstructions, switchPlatform)
+
+        signalService.send(
+            key, SignalMessage(
+                signalValue = SignalValue.RED,
+                id = transport.id,
+                key = key,
+                line = transport.line.id,
+                commuterChannel = transport.carriage.channel,
+            )
+        )
+
+        delay(transport.timeStep)
+
         launch {
-            sectionService.accept(
-                transport
-                    .also {
-                        if (sectionService.isSwitchPlatform(it, it.section())) {
-                            val section = it.section()
-                            it.addSwitchSection(Pair("${section.first}|", Line.getStation(section.first)))
-                        }
-                        it.setHoldChannel(platformMonitor.getHoldChannel(it))
-                    }, jobs
+            holdActions(
+                transport = transport,
+                key = key,
+                lineInstructions = lineInstructions,
+                switchPlatform = switchPlatform,
             )
         }
+
     }
 
     private suspend fun holdActions(
         transport: Transport,
         key: Pair<String, String>,
-        lineInstructions: LineInstructions
+        lineInstructions: LineInstructions,
+        switchPlatform: Boolean
     ) = coroutineScope {
         val counter = AtomicInteger(0)
         val embarkJob = launch { transport.carriage.embark(commuterChannel!!) }
         val disembarkJob = launch { transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!) }
+       // val switchSection = sectionService.isSwitchSection(transport)
+
+        var sectionClear: Boolean
+        var sectionsClear: Boolean
+        var isOtherPlatformClear: Boolean
 
         do {
             delay(transport.timeStep)
+
+            sectionClear = sectionService.isClear(transport = transport, switchFrom = switchPlatform/*, switchTo = switchSection*/)
+            sectionsClear = sectionService.areSectionsClear(transport = transport, lineInstructions =  lineInstructions) { k -> lineRepo.getPreviousSections(k) }
+            isOtherPlatformClear =  !switchPlatform ||  platformMonitor.isClear(key = Pair("${transport.line.name}:${transport.lineDirection(true)}", key.second))
+
         } while (counter.incrementAndGet() < minimumHold
-            || !sectionService.isClear(transport)
-            || !sectionService.areSectionsClear(transport, lineInstructions) { k -> lineRepo.getPreviousSections(k) }
-        )
+            || !sectionClear
+            || !sectionsClear
+            || !isOtherPlatformClear)
 
         dispatch(
             transport = transport,
             jobs = listOf(embarkJob, disembarkJob),
-            lineInstructions = lineInstructions
+            lineInstructions = lineInstructions,
+            switchPlatform = switchPlatform
         )
     }
 
     private suspend fun init(key: Pair<String, String>) = coroutineScope {
         launch { signalService.init(key) }
         launch { platformMonitor.monitorPlatform(key) }
+    }
+
+    private fun getPlatformSignalKey(
+        transport: Transport,
+        lineInstructions: LineInstructions,
+        switchPlatform: Boolean
+    ): Pair<String, String> {
+        var key = platformKey(transport, lineInstructions)
+        if (switchPlatform) key = platformTerminalKey(transport, key)
+
+        return key
     }
 
     companion object {

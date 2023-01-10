@@ -66,6 +66,8 @@ class SignalServiceImpl(
     override fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channels.getChannel(key)
 
     override suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
-    override suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) =
+    override suspend fun send(key: Pair<String, String>, signalMessage: SignalMessage) {
         channels.send(key, signalMessage)
+    }
+
 }

@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
-import com.tabiiki.kotlinlab.monitor.SectionMessage
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.util.LineBuilder
@@ -24,7 +23,7 @@ import org.mockito.Mockito.verify
 
 internal class TransportTest {
 
-    private val sectionChannel = Mockito.mock(Channel::class.java) as Channel<SectionMessage>
+    private val sectionChannel = Mockito.mock(Channel::class.java) as Channel<Transport>
 
     private val train = Transport(
         config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
@@ -76,16 +75,15 @@ internal class TransportTest {
 
     @Test
     fun `test platform from and to with journey`() = runBlocking {
-        val job = launch {
-            train.release(
-                LineInstructions(
-                    from = LineBuilder().stations[0],
-                    to = LineBuilder().stations[1],
-                    next = LineBuilder().stations[2],
-                    direction = LineDirection.POSITIVE
-                )
+        train.startJourney(
+            LineInstructions(
+                from = LineBuilder().stations[0],
+                to = LineBuilder().stations[1],
+                next = LineBuilder().stations[2],
+                direction = LineDirection.POSITIVE
             )
-        }
+        )
+        val job = launch { train.motionLoop() }
 
         val channel = Channel<SignalMessage>()
 
@@ -168,7 +166,7 @@ internal class TransportTest {
             delay(1000)
         } while (!train.atPlatform())
 
-        verify(sectionChannel, atLeastOnce()).send(SectionMessage.ARRIVED)
+        verify(sectionChannel, atLeastOnce()).send(train)
 
         res.cancel()
     }
@@ -207,21 +205,23 @@ internal class TransportTest {
         val westHam = Pair(51.528525530727, 0.00531739383278791)
         val northGreenwich = Pair(51.628525530727, 0.00531739383278791)
 
-        launch {
-            train.release(
-                LineInstructions(
-                    from = Station(
-                        StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second),
-                    ),
-                    to = Station(
-                        StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second),
-                    ),
-                    next = Station(
-                        StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second),
-                    ),
-                    direction = LineDirection.POSITIVE
-                )
+        train.startJourney(
+            LineInstructions(
+                from = Station(
+                    StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second),
+                ),
+                to = Station(
+                    StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second),
+                ),
+                next = Station(
+                    StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second),
+                ),
+                direction = LineDirection.POSITIVE
             )
+        )
+
+        launch {
+          train.motionLoop()
         }
     }
 

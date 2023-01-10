@@ -57,18 +57,12 @@ internal class LineControllerTest {
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
-        verify(conductor, atMost(4)).hold(
-            Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
-        )
 
         //ensure transporter only released once
         verify(conductor, atMostOnce()).release(
             line.transporters[0]
         )
 
-        verify(conductor, never()).hold(
-            line.transporters[0]
-        )
 
         res.cancel()
     }
