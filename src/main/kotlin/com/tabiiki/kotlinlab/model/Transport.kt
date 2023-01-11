@@ -31,36 +31,13 @@ enum class Instruction {
     fun isMoving(): Boolean = THROTTLE_ON == this
 }
 
-interface ITransport {
-    suspend fun signal(channel: Channel<SignalMessage>)
-    fun section(): Pair<String, String>
-    fun platformFromKey(): Pair<String, String>
-    fun platformToKey(terminal: Boolean = false): Pair<String, String>?
-    fun platformKey(): Pair<String, String>
-    fun addSection(section: Pair<String, String>? = null)
-    fun addSwitchSection(section: Pair<String, String>)
-    fun lineDirection(ignoreTerminal: Boolean = false): LineDirection
-    fun getJourneyTime(): Triple<Pair<String, String>, Int, Double>
-    fun atPlatform(): Boolean
-    fun isStationary(): Boolean
-    fun getSectionStationCode(): String
-    fun getCurrentInstruction(): Instruction
-    fun getPosition(): Double
-    fun setHoldChannel(holdChannel: Channel<Transport>)
-    suspend fun arrived()
-    fun switchSection(section: Pair<String, String>)
-    fun setChannel(sectionChannel: Channel<Transport>)
-    fun startJourney(lineInstructions: LineInstructions)
-    suspend fun motionLoop()
-    fun isCurrentlySwitchSection(): Boolean
-}
 
 data class Transport(
     val id: UUID = UUID.randomUUID(),
     private val config: TransportConfig,
     val line: Line,
     val timeStep: Long
-) : ITransport {
+){
 
     val transportId = config.transportId
     val carriage = Carriage(config.capacity)
@@ -68,6 +45,7 @@ data class Transport(
 
     var status = Status.DEPOT
     var instruction = Instruction.STATIONARY
+    var switchSection = false
     private var actualSection: Pair<String, String>? = null
     private var journey: LineInstructions? = null
     private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
@@ -75,35 +53,35 @@ data class Transport(
     private var holdChannel: Channel<Transport>? = null
     private var sectionChannel: Channel<Transport>? = null
 
-    override fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
-    override fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
-    override fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
-    override fun getSectionStationCode(): String = SwitchMonitor.replaceSwitch(Line.getStation(section().first))
-    override fun getCurrentInstruction(): Instruction = this.instruction
-    override fun getPosition(): Double = this.physics.displacement
-    override fun setHoldChannel(holdChannel: Channel<Transport>) {
+    fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
+    fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
+    fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
+    fun getSectionStationCode(): String = SwitchMonitor.replaceSwitch(Line.getStation(section().first))
+    fun getCurrentInstruction(): Instruction = this.instruction
+    fun getPosition(): Double = this.physics.displacement
+    fun setHoldChannel(holdChannel: Channel<Transport>) {
         this.holdChannel = holdChannel
     }
 
-    override suspend fun arrived() {
+    suspend fun arrived() {
         holdChannel!!.send(this)
     }
 
-    override fun switchSection(section: Pair<String, String>) {
+    fun switchSection(section: Pair<String, String>) {
         if (this.actualSection == null)
             this.actualSection = section
     }
 
-    override fun setChannel(sectionChannel: Channel<Transport>) {
+    fun setChannel(sectionChannel: Channel<Transport>) {
         this.sectionChannel = sectionChannel
     }
 
-    override fun platformKey(): Pair<String, String> =
+    fun platformKey(): Pair<String, String> =
         Pair("${line.name}:${this.lineDirection()}", section().first.substringBefore("|"))
 
-    override fun section(): Pair<String, String> = sectionData.second ?: sectionData.first!!
+    fun section(): Pair<String, String> = sectionData.second ?: sectionData.first!!
 
-    override fun platformFromKey(): Pair<String, String> {
+    fun platformFromKey(): Pair<String, String> {
         val line = line.name
         val dir = journey?.direction ?: this.lineDirection()
         val stationId = journey?.from?.id ?: Line.getStation(section().first)
@@ -111,7 +89,7 @@ data class Transport(
         return Pair("$line:$dir", "$line:$stationId")
     }
 
-    override fun platformToKey(terminal: Boolean): Pair<String, String>? {
+    fun platformToKey(terminal: Boolean = false): Pair<String, String>? {
         val line = line.name
         var dir = journey?.direction ?: return null
         if (terminal) dir = LineDirection.TERMINAL
@@ -119,18 +97,21 @@ data class Transport(
         return Pair("$line:$dir", "$line:${journey!!.to.id}")
     }
 
-    override fun addSection(section: Pair<String, String>?) {
+    fun addSection(section: Pair<String, String>? = null) {
         val key = section ?: actualSection!!
         assert(key.first.contains(":")) { "section is wrong $key" }
         sectionData = Pair(key, null)
     }
 
-    override fun addSwitchSection(section: Pair<String, String>) {
+    fun addSwitchSection(section: Pair<String, String>) {
         actualSection = section()
         addSection(section)
     }
 
-    override suspend fun signal(channel: Channel<SignalMessage>) {
+    fun getMainlineForSwitch(): Pair<String, String> =
+        Pair("${line.name}:${journey!!.from.id}", journey!!.to.id)
+
+    suspend fun signal(channel: Channel<SignalMessage>) {
         val timeRegistered = System.currentTimeMillis()
         var previousMsg: SignalMessage? = null
         do {
@@ -144,7 +125,7 @@ data class Transport(
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
-
+                        SignalValue.AMBER -> if(switchSection) Instruction.EMERGENCY_STOP else Instruction.THROTTLE_ON
                     }.also { instruction = it }
 
                     previousMsg = msg
@@ -153,7 +134,7 @@ data class Transport(
         } while (status.moving())
     }
 
-    override fun lineDirection(ignoreTerminal: Boolean): LineDirection {
+    fun lineDirection(ignoreTerminal: Boolean = false): LineDirection {
         if (actualSection != null && !ignoreTerminal) return LineDirection.TERMINAL
 
         val firstStation = getSectionStationCode()
@@ -180,38 +161,38 @@ data class Transport(
         }
     }
 
-    override suspend fun motionLoop(): Unit = coroutineScope {
+      suspend fun motionLoop()  {
+          val emergencyStop = AtomicInteger(0)
+          val counter = AtomicInteger(0)
+          val logged = AtomicBoolean(false)
 
-        val emergencyStop = AtomicInteger(0)
-        val counter = AtomicInteger(0)
-        val logged = AtomicBoolean(false)
+          do {
+              delay(timeStep)
+              if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
 
-        do {
-            delay(timeStep)
+              physics.calcTimeStep(instruction, isApproachingTerminal(section()))
 
-            if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
-            physics.calcTimeStep(instruction)
-            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
-                Instruction.SCHEDULED_STOP
+              if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
+                  Instruction.SCHEDULED_STOP
 
-            if(emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
+              if (emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
 
-            if(counter.getAndIncrement() - (counter.get() - emergencyStop.get()) > 60 && !logged.get() ){
-                logged.set(true)
-                println("$id stopped for over 1 minutes at ${section()}")
-            }
+              if (counter.getAndIncrement() - (counter.get() - emergencyStop.get()) > 60 && !logged.get()) {
+                  logged.set(true)
+                  println("$id stopped for over 1 minutes at ${section()}")
+              }
 
-        } while (physics.displacement <= physics.distance)
+          } while (physics.displacement <= physics.distance)
 
-        if(logged.get())
-            println("released $id")
+          if (logged.get())
+              println("released $id")
 
-        stopJourney()
+          stopJourney()
     }
 
-    override fun isCurrentlySwitchSection(): Boolean = actualSection!= null
+    fun isCurrentlySwitchSection(): Boolean = actualSection!= null
 
-    override fun startJourney(lineInstructions: LineInstructions) {
+    fun startJourney(lineInstructions: LineInstructions) {
         instruction = Instruction.STATIONARY
         journey = lineInstructions
         status = Status.ACTIVE
@@ -231,6 +212,7 @@ data class Transport(
 
     private suspend fun stopJourney() = coroutineScope {
         physics.reset()
+        switchSection = false
         actualSection = null
         journey!!.let {
             sectionData = Pair(
@@ -244,6 +226,8 @@ data class Transport(
     }
 
     companion object {
+
+        fun isApproachingTerminal(section: Pair<String, String>) = section.second.contains("|")
         class Physics(config: TransportConfig) {
             private val haversineCalculator = HaversineCalculator()
             private val drag = 0.88
@@ -276,10 +260,12 @@ data class Transport(
 
             private fun calculateAcceleration(force: Double): Double = force / weight.toDouble()
 
-            fun calcTimeStep(instruction: Instruction) {
-                var force = calculateForce(instruction)
+            fun calcTimeStep(instruction: Instruction, approachingTerminal: Boolean) {
+                var percentage = if(approachingTerminal) 25.0 else 100.0
+                var force = calculateForce(
+                    instruction = instruction,
+                    percentage = percentage)
                 var acceleration = calculateAcceleration(force)
-                var percentage = 100.0
 
                 while (velocity + acceleration > topSpeed && percentage >= 0.0) {
                     percentage--

@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.monitor.SwitchMonitor
 import com.tabiiki.kotlinlab.repo.LineDirection
+import kotlinx.coroutines.Job
 import org.springframework.stereotype.Service
 import java.util.function.Consumer
 
@@ -14,7 +15,7 @@ interface SwitchService {
     fun doesFirstStationInSectionContainTerminal(transport: Transport): Boolean
     fun isSwitchSection(transport: Transport): Boolean
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
-    suspend fun switch(transport: Transport, completeSection: Consumer<Pair<Transport, Pair<String, String>>>)
+    suspend fun switch(transport: Transport, jobs: List<Job>,  completeSection: Consumer<Pair<Transport, Pair<String, String>>>)
 }
 
 @Service
@@ -83,8 +84,9 @@ class SwitchServiceImpl(
 
     override suspend fun switch(
         transport: Transport,
+        jobs: List<Job>,
         completeSection: Consumer<Pair<Transport, Pair<String, String>>>
-    ) = switchMonitor.switch(transport, completeSection)
+    ) = switchMonitor.switch(transport, jobs, completeSection)
 
     companion object {
         private fun getSection(section: Pair<String, String>): Pair<String, String> =

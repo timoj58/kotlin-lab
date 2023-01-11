@@ -43,13 +43,13 @@ class OvergroundLineControllerTest @Autowired constructor(
 
     @ParameterizedTest
     @CsvSource(
+        "elizabeth",
         "gospel-oak",
         "highbury-islington",
         "london-euston",
         "romford",
         "london-liverpool-st",
         "stratford",
-        "elizabeth"
     )
     fun `test all transports complete a full journey on an overground line`(lineName: String) = runBlocking {
         lineControllerTest.test("overground", lineName, 10)

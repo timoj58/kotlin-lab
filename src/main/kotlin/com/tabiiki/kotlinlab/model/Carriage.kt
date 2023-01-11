@@ -2,6 +2,7 @@ package com.tabiiki.kotlinlab.model
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.isActive
 
 interface ICarriage {
 

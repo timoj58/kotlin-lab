@@ -27,15 +27,16 @@ class LineConductorImpl(
     override suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
+        println("start ${transport.id} - ${transport.line.id} ${transport.section()}")
         platformService.signalAndDispatch(transport = transport)
     }
 
     override suspend fun init(line: String, lines: List<Line>): Unit = coroutineScope {
-        launch { platformService.init(line, lines) }
+        launch { platformService.initLines(line, lines) }
     }
 
     override fun init(commuterChannel: Channel<Commuter>) {
-        platformService.init(commuterChannel)
+        platformService.initCommuterChannel(commuterChannel)
     }
 
     override fun isClear(transport: Transport): Boolean =

@@ -43,8 +43,8 @@ network:
       - transport-id: 6
         capacity: 75
         weight: 200
-        top-speed: 35
-        power: 75
+        top-speed: 20
+        power: 70
   lines:
     underground:
       - src/main/resources/network/underground/city.yml

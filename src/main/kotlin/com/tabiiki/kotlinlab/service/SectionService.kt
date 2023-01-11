@@ -10,6 +10,7 @@ import com.tabiiki.kotlinlab.repo.LineInstructions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -69,10 +70,11 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
     fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
 
     fun release(key: Pair<String, String>, transport: Transport) {
+        val limit = transport.line.transportersPerSection
         //set to two for now, due to switch platform releases..other checks enforce no overlaps.
         //and intention is to put back multiple transporters per section soon.
         //and fix emirates given its stuck at 2 carts..TODO
-        if (queues[key]!!.second.size >= 2) throw RuntimeException("${transport.id} Only one transporter ${queues[key]!!.second.map { it.id }} allowed in $key")
+        if (queues[key]!!.second.size > limit) throw RuntimeException("${transport.id} Only $limit transporters ${queues[key]!!.second.map { it.id }} allowed in $key")
         queues[key]!!.second.addLast(transport)
     }
 
@@ -81,13 +83,12 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
 
 
 interface SectionService {
-    suspend fun accept(transport: Transport, jobs: List<Job>?)
+    suspend fun accept(transport: Transport, motionJob: Job, jobs: List<Job>?)
     suspend fun init(line: String)
     fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean
     fun isClear(
         transport: Transport,
         switchFrom: Boolean,
-      //  switchTo: Pair<Boolean, Boolean>,
         incoming: Boolean = false
     ): Boolean
 
@@ -115,12 +116,12 @@ class SectionServiceImpl(
     private val queues = Queues(minimumHold, journeyRepo)
     private val sectionMonitor = SectionMonitor()
 
-    override suspend fun accept(transport: Transport, jobs: List<Job>?): Unit =
+    override suspend fun accept(transport: Transport, motionJob: Job, jobs: List<Job>?): Unit =
         coroutineScope {
             if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id })
                 throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
 
-            prepareRelease(transport) { t -> launch { release(t, jobs) } }
+            prepareRelease(transport) { t -> launch { release(t, motionJob, jobs) } }
         }
 
     override suspend fun init(line: String): Unit = coroutineScope {
@@ -139,7 +140,6 @@ class SectionServiceImpl(
     override fun isClear(
         transport: Transport,
         switchFrom: Boolean,
-     //   switchTo: Pair<Boolean, Boolean>,
         incoming: Boolean
     ): Boolean {
         val section = transport.section()
@@ -150,21 +150,8 @@ class SectionServiceImpl(
             incoming = incoming,
             max = max
         ).first else true
-        //TODO review this - works better without it.  was experiment,
-  /*      val isTerminalSectionToClear = if (switchTo.first)
-            queues.isClear(
-                section = Pair(section.first, "${Line.getStation(section.first)}|"),
-                incoming = incoming,
-                max = max
-            ).first
-        else if (switchTo.second)
-            queues.isClear(
-                section = Pair("${transport.line.name}:${section.second}", "${Line.getStation(section.second)}|"),
-                incoming = incoming,
-                max = max
-            ).first else true */
 
-        return isSectionClear && isTerminalSectionFromClear //&& isTerminalSectionToClear
+        return isSectionClear && isTerminalSectionFromClear
     }
 
     override fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int> =
@@ -203,15 +190,17 @@ class SectionServiceImpl(
         launch { transport.arrived() }
     }
 
-    private suspend fun release(transport: Transport, jobs: List<Job>?) = coroutineScope {
+    private suspend fun release(transport: Transport, motionJob: Job, jobs: List<Job>?) = coroutineScope {
         val job = launch { transport.signal(signalService.getChannel(transport.section())!!) }
 
         if (switchService.isSwitchSection(transport))
             launch {
-                switchService.switch(transport) {
-                    launch { processSwitch(it, job) }
+                switchService.switch(transport.also { it.switchSection = true }, listOf(job, motionJob)) {
+                    launch { processSwitch(it) }
                 }
             }
+
+
         launch {
             signalService.send(
                 transport.platformKey(), SignalMessage(
@@ -220,22 +209,42 @@ class SectionServiceImpl(
                     key = transport.section(),
                     line = transport.line.id,
                     commuterChannel = transport.carriage.channel,
-                )
+                ),
+                priorities = signalService.getSignal(transport.platformKey()).connected.map {
+                    Pair(
+                        it,
+                        isClearWithPriority(it)
+                    )
+                }.toList()
             )
             jobs?.forEach { it.cancel() }
         }
     }
 
-    private suspend fun processSwitch(details: Pair<Transport, Pair<String, String>>, job: Job) = coroutineScope {
+    private suspend fun processSwitch(details: Pair<Transport, Pair<String, String>>) = coroutineScope {
         val transport = details.first
         val sectionLeft = details.second
+        val sectionEntering = transport.section()
 
-        job.cancel()
+        launch {  transport.signal(signalService.getChannel(sectionEntering)!!) }
 
         prepareRelease(transport) { t ->
             launch {
                 queues.getQueue(sectionLeft).removeFirstOrNull()
-                transport.signal(signalService.getChannel(t.section())!!)
+
+                if (sectionEntering.second.contains("|"))
+                    signalService.send(
+                        key = transport.getMainlineForSwitch(),
+                        SignalMessage(
+                            signalValue = SignalValue.AMBER,
+                            id = transport.id,
+                            key = sectionLeft,
+                            line = transport.line.id,
+                            commuterChannel = transport.carriage.channel,
+                        ),
+                    ).also {
+                        println("sending amber to ${transport.getMainlineForSwitch()}")
+                    }
             }
         }
     }

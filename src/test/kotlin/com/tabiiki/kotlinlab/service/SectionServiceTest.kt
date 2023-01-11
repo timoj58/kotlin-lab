@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.util.LineBuilder
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,7 +43,7 @@ class SectionServiceTest {
         val job = launch {
             sectionService.accept(transport.also {
                 it.setHoldChannel(Channel())
-            }, listOf(testJob))
+            }, Job(), listOf(testJob))
         }
         delay(1000)
 
@@ -61,13 +62,13 @@ class SectionServiceTest {
         val job = launch {
             sectionService.accept(transport.also {
                 it.setHoldChannel(Channel())
-            }, listOf())
+            }, Job(), listOf())
         }
         delay(100)
         try {
             sectionService.accept(transport.also {
                 it.setHoldChannel(Channel())
-            }, listOf())
+            }, Job(), listOf())
         } catch (e: RuntimeException) {
             assertThat(true).isEqualTo(true)
         }

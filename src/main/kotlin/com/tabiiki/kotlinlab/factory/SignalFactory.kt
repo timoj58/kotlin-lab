@@ -3,9 +3,9 @@ package com.tabiiki.kotlinlab.factory
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.repo.LineDirection
+import com.tabiiki.kotlinlab.repo.LineRepo
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -15,11 +15,11 @@ enum class SignalType {
 }
 
 enum class SignalValue {
-    RED, GREEN
+    RED, GREEN, AMBER
 }
 
 data class SignalMessage(
-    val signalValue: SignalValue,
+    var signalValue: SignalValue,
     val id: UUID? = null,
     val key: Pair<String, String>? = null,
     val line: String? = null,
@@ -29,8 +29,8 @@ data class SignalMessage(
 ) {
     override fun equals(other: Any?): Boolean {
         if (other !is SignalMessage) return false
-        if(id == null && other.id != null) return false
-        if(id != null && other.id == null) return false
+        if (id == null && other.id != null) return false
+        if (id != null && other.id == null) return false
         if (signalValue != other.signalValue || id != other.id) return false
 
         return true
@@ -52,6 +52,7 @@ data class Signal(
         init = true
     ),
     val timeStep: Long = 10,
+    val connected: MutableList<Pair<String, String>> = mutableListOf()
 ) {
     suspend fun start(channelIn: Channel<SignalMessage>, channelOut: Channel<SignalMessage>) = coroutineScope {
         launch { receive(channelIn) }
@@ -76,10 +77,8 @@ data class Signal(
     private suspend fun send(channel: Channel<SignalMessage>) {
         do {
             channel.send(status.also { it.timesStamp = System.currentTimeMillis() })
-            delay(timeStep)
         } while (true)
     }
-
 }
 
 @Component
@@ -92,18 +91,42 @@ class SignalFactory(
         val lines = lineFactory.get().map { lineFactory.get(it) }
         lines.forEach { line ->
             getLineSections(line).forEach { section ->
-                val signal = Signal(section = section, type = SignalType.SECTION, timeStep = lineFactory.timeStep)
+                val signal = Signal(
+                    section = section,
+                    type = SignalType.SECTION,
+                    timeStep = lineFactory.timeStep,
+                    connected = mutableListOf()
+                )
                 signals[section] = signal
             }
         }
+        //only need to support connected here for now
         getPlatforms(lines).forEach { platform ->
-            val signal = Signal(section = platform, type = SignalType.PLATFORM, timeStep = lineFactory.timeStep)
+            val signal = Signal(
+                section = platform,
+                type = SignalType.PLATFORM,
+                timeStep = lineFactory.timeStep,
+                connected = mutableListOf()
+            )
             signals[platform] = signal
         }
     }
 
     fun get(section: Pair<String, String>): Signal = signals[section]!!
-    fun get(): List<Signal> = signals.values.toList()
+    fun get(signalType: SignalType): List<Signal> = signals.values.filter { it.type == signalType }.toList()
+
+    fun updateConnected(line: String, lineRepo: LineRepo) {
+        signals.values.filter { it.type == SignalType.PLATFORM && it.section.first.contains(line) }.forEach { signal ->
+            if(signal.section.first.contains(LineDirection.TERMINAL.name))
+                signal.connected.add(
+                    Pair(
+                        "$line:${Line.getStation(signal.section.second)}",
+                        "${Line.getStation(signal.section.second)}|"
+                    )
+                )
+            else lineRepo.getPreviousSections(signal.section).forEach { signal.connected.add(it) }
+        }
+    }
 
     private fun getPlatforms(lines: List<Line>): Set<Pair<String, String>> {
         val pairs = mutableSetOf<Pair<String, String>>()

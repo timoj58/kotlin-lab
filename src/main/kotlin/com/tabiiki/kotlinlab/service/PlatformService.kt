@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -21,8 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 interface PlatformService {
-    fun init(commuterChannel: Channel<Commuter>)
-    suspend fun init(line: String, lineDetails: List<Line>)
+    fun initCommuterChannel(commuterChannel: Channel<Commuter>)
+    suspend fun initLines(line: String, lineDetails: List<Line>)
     suspend fun signalAndDispatch(transport: Transport)
     fun isClear(transport: Transport): Boolean
     fun canLaunch(transport: Transport): Boolean
@@ -36,7 +37,7 @@ class PlatformServiceImpl(
     private val lineRepo: LineRepo,
     private val stationRepo: StationRepo,
 ) : PlatformService {
-    private val platformMonitor = PlatformMonitor(sectionService, signalService, lineRepo)
+    private val platformMonitor = PlatformMonitor(sectionService, signalService)
     private var commuterChannel: Channel<Commuter>? = null
 
     init {
@@ -46,7 +47,6 @@ class PlatformServiceImpl(
 
     override fun isClear(transport: Transport): Boolean {
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
-        //val switchSection = sectionService.isSwitchSection(transport)
         val platformClear = if (switchPlatform)
             platformMonitor.isClear(
                 Pair(
@@ -59,7 +59,6 @@ class PlatformServiceImpl(
         return platformClear && sectionService.isClear(
             transport = transport,
             switchFrom = switchPlatform,
-            //switchTo = switchSection
         )
     }
 
@@ -77,15 +76,21 @@ class PlatformServiceImpl(
                 response = false
                 break@outer
             }
+            //also test if each platform is clear front and back to delay release
+            if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
+                || !platformMonitor.isClear(Pair("$line:${transport.lineDirection()}", "$line:${station.id}"))) {
+                response = false
+                break@outer
+            }
         }
         return response
     }
 
-    override fun init(commuterChannel: Channel<Commuter>) {
+    override fun initCommuterChannel(commuterChannel: Channel<Commuter>) {
         this.commuterChannel = commuterChannel
     }
 
-    override suspend fun init(line: String, lineDetails: List<Line>): Unit =
+    override suspend fun initLines(line: String, lineDetails: List<Line>): Unit =
         coroutineScope {
             lineRepo.addLineDetails(line, lineDetails)
             launch { sectionService.init(line) }
@@ -94,6 +99,7 @@ class PlatformServiceImpl(
                 launch { init(it) }
                 launch { platformMonitor.monitorPlatformHold(it) { t -> launch { hold(t) } } }
             }
+            signalService.initConnected(line, lineRepo)
         }
 
     override suspend fun signalAndDispatch(transport: Transport): Unit = coroutineScope {
@@ -132,15 +138,18 @@ class PlatformServiceImpl(
         switchPlatform: Boolean
     ): Unit = coroutineScope {
         transport.startJourney(lineInstructions = lineInstructions)
-        launch { transport.motionLoop() }
+        val job = launch { transport.motionLoop() }
         sectionService.accept(
-            transport
+            transport = transport
                 .also {
                     if (switchPlatform) {
                         val section = it.section()
                         it.addSwitchSection(Pair("${section.first}|", Line.getStation(section.first)))
                     }
-                    it.setHoldChannel(platformMonitor.getHoldChannel(it)) }, jobs
+                    it.setHoldChannel(platformMonitor.getHoldChannel(it))
+                },
+            motionJob = job,
+            jobs = jobs
         )
     }
 
@@ -161,8 +170,6 @@ class PlatformServiceImpl(
             )
         )
 
-        delay(transport.timeStep)
-
         launch {
             holdActions(
                 transport = transport,
@@ -181,9 +188,14 @@ class PlatformServiceImpl(
         switchPlatform: Boolean
     ) = coroutineScope {
         val counter = AtomicInteger(0)
-        val embarkJob = launch { transport.carriage.embark(commuterChannel!!) }
-        val disembarkJob = launch { transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!) }
-       // val switchSection = sectionService.isSwitchSection(transport)
+        val embarkJob = launch {
+                transport.carriage.embark(commuterChannel!!)
+        }
+        val disembarkJob = launch {
+                transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!)
+        }
+
+        val holdLogger = AtomicBoolean(false)
 
         var sectionClear: Boolean
         var sectionsClear: Boolean
@@ -192,14 +204,32 @@ class PlatformServiceImpl(
         do {
             delay(transport.timeStep)
 
-            sectionClear = sectionService.isClear(transport = transport, switchFrom = switchPlatform/*, switchTo = switchSection*/)
-            sectionsClear = sectionService.areSectionsClear(transport = transport, lineInstructions =  lineInstructions) { k -> lineRepo.getPreviousSections(k) }
-            isOtherPlatformClear =  !switchPlatform ||  platformMonitor.isClear(key = Pair("${transport.line.name}:${transport.lineDirection(true)}", key.second))
+            if (counter.get() > minimumHold * 3 && !holdLogger.get())
+                holdLogger.set(true).also {
+                    println("holding ${transport.id} at $key")
+                }
+
+            sectionClear = sectionService.isClear(transport = transport, switchFrom = switchPlatform)
+            sectionsClear = sectionService.areSectionsClear(
+                transport = transport,
+                lineInstructions = lineInstructions
+            ) { k -> lineRepo.getPreviousSections(k) }
+            isOtherPlatformClear = !switchPlatform || platformMonitor.isClear(
+                key = Pair(
+                    "${transport.line.name}:${
+                        transport.lineDirection(true)
+                    }", key.second
+                )
+            )
 
         } while (counter.incrementAndGet() < minimumHold
             || !sectionClear
             || !sectionsClear
-            || !isOtherPlatformClear)
+            || !isOtherPlatformClear
+        )
+
+        if (holdLogger.get())
+            println("released ${transport.id} from hold")
 
         dispatch(
             transport = transport,

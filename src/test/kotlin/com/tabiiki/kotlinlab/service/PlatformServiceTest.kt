@@ -6,32 +6,34 @@ import com.tabiiki.kotlinlab.configuration.TransportConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
-import com.tabiiki.kotlinlab.factory.AvailableRoute
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.model.Commuter
-import com.tabiiki.kotlinlab.model.Status
 import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
 import com.tabiiki.kotlinlab.repo.LineRepoImpl
 import com.tabiiki.kotlinlab.repo.StationRepoImpl
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 internal class PlatformServiceTest {
+
 
     private val minimumHold = 45
     private val timeStep = 7L
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
     private val linesAdapter = LinesAdapter(
-        listOf("src/test/resources/network/test-line2.yml"),
+        listOf(
+            "src/main/resources/network/overground/elizabeth.yml",
+            "src/main/resources/network/tram/tram.yml",
+            "src/main/resources/network/river/river.yml",
+            "src/main/resources/network/underground/jubilee.yml",
+            "src/main/resources/network/dockland/dlr.yml"
+        ),
         listOf(),
         listOf(),
         listOf(),
@@ -40,15 +42,16 @@ internal class PlatformServiceTest {
     )
     private val linesConfig = LinesConfig(linesAdapter)
     private val transportersAdapter = TransportersAdapter(
-        listOf(
+        IntRange(1, 7).map {
             TransportConfig(
-                transportId = 1,
+                transportId = it,
                 capacity = 1000,
                 weight = 1500,
                 topSpeed = 20,
                 power = 2300
             )
-        )
+        }.toList()
+
     )
     private val transportConfig = TransportersConfig(transportersAdapter)
 
@@ -69,120 +72,94 @@ internal class PlatformServiceTest {
 
     private val stationService = StationServiceImpl(timeStep, signalService, stationFactory)
 
-    @Test
-    fun `platform & section service test`() = runBlocking {
+    private val jobs = mutableListOf<Job>()
 
+    private suspend fun setup() = coroutineScope {
+        jobs.clear()
 
-        val jobs = mutableListOf<Job>()
-        val globalCommuterChannel = Channel<Commuter>()
-
-        jobs.add(
-            launch { stationService.start(Channel(), globalCommuterChannel, linesConfig.lines.first().name) }
-        )
-
-        val routeEnquiryChannel = Channel<RouteEnquiry>()
-
-        val commuter = Commuter(
-            commute = Pair(Pair("26", "94"), routeEnquiryChannel),
-            timeStep = 10,
-        ) {
-            jobs.add(launch { globalCommuterChannel.send(it) })
-        }
-
-        val init = launch { commuter.initJourney() }
-
-        jobs.add(init)
-
-        val enquiry = launch {
-            commuter.channel.send(
-                AvailableRoute(
-                    route = mutableListOf(Pair("29", "94"))
-                )
-            )
-        }
-
-        jobs.add(enquiry)
-
-        val tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>> = ConcurrentHashMap()
-        val lineData = mutableListOf<Triple<String, Int, List<UUID>>>()
-
-        lines.forEach { line ->
-            lineData.add(Triple(line.id, (line.stations.size * 2) - 2, line.transporters.map { it.id }))
-        }
-
-        lines.flatMap { it.transporters }.forEach {
-            tracker[it.id] = mutableSetOf()
-        }
-        platformService.init(globalCommuterChannel)
-        //INIT start
+        platformService.initCommuterChannel(Channel())
         lines.groupBy { it.name }.values.forEach { line ->
             val startJob = launch {
-                platformService.init(line.map { it.name }.distinct().first(), line)
+                platformService.initLines(line.map { it.name }.distinct().first(), line)
             }
             jobs.add(startJob)
         }
-
-        lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten()
-            .distinctBy { it.section().first }.forEach {
-                tracker[it.id]!!.add(it.section())
-                val job = launch { platformService.signalAndDispatch(it) }
-                jobs.add(job)
-            }
-
-        val releaseTime = System.currentTimeMillis()
-
-        do {
-            delay(1000) //minimum start delay
-            lines.map { it.transporters }.flatten().filter { it.status == Status.DEPOT }
-                .groupBy { it.section() }.values.flatten().distinctBy { it.section().first }
-                .forEach {
-                    if (platformService.isClear(it) && platformService.canLaunch(it)) {
-                        tracker[it.id]!!.add(it.section())
-                        val job = launch {
-                            platformService.signalAndDispatch(it)
-                        }
-                        jobs.add(job)
-                    }
-                }
-        } while (lines.flatMap { it.transporters }.any { it.status == Status.DEPOT }
-            && System.currentTimeMillis() < releaseTime + (1000 * 60))
-        //INIT end
-        assertThat(lines.flatMap { it.transporters }.any { it.status == Status.DEPOT }).isEqualTo(false)
-        //SIMULATE start
-        val startTime = System.currentTimeMillis()
-
-        do {
-            lines.flatMap { it.transporters }.forEach {
-                if (it.atPlatform())
-                    tracker[it.id]!!.add(it.section())
-            }
-            delay(timeStep)
-        } while (!completed(lineData, tracker)
-            && System.currentTimeMillis() < startTime + (1000 * 60)
-        )
-        //SIMULATE end
-
-        //TEST
-        tracker.forEach { (t, u) ->
-            println("$t: ${u.size} vs ${lineData.first { it.third.contains(t) }.second}")
-        }
-
-        assertThat(completed(lineData, tracker)).isEqualTo(true)
-
-        jobs.forEach {
-            it.cancel()
-        }
     }
 
-    private fun completed(
-        lineData: List<Triple<String, Int, List<UUID>>>,
-        tracker: ConcurrentHashMap<UUID, MutableSet<Pair<String, String>>>
-    ): Boolean {
-        val results = mutableListOf<Boolean>()
-        tracker.forEach { (t, u) ->
-            val sections = lineData.first { it.third.contains(t) }.second
-            results.add(sections >= u.size) //todo due to terminal end points being added.
-        }
-        return results.all { it }
+    private suspend fun finish() {
+        delay(100)
+        jobs.forEach { it.cancel() }
     }
+
+    @Test
+    fun `testing terminal junction with incoming and outgoing traffic - Tram`() = runBlocking {
+        /*
+          173, 221, 127, 589 - TRAM01
+          173, 221, 127, 589 - TRAM02
+          173, 221, 127 - TRAM03
+
+         */
+        jobs.add(launch { setup() })
+        delay(1000)
+
+        //173 - POSITIVE
+        val t1 = lines.first { it.id == "TRAM01" }.transporters.first().also { it.addSection(Pair("Tram:173","221")) }
+        //221 - POSITIVE
+        val t2 = lines.first { it.id == "TRAM01" }.transporters.last().also { it.addSection(Pair("Tram:221","127")) }
+        //127 - NEGATIVE
+        val t3 = lines.first { it.id == "TRAM03" }.transporters.first().also { it.addSection(Pair("Tram:221","127")) }
+        //589 - NEGATIVE
+        val t4 = lines.first { it.id == "TRAM03" }.transporters.last().also { it.addSection(Pair("Tram:221","127")) }
+
+        //works, issue now how to recreate the issue, ie forcing transporters into sections to simulate it.
+
+        listOf(/*t1, t2, t3, t4*/t3).forEach {
+            println("releasing ${it.id} ${it.section()}")
+            jobs.add(launch { platformService.signalAndDispatch(it) })
+        }
+
+        delay(1000)
+
+        jobs.add(launch { platformService.signalAndDispatch(t4) })
+
+        delay(20000)
+
+        finish()
+    }
+
+    @Test
+    fun `testing terminals in close proximity same direction - Elizabeth line`() = runBlocking {
+        /*
+           267, 271, 269 - ELIZ02
+           267, 271, 269, 270 - ELIZ03
+         */
+        jobs.add(launch { setup() })
+        delay(1000)
+        finish()
+    }
+
+    @Test
+    fun `testing problematic junction - River`() = runBlocking {
+        /*
+          670, 671, 673 - RIVER01
+          670, 671, 672 - RIVER02
+          671, 672 - RIVER03
+          670, 671 - RIVER04
+         */
+        jobs.add(launch { setup() })
+        delay(1000)
+        finish()
+    }
+
+    @Test
+    fun `testing problematic junction - DLR`() = runBlocking {
+        /*
+          628, 94, 275 DLR01
+          435, 619, 94 DLR03
+         */
+        jobs.add(launch { setup() })
+        delay(1000)
+        finish()
+    }
+
 }

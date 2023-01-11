@@ -8,6 +8,7 @@ import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -36,6 +37,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
                 when (msg.signalValue) {
                     SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch { embark(msg.key!!, it) }
                     SignalValue.GREEN -> carriageChannelJobs[msg.id!!]?.cancel()
+                    SignalValue.AMBER -> throw Exception("Stations can not receive AMBER")
                 }
             }
             if (previousSignal == null || previousSignal != msg.signalValue) {

@@ -3,6 +3,7 @@ lines:
     transport-id: 2
     line-capacity: 2
     name: Emirates Air Line
+    transporters-per-section: 1 #TODO fix this
     stations:
       - 654
       - 655
