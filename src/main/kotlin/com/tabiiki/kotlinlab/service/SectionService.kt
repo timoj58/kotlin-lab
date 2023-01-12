@@ -233,17 +233,21 @@ class SectionServiceImpl(
                 queues.getQueue(sectionLeft).removeFirstOrNull()
 
                 if (sectionEntering.second.contains("|"))
-                    signalService.send(
-                        key = transport.getMainlineForSwitch(),
-                        SignalMessage(
-                            signalValue = SignalValue.AMBER,
-                            id = transport.id,
-                            key = sectionLeft,
-                            line = transport.line.id,
-                            commuterChannel = transport.carriage.channel,
-                        ),
+                    SignalMessage(
+                        signalValue = SignalValue.AMBER,
+                        id = transport.id,
+                        key = sectionLeft,
+                        line = transport.line.id,
+                        commuterChannel = transport.carriage.channel,
                     ).also {
-                        println("sending amber to ${transport.getMainlineForSwitch()}")
+                        signalService.send(
+                            key = transport.getMainlineForSwitch(),
+                            signalMessage = it
+                        )
+                        signalService.send(
+                            key = transport.section(),
+                            signalMessage = it
+                        )
                     }
             }
         }

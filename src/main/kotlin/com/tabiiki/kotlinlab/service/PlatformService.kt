@@ -76,12 +76,12 @@ class PlatformServiceImpl(
                 response = false
                 break@outer
             }
-            //also test if each platform is clear front and back to delay release
-            if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
+            //TODO review this....maybe too strict now
+                /*   if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
                 || !platformMonitor.isClear(Pair("$line:${transport.lineDirection()}", "$line:${station.id}"))) {
                 response = false
                 break@outer
-            }
+            } */
         }
         return response
     }
@@ -214,7 +214,7 @@ class PlatformServiceImpl(
                 transport = transport,
                 lineInstructions = lineInstructions
             ) { k -> lineRepo.getPreviousSections(k) }
-            isOtherPlatformClear = !switchPlatform || platformMonitor.isClear(
+            isOtherPlatformClear =  !switchPlatform || platformMonitor.isClear(
                 key = Pair(
                     "${transport.line.name}:${
                         transport.lineDirection(true)

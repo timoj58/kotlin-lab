@@ -117,15 +117,24 @@ data class Transport(
         do {
             val msg = channel.receive()
 
-            if (msg.timesStamp >= timeRegistered) {
+            if (msg.timesStamp >= timeRegistered || msg.signalValue == SignalValue.AMBER) {
                 if (previousMsg == null
                     || msg.signalValue != previousMsg.signalValue
                     && !(msg.id ?: UUID.randomUUID()).equals(id)
                 ) {
+                    if(msg.signalValue == SignalValue.AMBER)
+                        println("$id AMBER from ${msg.id}")
+
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
-                        SignalValue.AMBER -> if(switchSection) Instruction.EMERGENCY_STOP else Instruction.THROTTLE_ON
+                        SignalValue.AMBER -> {
+                             if(switchSection) {
+                                 println("AMBER stop")
+                                 Instruction.EMERGENCY_STOP
+                             }
+                             else Instruction.THROTTLE_ON
+                        }
                     }.also { instruction = it }
 
                     previousMsg = msg
@@ -189,8 +198,6 @@ data class Transport(
 
           stopJourney()
     }
-
-    fun isCurrentlySwitchSection(): Boolean = actualSection!= null
 
     fun startJourney(lineInstructions: LineInstructions) {
         instruction = Instruction.STATIONARY

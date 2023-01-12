@@ -30,7 +30,7 @@ class LineControllerImpl(
     private val conductor: LineConductor
 ) : LineController {
     init {
-        if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
+        if (startDelay < 500) throw ConfigurationException("start delay is to small, minimum 1000 ms")
     }
 
     override fun init(commuterChannel: Channel<Commuter>) = conductor.init(commuterChannel)

@@ -1,6 +1,6 @@
 network:
-  time-step: 7
-  start-delay: 1000
+  time-step: 5
+  start-delay: 500
   lines:
     river:
     tram:

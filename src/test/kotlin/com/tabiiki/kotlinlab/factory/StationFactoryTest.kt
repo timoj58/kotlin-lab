@@ -47,18 +47,17 @@ internal class StationFactoryTest {
     )
     fun `booking test`(complexity: String, days: Int, result: Int) {
         val complexityAsList = complexity.split("|").map { it.toInt() }.toMutableList()
-        if (complexityAsList.isEmpty() || complexityAsList.size < days) throw Exception("invalid complexity")
-        if (days == 0) throw Exception("invalid days")
+        if (complexityAsList.isEmpty() || complexityAsList.size < days || days == 0) throw Exception("invalid dataset")
+
         var smallest = complexityAsList.min()
-        val optimisedDaysComplexity = mutableListOf<MutableList<Int>>()
-        optimisedDaysComplexity.add(complexityAsList)
+        val optimisedDaysComplexity = mutableListOf(complexityAsList)
 
         while (optimisedDaysComplexity.size < days) {
             if (optimisedDaysComplexity.filter { it.contains(smallest) }.all { it.size == 1 })
                 smallest = complexityAsList.filter { it != smallest }.min()
-            val located =
-                optimisedDaysComplexity.filter { it.size > 1 && it.contains(smallest) }.toMutableList().first()
-            optimisedDaysComplexity.remove(located)
+            val located = optimisedDaysComplexity.filter { it.size > 1 && it.contains(smallest) }.toMutableList().first().also {
+                optimisedDaysComplexity.remove(it)
+            }
             val index = located.indexOfFirst { it == smallest }
             val actualIndex = if (index == 1) 1 else if (index == located.size - 1) index else index + 1
 
