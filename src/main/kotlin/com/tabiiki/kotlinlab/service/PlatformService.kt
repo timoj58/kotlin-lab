@@ -14,7 +14,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -77,11 +76,11 @@ class PlatformServiceImpl(
                 break@outer
             }
             //TODO review this....maybe too strict now
-                /*   if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
-                || !platformMonitor.isClear(Pair("$line:${transport.lineDirection()}", "$line:${station.id}"))) {
-                response = false
-                break@outer
-            } */
+            /*   if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
+            || !platformMonitor.isClear(Pair("$line:${transport.lineDirection()}", "$line:${station.id}"))) {
+            response = false
+            break@outer
+        } */
         }
         return response
     }
@@ -189,10 +188,10 @@ class PlatformServiceImpl(
     ) = coroutineScope {
         val counter = AtomicInteger(0)
         val embarkJob = launch {
-                transport.carriage.embark(commuterChannel!!)
+            transport.carriage.embark(commuterChannel!!)
         }
         val disembarkJob = launch {
-                transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!)
+            transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!)
         }
 
         val holdLogger = AtomicBoolean(false)
@@ -214,7 +213,7 @@ class PlatformServiceImpl(
                 transport = transport,
                 lineInstructions = lineInstructions
             ) { k -> lineRepo.getPreviousSections(k) }
-            isOtherPlatformClear =  !switchPlatform || platformMonitor.isClear(
+            isOtherPlatformClear = !switchPlatform || platformMonitor.isClear(
                 key = Pair(
                     "${transport.line.name}:${
                         transport.lineDirection(true)

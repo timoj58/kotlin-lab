@@ -3,7 +3,6 @@ package com.tabiiki.kotlinlab.monitor
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

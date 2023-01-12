@@ -37,7 +37,7 @@ data class Transport(
     private val config: TransportConfig,
     val line: Line,
     val timeStep: Long
-){
+) {
 
     val transportId = config.transportId
     val carriage = Carriage(config.capacity)
@@ -125,7 +125,7 @@ data class Transport(
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
-                        SignalValue.AMBER -> if(switchSection) Instruction.EMERGENCY_STOP else Instruction.THROTTLE_ON
+                        SignalValue.AMBER -> if (switchSection) Instruction.EMERGENCY_STOP else Instruction.THROTTLE_ON
                     }.also { instruction = it }
 
                     previousMsg = msg
@@ -161,33 +161,33 @@ data class Transport(
         }
     }
 
-      suspend fun motionLoop()  {
-          val emergencyStop = AtomicInteger(0)
-          val counter = AtomicInteger(0)
-          val logged = AtomicBoolean(false)
+    suspend fun motionLoop() {
+        val emergencyStop = AtomicInteger(0)
+        val counter = AtomicInteger(0)
+        val logged = AtomicBoolean(false)
 
-          do {
-              delay(timeStep)
-              if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
+        do {
+            delay(timeStep)
+            if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
 
-              physics.calcTimeStep(instruction, isApproachingTerminal(section()))
+            physics.calcTimeStep(instruction, isApproachingTerminal(section()))
 
-              if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
-                  Instruction.SCHEDULED_STOP
+            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
+                Instruction.SCHEDULED_STOP
 
-              if (emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
+            if (emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
 
-              if (counter.getAndIncrement() - (counter.get() - emergencyStop.get()) > 60 && !logged.get()) {
-                  logged.set(true)
-                  println("$id stopped for over 1 minutes at ${section()}")
-              }
+            if (counter.getAndIncrement() - (counter.get() - emergencyStop.get()) > 60 && !logged.get()) {
+                logged.set(true)
+                println("$id stopped for over 1 minutes at ${section()}")
+            }
 
-          } while (physics.displacement <= physics.distance)
+        } while (physics.displacement <= physics.distance)
 
-          if (logged.get())
-              println("released $id")
+        if (logged.get())
+            println("released $id")
 
-          stopJourney()
+        stopJourney()
     }
 
     fun startJourney(lineInstructions: LineInstructions) {
@@ -220,7 +220,7 @@ data class Transport(
         }
         status = Status.PLATFORM
 
-       launch {  sectionChannel!!.send(this@Transport) }
+        launch { sectionChannel!!.send(this@Transport) }
     }
 
     companion object {
@@ -259,10 +259,11 @@ data class Transport(
             private fun calculateAcceleration(force: Double): Double = force / weight.toDouble()
 
             fun calcTimeStep(instruction: Instruction, approachingTerminal: Boolean) {
-                var percentage = if(approachingTerminal) 25.0 else 100.0
+                var percentage = if (approachingTerminal) 25.0 else 100.0
                 var force = calculateForce(
                     instruction = instruction,
-                    percentage = percentage)
+                    percentage = percentage
+                )
                 var acceleration = calculateAcceleration(force)
 
                 while (velocity + acceleration > topSpeed && percentage >= 0.0) {

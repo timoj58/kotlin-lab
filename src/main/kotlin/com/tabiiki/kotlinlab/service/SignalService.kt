@@ -101,11 +101,11 @@ class SignalServiceImpl(
         //purpose of this without amber etc, is to ensure a transporter in the main section can disable the terminal section into the line
         //tidy this up eventually if it works.
         signalFactory.get(key).connected.firstOrNull { it.second.contains("|") }?.let {
-           if(signalMessage.signalValue == SignalValue.GREEN)
-               channels.send(
-                   key = Pair("${it.first}|", it.second.replace("|", "")),
-                   signalMessage = signalMessage.also { msg -> msg.signalValue = SignalValue.RED }
-               )
+            if (signalMessage.signalValue == SignalValue.GREEN)
+                channels.send(
+                    key = Pair("${it.first}|", it.second.replace("|", "")),
+                    signalMessage = signalMessage.also { msg -> msg.signalValue = SignalValue.RED }
+                )
         }
         channels.send(key = key, signalMessage = signalMessage)
     }

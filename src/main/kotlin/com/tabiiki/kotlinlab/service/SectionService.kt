@@ -10,7 +10,6 @@ import com.tabiiki.kotlinlab.repo.LineInstructions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -226,7 +225,7 @@ class SectionServiceImpl(
         val sectionLeft = details.second
         val sectionEntering = transport.section()
 
-        launch {  transport.signal(signalService.getChannel(sectionEntering)!!) }
+        launch { transport.signal(signalService.getChannel(sectionEntering)!!) }
 
         prepareRelease(transport) { t ->
             launch {

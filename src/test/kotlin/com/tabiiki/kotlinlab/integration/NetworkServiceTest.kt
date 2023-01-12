@@ -9,7 +9,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -30,7 +29,7 @@ class NetworkServiceTest @Autowired constructor(
     }
 
     @Test
-    fun `test all trains travel the line route`() = runBlocking{
+    fun `test all trains travel the line route`() = runBlocking {
         val init = launch { networkService.init() }
         delay(2000)
         val channel = Channel<StationMessage>()

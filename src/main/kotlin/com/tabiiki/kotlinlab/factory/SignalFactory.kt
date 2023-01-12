@@ -117,7 +117,7 @@ class SignalFactory(
 
     fun updateConnected(line: String, lineRepo: LineRepo) {
         signals.values.filter { it.type == SignalType.PLATFORM && it.section.first.contains(line) }.forEach { signal ->
-            if(signal.section.first.contains(LineDirection.TERMINAL.name))
+            if (signal.section.first.contains(LineDirection.TERMINAL.name))
                 signal.connected.add(
                     Pair(
                         "$line:${Line.getStation(signal.section.second)}",

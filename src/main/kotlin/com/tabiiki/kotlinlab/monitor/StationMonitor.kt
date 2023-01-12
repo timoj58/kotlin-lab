@@ -8,7 +8,6 @@ import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.service.MessageType
 import com.tabiiki.kotlinlab.service.StationMessage
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay

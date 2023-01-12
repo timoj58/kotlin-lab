@@ -82,7 +82,13 @@ class PlatformMonitor(
             val msg = channel.receive()
             platformToKey(msg).let {
                 if (!platforms.isClear(it)) {
-                    throw RuntimeException("${msg.id} arrived too quickly from ${msg.getJourneyTime().first} $it, owner: ${platforms.get(it)}")
+                    throw RuntimeException(
+                        "${msg.id} arrived too quickly from ${msg.getJourneyTime().first} $it, owner: ${
+                            platforms.get(
+                                it
+                            )
+                        }"
+                    )
                 }
                 holdConsumer.accept(msg)
             }

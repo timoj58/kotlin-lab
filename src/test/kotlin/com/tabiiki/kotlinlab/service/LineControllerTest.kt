@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.atMost
 import org.mockito.Mockito.atMostOnce
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import javax.naming.ConfigurationException

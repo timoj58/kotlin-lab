@@ -103,13 +103,13 @@ internal class PlatformServiceTest {
         delay(1000)
 
         //173 - POSITIVE
-        val t1 = lines.first { it.id == "TRAM01" }.transporters.first().also { it.addSection(Pair("Tram:173","221")) }
+        val t1 = lines.first { it.id == "TRAM01" }.transporters.first().also { it.addSection(Pair("Tram:173", "221")) }
         //221 - POSITIVE
-        val t2 = lines.first { it.id == "TRAM01" }.transporters.last().also { it.addSection(Pair("Tram:221","127")) }
+        val t2 = lines.first { it.id == "TRAM01" }.transporters.last().also { it.addSection(Pair("Tram:221", "127")) }
         //127 - NEGATIVE
-        val t3 = lines.first { it.id == "TRAM03" }.transporters.first().also { it.addSection(Pair("Tram:221","127")) }
+        val t3 = lines.first { it.id == "TRAM03" }.transporters.first().also { it.addSection(Pair("Tram:221", "127")) }
         //589 - NEGATIVE
-        val t4 = lines.first { it.id == "TRAM03" }.transporters.last().also { it.addSection(Pair("Tram:221","127")) }
+        val t4 = lines.first { it.id == "TRAM03" }.transporters.last().also { it.addSection(Pair("Tram:221", "127")) }
 
         //works, issue now how to recreate the issue, ie forcing transporters into sections to simulate it.
 

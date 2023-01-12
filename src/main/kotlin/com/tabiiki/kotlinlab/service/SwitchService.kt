@@ -15,7 +15,11 @@ interface SwitchService {
     fun doesFirstStationInSectionContainTerminal(transport: Transport): Boolean
     fun isSwitchSection(transport: Transport): Boolean
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
-    suspend fun switch(transport: Transport, jobs: List<Job>,  completeSection: Consumer<Pair<Transport, Pair<String, String>>>)
+    suspend fun switch(
+        transport: Transport,
+        jobs: List<Job>,
+        completeSection: Consumer<Pair<Transport, Pair<String, String>>>
+    )
 }
 
 @Service

@@ -55,9 +55,10 @@ internal class StationFactoryTest {
         while (optimisedDaysComplexity.size < days) {
             if (optimisedDaysComplexity.filter { it.contains(smallest) }.all { it.size == 1 })
                 smallest = complexityAsList.filter { it != smallest }.min()
-            val located = optimisedDaysComplexity.filter { it.size > 1 && it.contains(smallest) }.toMutableList().first().also {
-                optimisedDaysComplexity.remove(it)
-            }
+            val located =
+                optimisedDaysComplexity.filter { it.size > 1 && it.contains(smallest) }.toMutableList().first().also {
+                    optimisedDaysComplexity.remove(it)
+                }
             val index = located.indexOfFirst { it == smallest }
             val actualIndex = if (index == 1) 1 else if (index == located.size - 1) index else index + 1
 
@@ -72,12 +73,12 @@ internal class StationFactoryTest {
         assert(optimisedDaysComplexity.sumOf { it.max() } == result)
     }
 
-    suspend fun job () {
+    suspend fun job() {
 
     }
 
     @Test
-    fun `why doesnt job cancel test` () {
+    fun `why doesnt job cancel test`() {
 
     }
 }

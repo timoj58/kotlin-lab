@@ -221,7 +221,7 @@ internal class TransportTest {
         )
 
         launch {
-          train.motionLoop()
+            train.motionLoop()
         }
     }
 
