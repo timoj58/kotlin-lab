@@ -46,6 +46,11 @@ class LineFactory(
         }
     }
 
+    fun isJunction(line: String, station: String): Boolean {
+        val network = getNetwork(line) ?: return false
+        return network.getNodes().first { it.station == station }.linked.size > 2
+    }
+
     fun isSwitchSection(lineId: String, section: Pair<String, String>): Pair<Boolean, Boolean> =
         Pair(isSwitchStation(lineId, section.first), isSwitchStation(lineId, section.second))
 }

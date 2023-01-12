@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
+import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.repo.JourneyRepo
@@ -19,7 +20,6 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("test-overground")
 @SpringBootTest
 class OvergroundLineControllerTest @Autowired constructor(
-    @Value("\${network.start-delay}") val startDelay: Long,
     @Value("\${network.time-step}") val timeStep: Long,
     @Value("\${network.minimum-hold}") val minimumHold: Int,
     transportersConfig: TransportersConfig,
@@ -27,10 +27,10 @@ class OvergroundLineControllerTest @Autowired constructor(
     signalFactory: SignalFactory,
     journeyRepo: JourneyRepo,
     switchService: SwitchService,
-    stationFactory: StationFactory
+    stationFactory: StationFactory,
+    lineFactory: LineFactory
 ) {
     val lineControllerTest = LineControllerTest(
-        startDelay,
         timeStep,
         minimumHold,
         transportersConfig,
@@ -38,7 +38,8 @@ class OvergroundLineControllerTest @Autowired constructor(
         signalFactory,
         journeyRepo,
         switchService,
-        stationFactory
+        stationFactory,
+        lineFactory
     )
 
     @ParameterizedTest
@@ -52,6 +53,6 @@ class OvergroundLineControllerTest @Autowired constructor(
         "stratford",
     )
     fun `test all transports complete a full journey on an overground line`(lineName: String) = runBlocking {
-        lineControllerTest.test("overground", lineName, 15)
+        lineControllerTest.test("overground", lineName, 5)
     }
 }

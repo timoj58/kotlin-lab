@@ -1,12 +1,15 @@
 lines:
   - id: EMIRATES01
     transport-id: 2
-    line-capacity: 2
+    line-capacity: 6
     name: Emirates Air Line
-    transporters-per-section: 1 #TODO fix this
+    transporters-per-section: 6
+    override-is-clear: true
     stations:
       - 654
       - 655
     depots:
       - 654
       - 655
+
+      # need to think about this given its static line (also known issue, sequencing how transporters in line receive signals)

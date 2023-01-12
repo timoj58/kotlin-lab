@@ -73,12 +73,4 @@ internal class StationFactoryTest {
         assert(optimisedDaysComplexity.sumOf { it.max() } == result)
     }
 
-    suspend fun job() {
-
-    }
-
-    @Test
-    fun `why doesnt job cancel test`() {
-
-    }
 }

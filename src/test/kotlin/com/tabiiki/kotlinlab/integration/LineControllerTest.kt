@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class LineControllerTest(
-    private val startDelay: Long,
     val timeStep: Long,
     private val minimumHold: Int,
     private val transportersConfig: TransportersConfig,
@@ -34,7 +33,8 @@ class LineControllerTest(
     private val signalFactory: SignalFactory,
     private val journeyRepo: JourneyRepo,
     private val switchService: SwitchService,
-    private val stationFactory: StationFactory
+    private val stationFactory: StationFactory,
+    private val lineFactory: LineFactory,
 ) {
     private val integrationControl = IntegrationControl()
 
@@ -43,7 +43,7 @@ class LineControllerTest(
         val sectionService = SectionServiceImpl(45, switchService, signalService, journeyRepo)
 
         val lineService =
-            PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo)
+            PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo, lineFactory)
         val lineConductor = LineConductorImpl(lineService)
 
         val stationService =
@@ -72,7 +72,7 @@ class LineControllerTest(
 
 
         val controller = LineControllerImpl(
-            startDelay = startDelay,
+            timeStep = timeStep,
             conductor = lineConductor,
         )
 

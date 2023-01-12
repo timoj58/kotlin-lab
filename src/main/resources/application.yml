@@ -2,7 +2,6 @@ server:
   port: 8080
 
 network:
-  start-delay: 10000
   time-step: 1000
   minimum-hold: 45
   stations-csv: src/main/resources/network/stations.csv
@@ -43,7 +42,7 @@ network:
       - transport-id: 6
         capacity: 75
         weight: 200
-        top-speed: 20
+        top-speed: 30
         power: 70
   lines:
     underground:

@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
+import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.repo.JourneyRepo
@@ -19,7 +20,6 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("test-other")
 @SpringBootTest
 class OtherLineControllerTest @Autowired constructor(
-    @Value("\${network.start-delay}") val startDelay: Long,
     @Value("\${network.time-step}") val timeStep: Long,
     @Value("\${network.minimum-hold}") val minimumHold: Int,
     transportersConfig: TransportersConfig,
@@ -27,10 +27,10 @@ class OtherLineControllerTest @Autowired constructor(
     signalFactory: SignalFactory,
     journeyRepo: JourneyRepo,
     switchService: SwitchService,
-    stationFactory: StationFactory
+    stationFactory: StationFactory,
+    lineFactory: LineFactory
 ) {
     val lineControllerTest = LineControllerTest(
-        startDelay,
         timeStep,
         minimumHold,
         transportersConfig,
@@ -38,18 +38,19 @@ class OtherLineControllerTest @Autowired constructor(
         signalFactory,
         journeyRepo,
         switchService,
-        stationFactory
+        stationFactory,
+        lineFactory
     )
 
     @ParameterizedTest
     @CsvSource(
+        "cable,cable",
         "tram,tram",
         "dockland,dlr",
         "river,river",
-        "cable,cable"
     )
     fun `test all transports complete a full journey on an other line`(lineType: String, lineName: String) =
         runBlocking {
-            lineControllerTest.test(lineType, lineName, 15)
+            lineControllerTest.test(lineType, lineName, 5)
         }
 }

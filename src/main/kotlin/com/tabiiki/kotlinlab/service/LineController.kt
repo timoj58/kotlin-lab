@@ -25,12 +25,9 @@ interface LineController {
 
 @Service
 class LineControllerImpl(
-    @Value("\${network.start-delay}") private val startDelay: Long,
+    @Value("\${network.time-step}") private val timeStep: Long,
     private val conductor: LineConductor
 ) : LineController {
-    init {
-        if (startDelay < 1000) throw ConfigurationException("start delay is to small, minimum 1000 ms")
-    }
 
     override fun init(commuterChannel: Channel<Commuter>) = conductor.init(commuterChannel)
 
@@ -51,7 +48,7 @@ class LineControllerImpl(
 
         do {
             released.clear()
-            delay(startDelay)
+            delay(timeStep * startDelayScalar)
 
             transportersToDispatch.distinctBy { it.section() }.forEach {
                 if (conductor.isClear(it)) {
@@ -63,5 +60,9 @@ class LineControllerImpl(
 
         } while (transportersToDispatch.isNotEmpty())
 
+    }
+
+    companion object {
+        private const val startDelayScalar = 300 //ie 5 minutes, if timestep is 1 second
     }
 }

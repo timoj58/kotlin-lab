@@ -1,6 +1,6 @@
 network:
-  time-step: 10
-  start-delay: 1000
+  time-step: 5
+  minimum-hold: 5
   lines:
     river:
       - src/main/resources/network/river/river.yml

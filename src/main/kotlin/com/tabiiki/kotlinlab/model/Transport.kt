@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -57,7 +58,6 @@ data class Transport(
     fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
     fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
     fun getSectionStationCode(): String = SwitchMonitor.replaceSwitch(Line.getStation(section().first))
-    fun getCurrentInstruction(): Instruction = this.instruction
     fun getPosition(): Double = this.physics.displacement
     fun setHoldChannel(holdChannel: Channel<Transport>) {
         this.holdChannel = holdChannel
@@ -111,9 +111,10 @@ data class Transport(
     fun getMainlineForSwitch(): Pair<String, String> =
         Pair("${line.name}:${journey!!.from.id}", journey!!.to.id)
 
-    suspend fun signal(channel: Channel<SignalMessage>) {
+    suspend fun signal(channel: Channel<SignalMessage>, departedConsumer: Consumer<Transport>? = null) {
         val timeRegistered = System.currentTimeMillis()
         var previousMsg: SignalMessage? = null
+        val departedConsumerExecuted = AtomicBoolean(false)
         do {
             val msg = channel.receive()
 
@@ -123,7 +124,11 @@ data class Transport(
                     && !(msg.id ?: UUID.randomUUID()).equals(id)
                 ) {
                     when (msg.signalValue) {
-                        SignalValue.GREEN -> Instruction.THROTTLE_ON
+                        SignalValue.GREEN -> {
+                            if(!departedConsumerExecuted.get())
+                                departedConsumer?.accept(this).also { departedConsumerExecuted.set(true) }
+                            Instruction.THROTTLE_ON
+                        }
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
                         SignalValue.AMBER -> if (switchSection) Instruction.EMERGENCY_STOP else Instruction.THROTTLE_ON
                     }.also { instruction = it }
@@ -168,7 +173,7 @@ data class Transport(
 
         do {
             delay(timeStep)
-            if (physics.velocity > 0.0) journeyTime.second.incrementAndGet()
+            if (instruction != Instruction.STATIONARY) journeyTime.second.incrementAndGet()
 
             physics.calcTimeStep(instruction, isApproachingTerminal(section()))
 

@@ -1,5 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
@@ -35,6 +36,7 @@ class PlatformServiceImpl(
     private val sectionService: SectionService,
     private val lineRepo: LineRepo,
     private val stationRepo: StationRepo,
+    private val lineFactory: LineFactory,
 ) : PlatformService {
     private val platformMonitor = PlatformMonitor(sectionService, signalService)
     private var commuterChannel: Channel<Commuter>? = null
@@ -55,13 +57,20 @@ class PlatformServiceImpl(
             )
         else platformMonitor.isClear(transport.platformKey())
 
-        return platformClear && sectionService.isClear(
+        return platformClear && (transport.line.overrideIsClear ||
+                !transport.line.overrideIsClear && sectionService.isClear(
             transport = transport,
             switchFrom = switchPlatform,
-        )
+            approachingJunction =  lineFactory.isJunction(
+                line = transport.line.name,
+                station = transport.section().second
+            )
+        ))
     }
 
     override fun canLaunch(transport: Transport): Boolean {
+        if(transport.line.overrideIsClear) return true
+
         var response = true
         val line = Line.getLine(transport.section().first)
         val stations = stationRepo.getPreviousStationsOnLine(
@@ -75,12 +84,12 @@ class PlatformServiceImpl(
                 response = false
                 break@outer
             }
-            //TODO review this....maybe too strict now
-            /*   if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
-            || !platformMonitor.isClear(Pair("$line:${transport.lineDirection()}", "$line:${station.id}"))) {
-            response = false
-            break@outer
-        } */
+
+            if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
+                || !platformMonitor.isClear(Pair("$line:${transport.lineDirection()}", "$line:${station.id}"))) {
+                response = false
+                break@outer
+            }
         }
         return response
     }
@@ -208,7 +217,13 @@ class PlatformServiceImpl(
                     println("holding ${transport.id} at $key")
                 }
 
-            sectionClear = sectionService.isClear(transport = transport, switchFrom = switchPlatform)
+            sectionClear = sectionService.isClear(
+                transport = transport,
+                switchFrom = switchPlatform,
+                approachingJunction = lineFactory.isJunction(
+                    line = transport.line.name,
+                    station = lineInstructions.to.id
+                ))
             sectionsClear = sectionService.areSectionsClear(
                 transport = transport,
                 lineInstructions = lineInstructions
