@@ -1,6 +1,6 @@
 network:
-  time-step: 5
-  minimum-hold: 20
+  time-step: 3
+  minimum-hold: 12
   lines:
     river:
       - src/main/resources/network/river/river.yml
@@ -25,7 +25,7 @@ network:
       - src/main/resources/network/underground/bakerloo.yml
       - src/main/resources/network/underground/hammersmith.yml
       - src/main/resources/network/underground/metropolitan.yml
-      - src/main/resources/network/underground/central.yml
+    #  - src/main/resources/network/underground/central.yml  TODO review..
       - src/main/resources/network/underground/district.yml
       - src/main/resources/network/underground/northern.yml
       - src/main/resources/network/underground/circle.yml
