@@ -33,7 +33,6 @@ private class Platforms {
         val new = when (signal.signalValue) {
             SignalValue.GREEN -> true
             SignalValue.RED -> false
-            SignalValue.AMBER -> throw Exception("platforms can not be AMBER")
         }
         if (new && (platformLockOwners[key]
                 ?: signal.id) != signal.id
@@ -93,6 +92,13 @@ class PlatformMonitor(
                 holdConsumer.accept(msg)
             }
         } while (true)
+    }
+
+    fun dump() {
+        platforms.getPlatformKeys().forEach {
+            if (!platforms.isClear(it))
+                println("$it: holding ${platforms.get(it)}")
+        }
     }
 
     private fun platformToKey(transport: Transport): Pair<String, String> {

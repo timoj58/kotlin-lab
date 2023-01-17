@@ -20,16 +20,6 @@ internal class LineControllerTest {
     private val line = LineBuilder().getLine()
 
     @Test
-    fun `invalid start delay test`() {
-        Assertions.assertThrows(ConfigurationException::class.java) {
-            LineControllerImpl(
-                100,
-                mock(LineConductor::class.java)
-            )
-        }
-    }
-
-    @Test
     fun `start line and expect all trains to arrive at station B`() = runBlocking {
         val conductor = mock(LineConductor::class.java)
         `when`(conductor.getTransportersToDispatch(listOf(line))).thenReturn(

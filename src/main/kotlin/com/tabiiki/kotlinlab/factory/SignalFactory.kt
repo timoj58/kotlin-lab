@@ -15,7 +15,7 @@ enum class SignalType {
 }
 
 enum class SignalValue {
-    RED, GREEN, AMBER
+    RED, GREEN
 }
 
 data class SignalMessage(

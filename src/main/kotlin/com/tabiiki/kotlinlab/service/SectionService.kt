@@ -69,9 +69,6 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
 
     fun release(key: Pair<String, String>, transport: Transport) {
         val limit = transport.line.transportersPerSection
-        //set to two for now, due to switch platform releases..other checks enforce no overlaps.
-        //and intention is to put back multiple transporters per section soon.
-        //and fix emirates given its stuck at 2 carts..TODO
         if (queues[key]!!.second.size > limit) throw RuntimeException("${transport.id} Only $limit transporters ${queues[key]!!.second.map { it.id }} allowed in $key")
         queues[key]!!.second.addLast(transport)
     }
@@ -91,17 +88,17 @@ interface SectionService {
         approachingJunction: Boolean
     ): Boolean
 
-    fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int>
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
     fun isSwitchSection(transport: Transport): Pair<Boolean, Boolean>
     fun initQueues(key: Pair<String, String>)
-    fun areSectionsClear(
+    fun arePreviousSectionsClear(
         transport: Transport,
         lineInstructions: LineInstructions,
         sections: (Pair<String, String>) -> List<Pair<String, String>>
     ): Boolean
 
     fun isStationTerminal(station: String): Boolean
+    fun dump()
 }
 
 @Service
@@ -143,7 +140,8 @@ class SectionServiceImpl(
         approachingJunction: Boolean
     ): Boolean {
         val section = transport.section()
-        val max = if(approachingJunction) 0 else if(transport.line.overrideIsClear) transport.line.transportersPerSection else 2
+        val max =
+            if (approachingJunction) 0 else if (transport.line.overrideIsClear) transport.line.transportersPerSection else 2
         val isSectionClear = queues.isClear(section, incoming, max).first
         val isTerminalSectionFromClear = if (switchFrom) queues.isClear(
             section = Pair("${section.first}|", Line.getStation(section.first)),
@@ -154,9 +152,6 @@ class SectionServiceImpl(
         return isSectionClear && isTerminalSectionFromClear
     }
 
-    override fun isClearWithPriority(section: Pair<String, String>): Pair<Boolean, Int> =
-        queues.isClear(section, true)
-
     override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean =
         switchService.isSwitchPlatform(transport, section, destination)
 
@@ -165,7 +160,7 @@ class SectionServiceImpl(
 
     override fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
 
-    override fun areSectionsClear(
+    override fun arePreviousSectionsClear(
         transport: Transport,
         lineInstructions: LineInstructions,
         sections: (Pair<String, String>) -> List<Pair<String, String>>
@@ -184,6 +179,14 @@ class SectionServiceImpl(
     }
 
     override fun isStationTerminal(station: String): Boolean = switchService.isStationTerminal(station)
+    override fun dump() {
+        queues.getQueueKeys().forEach { k ->
+            if (queues.getQueue(k).isNotEmpty())
+                queues.getQueue(k).forEach { t ->
+                    println("$k contains ${t.id}")
+                }
+        }
+    }
 
     private suspend fun arrive(transport: Transport) = coroutineScope {
         journeyRepo.addJourneyTime(transport.getJourneyTime())
@@ -196,7 +199,7 @@ class SectionServiceImpl(
 
         if (switchService.isSwitchSection(transport))
             launch {
-                switchService.switch(transport.also { it.switchSection = true }, listOf(job, motionJob)) {
+                switchService.switch(transport, listOf(job, motionJob)) {
                     launch { processSwitch(it) }
                 }
             }
@@ -206,19 +209,14 @@ class SectionServiceImpl(
 
     private suspend fun departedActions(transport: Transport) {
         signalService.send(
-            transport.platformKey(), SignalMessage(
+            transport.platformKey(),
+            SignalMessage(
                 signalValue = SignalValue.GREEN,
                 id = transport.id,
                 key = transport.section(),
                 line = transport.line.id,
                 commuterChannel = transport.carriage.channel,
             ),
-            priorities = signalService.getSignal(transport.platformKey()).connected.map {
-                Pair(
-                    it,
-                    isClearWithPriority(it)
-                )
-            }.toList()
         )
     }
 
@@ -232,7 +230,7 @@ class SectionServiceImpl(
                 launch {
                     if (sectionEntering.second.contains("|"))
                         SignalMessage(
-                            signalValue = SignalValue.AMBER,
+                            signalValue = SignalValue.GREEN,
                             id = t.id,
                             key = sectionLeft,
                             line = t.line.id,

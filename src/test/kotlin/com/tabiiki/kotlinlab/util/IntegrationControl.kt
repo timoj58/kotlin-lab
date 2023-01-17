@@ -19,23 +19,28 @@ class IntegrationControl {
         transportersPerLine += line.transporters.size
     }
 
-    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>, timeout: Int) {
+    suspend fun status(channel: Channel<StationMessage>, jobs: List<Job>, timeout: Int, diagnostics: Runnable) {
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
-            // println("$msg")
-            if (!trainsByLine.containsKey(msg.line))
-                trainsByLine[msg.line] = mutableSetOf()
-            if (!stationVisitedPerTrain.containsKey(msg.transportId))
-                stationVisitedPerTrain[msg.transportId] = mutableListOf()
+            if (msg.type != MessageType.HEALTH) {
+                // println("$msg")
+                if (!trainsByLine.containsKey(msg.line))
+                    trainsByLine[msg.line!!] = mutableSetOf()
+                if (!stationVisitedPerTrain.containsKey(msg.transportId))
+                    stationVisitedPerTrain[msg.transportId!!] = mutableListOf()
 
-            trainsByLine[msg.line]?.add(msg.transportId)
-            if (msg.type == MessageType.DEPART)
-                stationVisitedPerTrain[msg.transportId]?.add(msg.stationId)
+                trainsByLine[msg.line]?.add(msg.transportId!!)
+                if (msg.type == MessageType.DEPART)
+                    stationVisitedPerTrain[msg.transportId]?.add(msg.stationId!!)
+            } else {
+                println("HEALTH received") //to ensure completion, when messages stop (fixing issue around gridlock)
+            }
 
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * timeout) > System.currentTimeMillis())
 
         diagnosticsCheck()
+        diagnostics.run()
         jobs.forEach { it.cancel() }
         assert()
     }

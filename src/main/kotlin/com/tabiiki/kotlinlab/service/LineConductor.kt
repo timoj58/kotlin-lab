@@ -14,6 +14,7 @@ interface LineConductor {
     suspend fun init(line: String, lines: List<Line>)
     fun init(commuterChannel: Channel<Commuter>)
     fun isClear(transport: Transport): Boolean
+    fun dump()
 }
 
 @Service
@@ -41,5 +42,7 @@ class LineConductorImpl(
 
     override fun isClear(transport: Transport): Boolean =
         platformService.isClear(transport) && platformService.canLaunch(transport)
+
+    override fun dump() = platformService.dump()
 
 }

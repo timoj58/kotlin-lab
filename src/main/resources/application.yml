@@ -10,7 +10,7 @@ network:
       - transport-id: 1
         capacity: 200
         weight: 20000
-        top-speed: 20
+        top-speed: 25
         power: 5000
       - transport-id: 7
         capacity: 200

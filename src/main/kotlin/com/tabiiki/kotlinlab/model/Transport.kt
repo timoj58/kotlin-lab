@@ -46,7 +46,6 @@ data class Transport(
 
     var status = Status.DEPOT
     var instruction = Instruction.STATIONARY
-    var switchSection = false
     private var actualSection: Pair<String, String>? = null
     private var journey: LineInstructions? = null
     private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
@@ -114,23 +113,20 @@ data class Transport(
     suspend fun signal(channel: Channel<SignalMessage>, departedConsumer: Consumer<Transport>? = null) {
         val timeRegistered = System.currentTimeMillis()
         var previousMsg: SignalMessage? = null
-        val departedConsumerExecuted = AtomicBoolean(false)
+        departedConsumer?.accept(this)
+
         do {
             val msg = channel.receive()
 
-            if (msg.timesStamp >= timeRegistered || msg.signalValue == SignalValue.AMBER) {
+            if (msg.timesStamp >= timeRegistered) {
                 if (previousMsg == null
                     || msg.signalValue != previousMsg.signalValue
                     && !(msg.id ?: UUID.randomUUID()).equals(id)
                 ) {
                     when (msg.signalValue) {
-                        SignalValue.GREEN -> {
-                            if(!departedConsumerExecuted.get())
-                                departedConsumer?.accept(this).also { departedConsumerExecuted.set(true) }
-                            Instruction.THROTTLE_ON
-                        }
+                        SignalValue.GREEN -> Instruction.THROTTLE_ON
+
                         SignalValue.RED -> Instruction.EMERGENCY_STOP
-                        SignalValue.AMBER -> if (switchSection) Instruction.EMERGENCY_STOP else Instruction.THROTTLE_ON
                     }.also { instruction = it }
 
                     previousMsg = msg
@@ -215,7 +211,6 @@ data class Transport(
 
     private suspend fun stopJourney() = coroutineScope {
         physics.reset()
-        switchSection = false
         actualSection = null
         journey!!.let {
             sectionData = Pair(

@@ -9,7 +9,6 @@ import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
-import javax.naming.ConfigurationException
 
 data class LineChannelMessage(
     val line: String,
@@ -21,6 +20,8 @@ interface LineController {
     fun init(commuterChannel: Channel<Commuter>)
     suspend fun init(line: List<Line>)
     suspend fun start(line: List<Line>)
+
+    fun dump()
 }
 
 @Service
@@ -61,6 +62,8 @@ class LineControllerImpl(
         } while (transportersToDispatch.isNotEmpty())
 
     }
+
+    override fun dump() = conductor.dump()
 
     companion object {
         private const val startDelayScalar = 300 //ie 5 minutes, if timestep is 1 second

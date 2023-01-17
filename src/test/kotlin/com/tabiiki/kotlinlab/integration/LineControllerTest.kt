@@ -43,7 +43,14 @@ class LineControllerTest(
         val sectionService = SectionServiceImpl(45, switchService, signalService, journeyRepo)
 
         val lineService =
-            PlatformServiceImpl(minimumHold, signalService, sectionService, LineRepoImpl(stationRepo), stationRepo, lineFactory)
+            PlatformServiceImpl(
+                minimumHold,
+                signalService,
+                sectionService,
+                LineRepoImpl(stationRepo),
+                stationRepo,
+                lineFactory
+            )
         val lineConductor = LineConductorImpl(lineService)
 
         val stationService =
@@ -93,7 +100,7 @@ class LineControllerTest(
         }
 
         val running = async {
-            integrationControl.status(listener, listOf(initJob, job, job2), timeout)
+            integrationControl.status(listener, listOf(initJob, job, job2), timeout) { controller.dump() }
         }
     }
 

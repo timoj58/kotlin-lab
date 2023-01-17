@@ -24,6 +24,13 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         stations.forEach { stationCommuters[it] = mutableListOf() }
     }
 
+    suspend fun healthTest(globalListener: Channel<StationMessage>) = coroutineScope {
+        do {
+            delay(1000 * 60)
+            globalListener.send(StationMessage(type = MessageType.HEALTH))
+        } while (true)
+    }
+
     suspend fun monitorPlatform(
         platformChannel: Channel<SignalMessage>,
         stationChannel: Channel<SignalMessage>,
@@ -36,7 +43,6 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
                 when (msg.signalValue) {
                     SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch { embark(msg.key!!, it) }
                     SignalValue.GREEN -> carriageChannelJobs[msg.id!!]?.cancel()
-                    SignalValue.AMBER -> throw Exception("Stations can not receive AMBER")
                 }
             }
             if (previousSignal == null || previousSignal != msg.signalValue) {
