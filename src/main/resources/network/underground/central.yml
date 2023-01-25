@@ -1,5 +1,5 @@
 lines:
-  - id: CENTRAL01
+  - id: CENTRAL-1
     transport-id: 3
     line-capacity: 8
     name: Central
@@ -40,7 +40,7 @@ lines:
       - 168
       - 197
 
-  - id: CENTRAL02
+  - id: CENTRAL-2
     transport-id: 3
     line-capacity: 4
     name: Central
@@ -80,7 +80,7 @@ lines:
       - 168
       - 246
 
-  - id: CENTRAL03
+  - id: CENTRAL-3
     transport-id: 3
     line-capacity: 4
     name: Central
@@ -126,7 +126,7 @@ lines:
       - 622
       - 197
 
-  - id: CENTRAL04
+  - id: CENTRAL-4
     transport-id: 3
     line-capacity: 4
     name: Central
@@ -171,7 +171,7 @@ lines:
       - 622
       - 246
 
-  - id: CENTRAL05
+  - id: CENTRAL-5
     transport-id: 3
     line-capacity: 4
     name: Central

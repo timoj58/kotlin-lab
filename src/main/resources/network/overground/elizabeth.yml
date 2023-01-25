@@ -1,5 +1,5 @@
 lines:
-  - id: ELIZ01
+  - id: ELIZ-4
     transport-id: 3
     line-capacity: 8
     name: Elizabeth
@@ -18,9 +18,9 @@ lines:
       - 2
       - 418
 
-  - id: ELIZ02
+  - id: ELIZ-3
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 4
     name: Elizabeth
     transporters-per-section: 3
     stations:
@@ -37,9 +37,9 @@ lines:
       - 418
       - 269
 
-  - id: ELIZ03
+  - id: ELIZ-2
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 4
     name: Elizabeth
     transporters-per-section: 3
     stations:
@@ -57,7 +57,7 @@ lines:
       - 418
       - 270
 
-  - id: ELIZ04
+  - id: ELIZ-5
     transport-id: 3
     line-capacity: 8
     name: Elizabeth
@@ -82,7 +82,7 @@ lines:
       - 418
       - 454
 
-  - id: ELIZ05
+  - id: ELIZ-1
     transport-id: 3
     line-capacity: 8
     name: Elizabeth

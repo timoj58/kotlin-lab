@@ -1,5 +1,5 @@
 lines:
-  - id: LIV01
+  - id: LIV-1
     transport-id: 3
     line-capacity: 6
     name: London Liverpool St
@@ -19,7 +19,7 @@ lines:
       - 343
       - 121
 
-  - id: LIV02
+  - id: LIV-2
     transport-id: 3
     line-capacity: 6
     name: London Liverpool St
@@ -43,7 +43,7 @@ lines:
       - 343
       - 196
 
-  - id: LIV03
+  - id: LIV-3
     transport-id: 3
     line-capacity: 2
     name: London Liverpool St

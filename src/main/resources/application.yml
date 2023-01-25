@@ -10,12 +10,12 @@ network:
       - transport-id: 1
         capacity: 200
         weight: 20000
-        top-speed: 25
+        top-speed: 15
         power: 5000
       - transport-id: 7
         capacity: 200
         weight: 20000
-        top-speed: 10
+        top-speed: 7
         power: 1000
     cable-cars:
       - transport-id: 2
@@ -73,3 +73,4 @@ network:
       - src/main/resources/network/dockland/dlr.yml
     tram:
       - src/main/resources/network/tram/tram.yml
+#22 lines

@@ -1,5 +1,5 @@
 lines:
-  - id: HAM01
+  - id: HAM-1
     transport-id: 3
     line-capacity: 10
     name: Hammersmith & City

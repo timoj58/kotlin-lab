@@ -1,5 +1,5 @@
 lines:
-  - id: CIRCLE01
+  - id: CIRCLE-1
     transport-id: 3
     line-capacity: 8
     name: Circle
@@ -44,7 +44,7 @@ lines:
       - 247
       - 418
 
-  - id: CIRCLE02
+  - id: CIRCLE-2
     transport-id: 3
     line-capacity: 8
     name: Circle

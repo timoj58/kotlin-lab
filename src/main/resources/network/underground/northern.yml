@@ -1,5 +1,5 @@
 lines:
-  - id: NORTH01
+  - id: NORTH-1
     transport-id: 3
     line-capacity: 4
     name: Northern
@@ -30,7 +30,7 @@ lines:
       - 36
       - 181
 
-  - id: NORTH02
+  - id: NORTH-2
     transport-id: 3
     line-capacity: 4
     name: Northern
@@ -62,7 +62,7 @@ lines:
       - 36
       - 276
 
-  - id: NORTH03
+  - id: NORTH-3
     transport-id: 3
     line-capacity: 4
     name: Northern
@@ -102,7 +102,7 @@ lines:
       - 372
       - 181
 
-  - id: NORTH04
+  - id: NORTH-4
     transport-id: 3
     line-capacity: 4
     name: Northern
@@ -140,7 +140,7 @@ lines:
       - 372
       - 365
 
-  - id: NORTH05
+  - id: NORTH-5
     transport-id: 3
     line-capacity: 4
     name: Northern
@@ -181,7 +181,7 @@ lines:
       - 372
       - 276
 
-  - id: NORTH06
+  - id: NORTH-6
     transport-id: 3
     line-capacity: 4
     name: Northern
@@ -221,7 +221,7 @@ lines:
       - 372
       - 181
 
-  - id: NORTH07
+  - id: NORTH-7
     transport-id: 3
     line-capacity: 4
     name: Northern
@@ -259,7 +259,7 @@ lines:
       - 372
       - 365
 
-  - id: NORTH08
+  - id: NORTH-8
     transport-id: 3
     line-capacity: 4
     name: Northern

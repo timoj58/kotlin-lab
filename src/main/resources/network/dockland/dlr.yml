@@ -1,5 +1,5 @@
 lines:
-  - id: DLR01
+  - id: DLR-5
     transport-id: 5
     line-capacity: 4
     name: DLR
@@ -23,7 +23,7 @@ lines:
       - 26
       - 337
 
-  - id: DLR02
+  - id: DLR-1
     transport-id: 5
     line-capacity: 4
     name: DLR
@@ -45,7 +45,7 @@ lines:
       - 26
       - 651
 
-  - id: DLR03
+  - id: DLR-2
     transport-id: 5
     line-capacity: 4
     name: DLR
@@ -63,7 +63,7 @@ lines:
       - 528
       - 94
 
-  - id: DLR04
+  - id: DLR-3
     transport-id: 5
     line-capacity: 4
     name: DLR
@@ -84,7 +84,7 @@ lines:
       - 530
       - 651
 
-  - id: DLR05
+  - id: DLR-4
     transport-id: 5
     line-capacity: 4
     name: DLR

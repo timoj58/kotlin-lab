@@ -1,5 +1,5 @@
 lines:
-  - id: PIC01
+  - id: PIC-1
     transport-id: 3
     line-capacity: 6
     name: Piccadilly
@@ -46,7 +46,7 @@ lines:
       - 270
       - 136
 
-  - id: PIC02
+  - id: PIC-2
     transport-id: 3
     line-capacity: 6
     name: Piccadilly

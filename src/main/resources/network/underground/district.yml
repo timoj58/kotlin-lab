@@ -1,5 +1,5 @@
 lines:
-  - id: DISTRICT01
+  - id: DISTRICT-1
     transport-id: 3
     line-capacity: 4
     name: District
@@ -51,7 +51,7 @@ lines:
       - 168
       - 574
 
-  - id: DISTRICT02
+  - id: DISTRICT-2
     transport-id: 3
     line-capacity: 4
     name: District
@@ -94,7 +94,7 @@ lines:
       - 306
       - 574
 
-  - id: DISTRICT03
+  - id: DISTRICT-3
     transport-id: 3
     line-capacity: 2
     name: District
@@ -110,7 +110,7 @@ lines:
       - 306
       - 183
 
-  - id: DISTRICT04
+  - id: DISTRICT-4
     transport-id: 3
     line-capacity: 2
     name: District
@@ -161,7 +161,7 @@ lines:
       - 460
       - 574
 
-  - id: DISTRICT05
+  - id: DISTRICT-5
     transport-id: 3
     line-capacity: 2
     name: District
@@ -185,7 +185,7 @@ lines:
       - 460
       - 183
 
-  - id: DISTRICT06
+  - id: DISTRICT-6
     transport-id: 3
     line-capacity: 4
     name: District
@@ -235,7 +235,7 @@ lines:
       - 638
       - 574
 
-  - id: DISTRICT07
+  - id: DISTRICT-7
     transport-id: 3
     line-capacity: 2
     name: District

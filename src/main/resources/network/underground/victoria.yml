@@ -1,5 +1,5 @@
 lines:
-  - id: VIC01
+  - id: VIC-1
     transport-id: 3
     line-capacity: 10
     name: Victoria

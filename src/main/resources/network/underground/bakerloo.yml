@@ -1,5 +1,5 @@
 lines:
-  - id: BAKER01
+  - id: BAKER-1
     transport-id: 4
     line-capacity: 8
     name: Bakerloo

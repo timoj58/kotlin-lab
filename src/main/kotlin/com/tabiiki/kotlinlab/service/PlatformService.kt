@@ -26,7 +26,6 @@ interface PlatformService {
     suspend fun initLines(line: String, lineDetails: List<Line>)
     suspend fun signalAndDispatch(transport: Transport)
     fun isClear(transport: Transport): Boolean
-    fun canLaunch(transport: Transport): Boolean
     fun dump()
 }
 
@@ -67,33 +66,6 @@ class PlatformServiceImpl(
                 station = transport.section().second
             )
         ))
-    }
-
-    override fun canLaunch(transport: Transport): Boolean {
-        if (transport.line.overrideIsClear) return true
-
-        var response = true
-        val line = Line.getLine(transport.section().first)
-        val stations = stationRepo.getPreviousStationsOnLine(
-            lineRepo.getLineStations(line),
-            transport.getSectionStationCode(),
-            transport.lineDirection()
-        )
-        outer@ for (station in stations) {
-            val toTest = Pair("$line:${station.id}", transport.getSectionStationCode())
-            if (!sectionService.isClear(toTest, true)) {
-                response = false
-                break@outer
-            }
-
-            if (!platformMonitor.isClear(Pair("$line:${transport.lineDirection(true)}", "$line:${station.id}"))
-                || !platformMonitor.isClear(Pair("$line:${transport.lineDirection()}", "$line:${station.id}"))
-            ) {
-                response = false
-                break@outer
-            }
-        }
-        return response
     }
 
     override fun dump() {
@@ -200,7 +172,7 @@ class PlatformServiceImpl(
 
             if (counter.get() > minimumHold * 3 && !holdLogger.get())
                 holdLogger.set(true).also {
-                    println("holding ${transport.id} at $key")
+                    println("holding ${transport.id} at $key data: $canRelease")
                 }
 
         } while (counter.incrementAndGet() < minimumHold

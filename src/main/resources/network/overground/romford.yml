@@ -1,5 +1,5 @@
 lines:
-  - id: ROM01
+  - id: ROM-1
     transport-id: 3
     line-capacity: 4
     name: Romford - Upminster

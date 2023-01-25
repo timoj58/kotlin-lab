@@ -1,5 +1,5 @@
 lines:
-  - id: CITY01
+  - id: CITY-1
     transport-id: 4
     line-capacity: 2
     name: Waterloo & City

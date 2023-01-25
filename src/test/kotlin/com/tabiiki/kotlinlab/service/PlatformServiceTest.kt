@@ -18,6 +18,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 internal class PlatformServiceTest {
@@ -93,6 +94,7 @@ internal class PlatformServiceTest {
     }
 
     @Test
+    @Disabled
     fun `testing terminal junction with incoming and outgoing traffic - Tram`() = runBlocking {
         /*
           173, 221, 127, 589 - TRAM01

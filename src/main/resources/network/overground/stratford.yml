@@ -1,5 +1,5 @@
 lines:
-  - id: STRAT01
+  - id: STRAT-1
     transport-id: 3
     line-capacity: 6
     name: Stratford
@@ -31,7 +31,7 @@ lines:
       - 528
       - 460
 
-  - id: STRAT02
+  - id: STRAT-2
     transport-id: 3
     line-capacity: 6
     name: Stratford

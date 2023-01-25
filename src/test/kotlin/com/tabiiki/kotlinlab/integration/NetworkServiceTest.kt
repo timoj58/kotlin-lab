@@ -9,12 +9,14 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
+//@Disabled
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @ActiveProfiles("test")
 @SpringBootTest
@@ -36,6 +38,6 @@ class NetworkServiceTest @Autowired constructor(
         val res = launch { networkService.start(channel) }
 
         val running =
-            async { integrationControl.status(channel, listOf(init, res), 20) {} }
+            async { integrationControl.status(channel, listOf(init, res), 10) {} }
     }
 }
