@@ -46,21 +46,15 @@ class StationRepoImpl(
     ): List<Station> {
         val stations = mutableListOf<Station>()
 
-        outer@ for (line in lineStations.filter { it.stations.size > 2 }) { //TODO this filter removes 2 station lines
+        outer@ for (line in lineStations.filter { it.stations.size > 2 }) {
             val firstIdx = line.stations.indexOf(stationTo)
             val lastIdx = line.stations.lastIndexOf(stationTo)
             if (firstIdx == -1) continue@outer
             if (firstIdx == lastIdx) {
-                //TODO review this.  add exception to see if it gets called.
-                if (direction == LineDirection.TERMINAL && !listOf(
-                        0,
-                        line.stations.size - 1
-                    ).contains(firstIdx)
-                ) continue@outer
                 stations.addAll(addStations(firstIdx, direction, line.stations))
             } else {
-                if (direction == LineDirection.TERMINAL && !listOf(0, line.stations.size - 1).contains(firstIdx)
-                    || !listOf(0, line.stations.size - 1).contains(lastIdx)
+                //probably not called either.
+                if (!listOf(0, line.stations.size - 1).contains(lastIdx)
                 ) continue@outer
                 stations.addAll(addStations(firstIdx, direction, line.stations))
                 stations.addAll(addStations(lastIdx, direction, line.stations))

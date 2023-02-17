@@ -209,7 +209,8 @@ class PlatformServiceImpl(
             sectionService.arePreviousSectionsClear(
                 transport = transport,
                 lineInstructions = lineInstructions
-            ) { k -> lineRepo.getPreviousSections(k) }, !switchPlatform || platformMonitor.isClear(
+            ) { k -> lineRepo.getPreviousSections(k) },
+            !switchPlatform || platformMonitor.isClear(
                 key = Pair(
                     "${transport.line.name}:${
                         transport.lineDirection(true)

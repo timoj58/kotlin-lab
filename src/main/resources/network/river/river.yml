@@ -47,16 +47,6 @@ lines:
       - 661
       - 676
 
-  - id: RIVER-4
-    transport-id: 7
-    line-capacity: 1
-    name: River
-    stations:
-      - 671
-      - 672
-    depots:
-      - 672
-
   - id: RIVER-3
     transport-id: 1
     line-capacity: 6
