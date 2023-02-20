@@ -1,5 +1,5 @@
 network:
-  time-step: 3
+  time-step: 1
   minimum-hold: 12
   lines:
     river:

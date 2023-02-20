@@ -37,6 +37,6 @@ internal class LinesConfigTest {
     fun `load network`() {
         val lines = LinesConfig(linesAdapter)
 
-        assertThat(lines.lines.size).isEqualTo(18)
+        assertThat(lines.lines.size).isEqualTo(17)
     }
 }

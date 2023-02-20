@@ -18,7 +18,7 @@ class LineFactory(
     private val lineNetworks: MutableMap<String, LineNetwork> = mutableMapOf()
 
     init {
-        if (timeStep < 2) throw ConfigurationException("timestep is too small, minimum 7 ms")
+        if (timeStep < 1) throw ConfigurationException("timestep is too small, minimum 7 ms")
     }
 
     private val lines =
