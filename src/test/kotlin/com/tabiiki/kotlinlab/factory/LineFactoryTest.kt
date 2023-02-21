@@ -56,7 +56,7 @@ internal class LineFactoryTest {
     fun `invalid timestep`() {
         Mockito.`when`(linesConfig.lines).thenReturn(listOf())
         assertThrows(ConfigurationException::class.java) {
-            LineFactory(1, transportsConfig, linesConfig).get("1")
+            LineFactory(0, transportsConfig, linesConfig).get("1")
         }
     }
 
