@@ -48,7 +48,6 @@ class LineControllerTest(
                 signalService,
                 sectionService,
                 LineRepoImpl(stationRepo),
-                stationRepo,
                 lineFactory
             )
         val lineConductor = LineConductorImpl(lineService)

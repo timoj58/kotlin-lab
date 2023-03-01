@@ -10,7 +10,6 @@ import com.tabiiki.kotlinlab.monitor.PlatformMonitor
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineInstructions
 import com.tabiiki.kotlinlab.repo.LineRepo
-import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -35,7 +34,6 @@ class PlatformServiceImpl(
     private val signalService: SignalService,
     private val sectionService: SectionService,
     private val lineRepo: LineRepo,
-    private val stationRepo: StationRepo,
     private val lineFactory: LineFactory,
 ) : PlatformService {
     private val platformMonitor = PlatformMonitor(sectionService, signalService)

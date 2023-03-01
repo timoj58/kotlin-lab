@@ -19,20 +19,17 @@ data class Commuter(
     private val route: MutableList<AvailableRoute> = mutableListOf()
     private val history: MutableList<Pair<String, String>> = mutableListOf()
 
-    fun peekNextJourneyStage(): Pair<String, String>? =
-        route.first().route.firstOrNull()
+    fun peekNextJourneyStage(): Pair<String, String>? = route.first().route.firstOrNull()
 
-    fun completeJourneyStage(): Pair<String, String> {
+    fun completeJourneyStage() {
         val travelled = route.first().route.removeFirstOrNull() ?: throw Exception("route is already complete")
         history.add(travelled)
         peekNextJourneyStage()?.let {
             println("next $it, completed $history for $id")
         } ?: println("completed $history for $id")
-
-        return travelled
     }
 
-    fun getCurrentStation(): String = commute.first.first
+    fun getCurrentStation(): String = Line.getStation(peekNextJourneyStage()?.first ?: commute.first.second)
 
     suspend fun initJourney() = coroutineScope {
         launch {

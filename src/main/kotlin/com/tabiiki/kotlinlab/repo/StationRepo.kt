@@ -53,7 +53,7 @@ class StationRepoImpl(
             if (firstIdx == lastIdx) {
                 stations.addAll(addStations(firstIdx, direction, line.stations))
             } else {
-                //probably not called either.
+                //probably not called either. TODO
                 if (!listOf(0, line.stations.size - 1).contains(lastIdx)
                 ) continue@outer
                 stations.addAll(addStations(firstIdx, direction, line.stations))
