@@ -3,9 +3,6 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -53,7 +50,7 @@ class LineControllerImpl(
 
     override fun dump() = conductor.dump()
 
-    private suspend fun dispatchByLineId(line: String, linesToDispatch :MutableList<MutableList<Transport>>) {
+    private suspend fun dispatchByLineId(line: String, linesToDispatch: MutableList<MutableList<Transport>>) {
         val transportersToDispatch = linesToDispatch.removeFirst()
         val released = mutableListOf<UUID>()
 
@@ -65,20 +62,20 @@ class LineControllerImpl(
         transportersToDispatch.removeAll { released.contains(it.id) }
 
         do {
-               released.clear()
-               delay(timeStep * startDelayScalar)
+            released.clear()
+            delay(timeStep * startDelayScalar)
 
-               transportersToDispatch.distinctBy { it.section() }.forEach {
-                   if (conductor.isClear(it)) {
-                       released.add(it.id)
-                       release(it)
-                   }
-               }
-               transportersToDispatch.removeAll { released.contains(it.id) }
+            transportersToDispatch.distinctBy { it.section() }.forEach {
+                if (conductor.isClear(it)) {
+                    released.add(it.id)
+                    release(it)
+                }
+            }
+            transportersToDispatch.removeAll { released.contains(it.id) }
 
         } while (transportersToDispatch.isNotEmpty())
 
-        if(linesToDispatch.isNotEmpty()) dispatchByLineId(line, linesToDispatch)
+        if (linesToDispatch.isNotEmpty()) dispatchByLineId(line, linesToDispatch)
     }
 
     private suspend fun release(transport: Transport) = coroutineScope {

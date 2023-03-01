@@ -43,7 +43,7 @@ class LineFactory(
         val network = getNetwork(line) ?: return false
         return network.getNodes().any {
             (it.station == SwitchMonitor.replaceSwitch(station)) &&
-                    it.linked.any { n -> n.contains("*") }  && it.linked.size > 1
+                    it.linked.any { n -> n.contains("*") } && it.linked.size > 1
         }
     }
 

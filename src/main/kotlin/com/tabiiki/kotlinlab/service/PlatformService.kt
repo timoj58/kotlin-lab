@@ -196,14 +196,15 @@ class PlatformServiceImpl(
         lineInstructions: LineInstructions,
         key: Pair<String, String>
     ): Triple<Boolean, Boolean, Boolean> =
-        Triple(sectionService.isClear(
-            transport = transport,
-            switchFrom = switchPlatform,
-            approachingJunction = lineFactory.isJunction(
-                line = transport.line.name,
-                station = lineInstructions.to.id
-            )
-        ),
+        Triple(
+            sectionService.isClear(
+                transport = transport,
+                switchFrom = switchPlatform,
+                approachingJunction = lineFactory.isJunction(
+                    line = transport.line.name,
+                    station = lineInstructions.to.id
+                )
+            ),
             sectionService.arePreviousSectionsClear(
                 transport = transport,
                 lineInstructions = lineInstructions
@@ -214,7 +215,8 @@ class PlatformServiceImpl(
                         transport.lineDirection(true)
                     }", key.second
                 )
-            ))
+            )
+        )
 
     private suspend fun dispatch(
         transport: Transport,
