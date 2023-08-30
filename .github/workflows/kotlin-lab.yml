@@ -17,7 +17,7 @@ jobs:
           java-version: '19'
           distribution: 'adopt'
       - name: gradle build
-        run: gradle build test jacocoTestReport
+        run: ./gradlew build test jacocoTestReport
       - name: Generate JaCoCo Badge
         uses: cicirello/jacoco-badge-generator@v2
         with:
