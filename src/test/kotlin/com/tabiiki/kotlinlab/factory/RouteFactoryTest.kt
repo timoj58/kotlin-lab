@@ -31,7 +31,7 @@ class RouteFactoryTest {
                     listOf(
                         Pair("Circle:37", "Circle:418"),
                         Pair("Circle:418", "Circle:24"),
-                        Pair("Jubilee:24", "Jubilee:528"),
+                        Pair("Jubilee:24", "Jubilee:528")
                     )
                 )
             )
@@ -51,8 +51,8 @@ class RouteFactoryTest {
             listOf(
                 listOf(
                     Pair("Elizabeth:613", "Elizabeth:650"),
-                    Pair("River:678", "River:666"), //virtual has beem removed for now.
-                    Pair("Northern:192", "Northern:227"),
+                    Pair("River:678", "River:666"), // virtual has beem removed for now.
+                    Pair("Northern:192", "Northern:227")
                 )
             )
         )
@@ -73,7 +73,7 @@ class RouteFactoryTest {
             listOf(
                 listOf(Pair("Jubilee:528", "Jubilee:94")),
                 listOf(Pair("DLR:528", "DLR:94"))
-            ),
+            )
         )
 
         Assertions.assertThat(enquiries.isNotEmpty())
@@ -87,13 +87,13 @@ class RouteFactoryTest {
             routeFactory.generateAvailableRoutes(RouteEnquiry(route = Pair("41", "94"), channel = channel))
         }
 
-        //get results from channel.
+        // get results from channel.
         val enquiries = testResults(
             channel,
             listOf(
                 listOf(
                     Pair("DLR:41", "DLR:95"),
-                    Pair("Jubilee:95", "Jubilee:94"),
+                    Pair("Jubilee:95", "Jubilee:94")
                 )
             )
         )
@@ -112,7 +112,7 @@ class RouteFactoryTest {
         val enquiries = testResults(
             channel,
             listOf(
-                listOf(Pair("Emirates Air Line:655", "Emirates Air Line:654"), Pair("Jubilee:396", "Jubilee:50")),
+                listOf(Pair("Emirates Air Line:655", "Emirates Air Line:654"), Pair("Jubilee:396", "Jubilee:50"))
             )
         )
 
@@ -130,8 +130,6 @@ class RouteFactoryTest {
             enquiries.add(enquiry.route)
         } while (!enquiries.containsAll(test))
 
-
         return enquiries
     }
-
 }

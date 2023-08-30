@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
-
 class SectionServiceTest {
 
     private val signalService = mock(SignalService::class.java)
@@ -41,9 +40,13 @@ class SectionServiceTest {
         launch { sectionService.initQueues(transport.section()) }
         delay(100)
         val job = launch {
-            sectionService.accept(transport.also {
-                it.setHoldChannel(Channel())
-            }, Job(), listOf(testJob))
+            sectionService.accept(
+                transport.also {
+                    it.setHoldChannel(Channel())
+                },
+                Job(),
+                listOf(testJob)
+            )
         }
         delay(1000)
 
@@ -54,26 +57,32 @@ class SectionServiceTest {
 
     @Test
     fun `added twice exception test`() = runBlocking {
-
         `when`(signalService.getChannel(transport.section())).thenReturn(Channel())
 
         launch { sectionService.initQueues(transport.section()) }
         delay(100)
         val job = launch {
-            sectionService.accept(transport.also {
-                it.setHoldChannel(Channel())
-            }, Job(), listOf())
+            sectionService.accept(
+                transport.also {
+                    it.setHoldChannel(Channel())
+                },
+                Job(),
+                listOf()
+            )
         }
         delay(100)
         try {
-            sectionService.accept(transport.also {
-                it.setHoldChannel(Channel())
-            }, Job(), listOf())
+            sectionService.accept(
+                transport.also {
+                    it.setHoldChannel(Channel())
+                },
+                Job(),
+                listOf()
+            )
         } catch (e: RuntimeException) {
             assertThat(true).isEqualTo(true)
         }
 
         job.cancel()
     }
-
 }

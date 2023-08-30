@@ -48,9 +48,10 @@ class LineRepoImpl(private val stationRepo: StationRepo) : LineRepo {
     )
 
     override fun getLineStations(transport: Transport): List<String> {
-        if (!lineStations.contains(transport.id))
+        if (!lineStations.contains(transport.id)) {
             lineStations[transport.id] =
                 lineDetails[transport.line.name]!!.first { l -> l.transporters.any { it.id == transport.id } }.stations
+        }
         return lineStations[transport.id]!!
     }
 

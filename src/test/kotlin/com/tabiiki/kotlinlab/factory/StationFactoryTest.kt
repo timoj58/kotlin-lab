@@ -9,7 +9,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.Mockito
 
-
 internal class StationFactoryTest {
 
     private val stationsConfig = Mockito.mock(StationsConfig::class.java)
@@ -20,7 +19,7 @@ internal class StationFactoryTest {
             listOf(
                 StationConfig(id = "A"),
                 StationConfig(id = "B"),
-                StationConfig(id = "C"),
+                StationConfig(id = "C")
             )
         )
 
@@ -53,8 +52,9 @@ internal class StationFactoryTest {
         val optimisedDaysComplexity = mutableListOf(complexityAsList)
 
         while (optimisedDaysComplexity.size < days) {
-            if (optimisedDaysComplexity.filter { it.contains(smallest) }.all { it.size == 1 })
+            if (optimisedDaysComplexity.filter { it.contains(smallest) }.all { it.size == 1 }) {
                 smallest = complexityAsList.filter { it != smallest }.min()
+            }
             val located =
                 optimisedDaysComplexity.filter { it.size > 1 && it.contains(smallest) }.toMutableList().first().also {
                     optimisedDaysComplexity.remove(it)
@@ -72,5 +72,4 @@ internal class StationFactoryTest {
 
         assert(optimisedDaysComplexity.sumOf { it.max() } == result)
     }
-
 }

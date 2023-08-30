@@ -9,32 +9,32 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
-
 class CarriageTest {
 
     private val carriage = Carriage(100)
 
     @Test
     fun `carriage embark and disembark test`() = runBlocking {
-
         val jobs = mutableListOf<Job>()
         val stationChannel = Channel<Commuter>()
         val routeEnquiryChannel = Channel<RouteEnquiry>()
 
         val commuter = Commuter(
             commute = Pair(Pair("B", "A"), routeEnquiryChannel),
-            timeStep = 10,
+            timeStep = 10
         ) {
             jobs.add(launch { stationChannel.send(it) })
         }
 
         jobs.add(launch { commuter.initJourney() })
 
-        jobs.add(launch {
-            commuter.channel.send(
-                AvailableRoute(route = mutableListOf(Pair("B", "A")))
-            )
-        })
+        jobs.add(
+            launch {
+                commuter.channel.send(
+                    AvailableRoute(route = mutableListOf(Pair("B", "A")))
+                )
+            }
+        )
 
         delay(100)
 
@@ -54,5 +54,4 @@ class CarriageTest {
         assert(carriage.isEmpty())
         jobs.forEach { it.cancel() }
     }
-
 }

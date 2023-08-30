@@ -16,7 +16,7 @@ interface CommuterService {
 @Service
 class CommuterServiceImpl(
     @Value("\${network.time-step}") val timeStep: Long,
-    private val routeService: RouteService,
+    private val routeService: RouteService
 ) : CommuterService {
     private val commuterChannel = Channel<Commuter>()
     // private val commuterMonitor = CommuterMonitor()
@@ -24,26 +24,21 @@ class CommuterServiceImpl(
     override fun getCommuterChannel(): Channel<Commuter> = commuterChannel
 
     override suspend fun generate(): Unit = coroutineScope {
-
         launch { routeService.listen() }
         // launch { commuterMonitor.monitor(trackingChannel) }
 
         do {
             delay(timeStep * 100)
-            //release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)
-            //also what happens when they complete journey? need to track  them.  and perhaps cap no of commuters once performance discovered
+            // release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)
+            // also what happens when they complete journey? need to track  them.  and perhaps cap no of commuters once performance discovered
             val commuter = Commuter(
                 commute = routeService.generate(),
-                timeStep = timeStep,
+                timeStep = timeStep
             ) {
                 launch { commuterChannel.send(it) }
             }
 
             launch { commuter.initJourney() }
-
         } while (true)
-
     }
-
-
 }

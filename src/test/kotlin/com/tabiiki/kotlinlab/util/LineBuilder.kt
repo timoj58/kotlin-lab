@@ -11,12 +11,11 @@ class LineBuilder {
         TransportConfig(transportId = 1, capacity = 100, weight = 1000, topSpeed = 75, power = 100)
     val stations = listOf(
         Station(
-            StationConfig(id = "A", latitude = 51.541692575874, longitude = -0.00375164102719075),
+            StationConfig(id = "A", latitude = 51.541692575874, longitude = -0.00375164102719075)
         ),
         Station(StationConfig(id = "B", latitude = 51.528525530727, longitude = 0.00531739383278791)),
         Station(StationConfig(id = "C", latitude = 51.5002551610895, longitude = 0.00358625912595083))
     )
-
 
     fun getLine() = Line(
         timeStep = 10,
@@ -27,7 +26,8 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("A", "B", "C"),
             depots = listOf("A", "C")
-        ), listOf(transportConfig)
+        ),
+        listOf(transportConfig)
     )
 
     fun getLine2() = Line(
@@ -39,7 +39,8 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("A", "B", "C", "D"),
             depots = listOf("A", "D")
-        ), listOf(transportConfig)
+        ),
+        listOf(transportConfig)
     )
 
     fun getLine3() = Line(
@@ -51,7 +52,8 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("A", "B", "D"),
             depots = listOf("A", "D")
-        ), listOf(transportConfig)
+        ),
+        listOf(transportConfig)
     )
 
     fun getCircleLine() = Line(
@@ -63,7 +65,8 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("A", "B", "C", "D", "A"),
             depots = listOf("A", "D")
-        ), listOf(transportConfig)
+        ),
+        listOf(transportConfig)
     )
 
     fun getCircleLine2() = Line(
@@ -75,7 +78,8 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("E", "B", "A", "C", "D", "A"),
             depots = listOf("A", "D")
-        ), listOf(transportConfig)
+        ),
+        listOf(transportConfig)
     )
 
     fun getSwitchLine1() = Line(
@@ -87,7 +91,8 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("A", "B", "C", "D"),
             depots = listOf("A", "D")
-        ), listOf(transportConfig)
+        ),
+        listOf(transportConfig)
     )
 
     fun getSwitchLine2() = Line(
@@ -99,7 +104,7 @@ class LineBuilder {
             lineCapacity = 6,
             stations = listOf("B", "C", "D"),
             depots = listOf("B", "D")
-        ), listOf(transportConfig)
+        ),
+        listOf(transportConfig)
     )
-
 }

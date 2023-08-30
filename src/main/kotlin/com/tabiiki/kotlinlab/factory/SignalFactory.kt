@@ -25,7 +25,7 @@ data class SignalMessage(
     val line: String? = null,
     val commuterChannel: Channel<Commuter>? = null,
     var timesStamp: Long = System.currentTimeMillis(),
-    val init: Boolean = false,
+    val init: Boolean = false
 ) {
     override fun equals(other: Any?): Boolean {
         if (other !is SignalMessage) return false
@@ -68,7 +68,7 @@ data class Signal(
                     id = msg.id,
                     key = msg.key,
                     line = msg.line,
-                    commuterChannel = msg.commuterChannel,
+                    commuterChannel = msg.commuterChannel
                 )
             }
         } while (true)
@@ -100,7 +100,7 @@ class SignalFactory(
                 signals[section] = signal
             }
         }
-        //only need to support connected here for now
+        // only need to support connected here for now
         getPlatforms(lines).forEach { platform ->
             val signal = Signal(
                 section = platform,
@@ -117,14 +117,16 @@ class SignalFactory(
 
     fun updateConnected(line: String, lineRepo: LineRepo) {
         signals.values.filter { it.type == SignalType.PLATFORM && it.section.first.contains(line) }.forEach { signal ->
-            if (signal.section.first.contains(LineDirection.TERMINAL.name))
+            if (signal.section.first.contains(LineDirection.TERMINAL.name)) {
                 signal.connected.add(
                     Pair(
                         "$line:${Line.getStation(signal.section.second)}",
                         "${Line.getStation(signal.section.second)}|"
                     )
                 )
-            else lineRepo.getPreviousSections(signal.section).forEach { signal.connected.add(it) }
+            } else {
+                lineRepo.getPreviousSections(signal.section).forEach { signal.connected.add(it) }
+            }
         }
     }
 
@@ -134,8 +136,10 @@ class SignalFactory(
             val id = line.name
             pairs.addAll(line.stations.map { Pair("$id:${LineDirection.POSITIVE}", "$id:$it") })
             pairs.addAll(line.stations.map { Pair("$id:${LineDirection.NEGATIVE}", "$id:$it") })
-            pairs.addAll(line.stations.filter { lineFactory.isSwitchStation(id, it) }
-                .map { Pair("$id:${LineDirection.TERMINAL}", "$id:$it") })
+            pairs.addAll(
+                line.stations.filter { lineFactory.isSwitchStation(id, it) }
+                    .map { Pair("$id:${LineDirection.TERMINAL}", "$id:$it") }
+            )
         }
         return pairs.toSet()
     }
@@ -168,5 +172,4 @@ class SignalFactory(
 
         return pairs.toSet()
     }
-
 }

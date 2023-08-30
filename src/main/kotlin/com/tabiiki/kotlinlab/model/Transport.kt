@@ -32,7 +32,6 @@ enum class Instruction {
     fun isMoving(): Boolean = THROTTLE_ON == this
 }
 
-
 data class Transport(
     val id: UUID = UUID.randomUUID(),
     private val config: TransportConfig,
@@ -67,8 +66,9 @@ data class Transport(
     }
 
     fun switchSection(section: Pair<String, String>) {
-        if (this.actualSection == null)
+        if (this.actualSection == null) {
             this.actualSection = section
+        }
     }
 
     fun setChannel(sectionChannel: Channel<Transport>) {
@@ -119,9 +119,9 @@ data class Transport(
             val msg = channel.receive()
 
             if (msg.timesStamp >= timeRegistered) {
-                if (previousMsg == null
-                    || msg.signalValue != previousMsg.signalValue
-                    && !(msg.id ?: UUID.randomUUID()).equals(id)
+                if (previousMsg == null ||
+                    msg.signalValue != previousMsg.signalValue &&
+                    !(msg.id ?: UUID.randomUUID()).equals(id)
                 ) {
                     when (msg.signalValue) {
                         SignalValue.GREEN -> Instruction.THROTTLE_ON
@@ -173,8 +173,10 @@ data class Transport(
 
             physics.calcTimeStep(instruction, isApproachingTerminal(section()))
 
-            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) instruction =
-                Instruction.SCHEDULED_STOP
+            if (instruction.isMoving() && physics.shouldApplyBrakes(instruction)) {
+                instruction =
+                    Instruction.SCHEDULED_STOP
+            }
 
             if (emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
 
@@ -182,11 +184,11 @@ data class Transport(
                 logged.set(true)
                 println("$id stopped for over 1 minutes at ${section()}")
             }
-
         } while (physics.displacement <= physics.distance)
 
-        if (logged.get())
+        if (logged.get()) {
             println("released $id")
+        }
 
         stopJourney()
     }

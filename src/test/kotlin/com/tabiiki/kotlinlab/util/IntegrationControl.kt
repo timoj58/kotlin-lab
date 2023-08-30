@@ -24,18 +24,20 @@ class IntegrationControl {
         do {
             val msg = channel.receive()
             if (msg.type != MessageType.HEALTH) {
-                if (!trainsByLine.containsKey(msg.line))
+                if (!trainsByLine.containsKey(msg.line)) {
                     trainsByLine[msg.line!!] = mutableSetOf()
-                if (!stationVisitedPerTrain.containsKey(msg.transportId))
+                }
+                if (!stationVisitedPerTrain.containsKey(msg.transportId)) {
                     stationVisitedPerTrain[msg.transportId!!] = mutableListOf()
+                }
 
                 trainsByLine[msg.line]?.add(msg.transportId!!)
-                if (msg.type == MessageType.DEPART)
+                if (msg.type == MessageType.DEPART) {
                     stationVisitedPerTrain[msg.transportId]?.add(msg.stationId!!)
+                }
             } else {
-                println("HEALTH received") //to ensure completion, when messages stop (fixing issue around gridlock)
+                println("HEALTH received") // to ensure completion, when messages stop (fixing issue around gridlock)
             }
-
         } while (testSectionsVisited() != transportersPerLine && startTime + (1000 * 60 * timeout) > System.currentTimeMillis())
 
         diagnosticsCheck()
@@ -60,7 +62,7 @@ class IntegrationControl {
         println("total trains: $transportersPerLine, trains running: ${stationVisitedPerTrain.keys.size}  and stations visited ${stationVisitedPerTrain.values.flatten().size}")
         val count = testSectionsVisited()
         println("completed journeys count: $count")
-        //takes too long so for now...just assert greater than zero
+        // takes too long so for now...just assert greater than zero
         // Assertions.assertThat(count).isEqualTo(transportersPerLine)
         Assertions.assertThat(count).isGreaterThan(0)
     }
@@ -71,12 +73,13 @@ class IntegrationControl {
         if (stationVisitedPerTrain.isEmpty()) return 1
 
         stationVisitedPerTrain.forEach { (k, u) ->
-            if (u.containsAll(stationsByLine[getLineByTrain(k)]!!) && testAllStationsEntered(u))
+            if (u.containsAll(stationsByLine[getLineByTrain(k)]!!) && testAllStationsEntered(u)) {
                 completedRouteCount++
+            }
         }
 
         return completedRouteCount +
-                if (trainsByLine.values.flatten().size == transportersPerLine) 0 else 1
+            if (trainsByLine.values.flatten().size == transportersPerLine) 0 else 1
     }
 
     private fun testAllStationsEntered(stations: List<String>): Boolean {
@@ -87,7 +90,6 @@ class IntegrationControl {
         var line = ""
         trainsByLine.forEach { (t, u) ->
             if (u.contains(id)) t.also { line = it }
-
         }
         return line
     }

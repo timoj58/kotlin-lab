@@ -9,9 +9,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
-
 data class RouteEnquiry(val route: Pair<String, String>, val channel: Channel<AvailableRoute>, val depth: Int = 2)
-
 
 interface RouteService {
     fun generate(): Pair<Pair<String, String>, Channel<RouteEnquiry>>
@@ -31,7 +29,8 @@ class RouteServiceImpl(
             Pair(
                 from,
                 generateStation(stations, from)
-            ), channel
+            ),
+            channel
         )
     }
 
@@ -42,7 +41,6 @@ class RouteServiceImpl(
         } while (true)
     }
 
-
     private fun generateStation(stations: List<Station>, from: String? = null): String {
         var station: String? = null
         while (station == null) {
@@ -52,5 +50,4 @@ class RouteServiceImpl(
 
         return station
     }
-
 }

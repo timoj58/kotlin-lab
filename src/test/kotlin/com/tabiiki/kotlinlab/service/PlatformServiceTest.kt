@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test
 
 internal class PlatformServiceTest {
 
-
     private val minimumHold = 45
     private val timeStep = 7L
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
@@ -105,16 +104,16 @@ internal class PlatformServiceTest {
         jobs.add(launch { setup() })
         delay(1000)
 
-        //173 - POSITIVE
+        // 173 - POSITIVE
         val t1 = lines.first { it.id == "TRAM01" }.transporters.first().also { it.addSection(Pair("Tram:173", "221")) }
-        //221 - POSITIVE
+        // 221 - POSITIVE
         val t2 = lines.first { it.id == "TRAM01" }.transporters.last().also { it.addSection(Pair("Tram:221", "127")) }
-        //127 - NEGATIVE
+        // 127 - NEGATIVE
         val t3 = lines.first { it.id == "TRAM03" }.transporters.first().also { it.addSection(Pair("Tram:221", "127")) }
-        //589 - NEGATIVE
+        // 589 - NEGATIVE
         val t4 = lines.first { it.id == "TRAM03" }.transporters.last().also { it.addSection(Pair("Tram:221", "127")) }
 
-        //works, issue now how to recreate the issue, ie forcing transporters into sections to simulate it.
+        // works, issue now how to recreate the issue, ie forcing transporters into sections to simulate it.
 
         listOf(/*t1, t2, t3, t4*/t3).forEach {
             println("releasing ${it.id} ${it.section()}")
@@ -164,5 +163,4 @@ internal class PlatformServiceTest {
         delay(1000)
         finish()
     }
-
 }

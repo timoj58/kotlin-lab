@@ -21,7 +21,6 @@ class RouteServiceImplTest {
 
     @Test
     fun `route service generation test`() {
-
         stationRepo.get().forEach {
             `when`(routeFactory.isSelectableStation(it.id)).thenReturn(nextBoolean())
         }
@@ -32,9 +31,7 @@ class RouteServiceImplTest {
 
         Assertions.assertThat(route.first).isNotEqualTo(route.second)
 
-
         Assertions.assertThat(stationRepo.get(route.first.first)).isNotNull
         Assertions.assertThat(stationRepo.get(route.first.second)).isNotNull
     }
-
 }

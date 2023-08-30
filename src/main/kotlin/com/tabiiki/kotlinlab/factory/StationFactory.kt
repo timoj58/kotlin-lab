@@ -6,11 +6,11 @@ import org.springframework.stereotype.Component
 
 @Component
 class StationFactory(
-    stationsConfig: StationsConfig,
+    stationsConfig: StationsConfig
 ) {
     private val stations = stationsConfig.stations.map { config ->
         Station(
-            config,
+            config
         )
     }
 

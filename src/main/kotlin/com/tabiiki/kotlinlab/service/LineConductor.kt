@@ -41,8 +41,7 @@ class LineConductorImpl(
     }
 
     override fun isClear(transport: Transport): Boolean =
-        platformService.isClear(transport) //removing can launch for now.
+        platformService.isClear(transport) // removing can launch for now.
 
     override fun dump() = platformService.dump()
-
 }

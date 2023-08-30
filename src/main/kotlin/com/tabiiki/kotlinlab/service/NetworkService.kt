@@ -17,7 +17,7 @@ class NetworkServiceImpl(
     private val lineController: LineController,
     private val stationService: StationService,
     private val commuterService: CommuterService,
-    lineFactory: LineFactory,
+    lineFactory: LineFactory
 ) : NetworkService {
     private val lines = lineFactory.get().map { lineFactory.get(it) }
     override suspend fun init() = coroutineScope {

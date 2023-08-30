@@ -11,7 +11,6 @@ internal class LinesConfigTest {
 
     @BeforeEach
     fun init() {
-
         linesAdapter.setCable(
             mutableListOf("src/main/resources/network/cable/cable.yml")
         )
@@ -30,7 +29,6 @@ internal class LinesConfigTest {
         linesAdapter.setTram(
             mutableListOf("src/main/resources/network/tram/tram.yml")
         )
-
     }
 
     @Test

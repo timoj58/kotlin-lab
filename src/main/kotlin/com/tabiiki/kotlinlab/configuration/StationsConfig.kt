@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import java.io.File
 
-
 data class StationConfig(
     val id: String,
     val name: String = "",
@@ -22,7 +21,7 @@ class StationsConfig(@Value("\${network.stations-csv}") stationsCsv: String) {
 
     init {
         var counter = 1
-        //headers: Station,OS X,OS Y,Latitude,Longitude,Zone,Postcode
+        // headers: Station,OS X,OS Y,Latitude,Longitude,Zone,Postcode
         File(stationsCsv).forEachLine {
             val station = it.split(",")
 
@@ -38,5 +37,4 @@ class StationsConfig(@Value("\${network.stations-csv}") stationsCsv: String) {
             counter++
         }
     }
-
 }

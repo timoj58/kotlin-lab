@@ -1,6 +1,5 @@
 package com.tabiiki.kotlinlab.factory
 
-
 import com.tabiiki.kotlinlab.configuration.LineType
 import com.tabiiki.kotlinlab.util.InterchangeFactoryBuilder
 import org.assertj.core.api.Assertions
@@ -11,7 +10,6 @@ class InterchangeFactoryTest {
 
     @Test
     fun `interchange init test `() {
-
         Assertions.assertThat(
             interchangeFactory.getLinks(
                 key = "Jubilee",
@@ -25,7 +23,7 @@ class InterchangeFactoryTest {
                 Pair("Central", "528"),
                 Pair("District", "615"),
                 Pair("Circle", "629")
-            ),
+            )
         )
 
         Assertions.assertThat(
@@ -36,8 +34,8 @@ class InterchangeFactoryTest {
             ).toList()
         ).containsAll(
             listOf(
-                Pair("Jubilee", "396"),
-            ),
+                Pair("Jubilee", "396")
+            )
         )
 
         Assertions.assertThat(
@@ -48,19 +46,16 @@ class InterchangeFactoryTest {
             ).toList()
         ).containsAll(
             listOf(
-                Pair("Elizabeth", "418"),
-            ),
+                Pair("Elizabeth", "418")
+            )
         )
 
         Assertions.assertThat(
             interchangeFactory.getLinks(key = "River", exclude = "", lineType = LineType.DOCKLAND).toList()
         ).containsAll(
             listOf(
-                Pair("DLR", "628"),
-            ),
+                Pair("DLR", "628")
+            )
         )
-
     }
-
-
 }

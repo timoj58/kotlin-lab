@@ -18,11 +18,10 @@ internal class LineFactoryTest {
 
     @BeforeEach
     fun init() {
-
         Mockito.`when`(transportsConfig.get()).thenReturn(
             listOf(
                 TransportConfig(1, 1000),
-                TransportConfig(2, 1500),
+                TransportConfig(2, 1500)
             )
         )
     }
@@ -59,5 +58,4 @@ internal class LineFactoryTest {
             LineFactory(0, transportsConfig, linesConfig).get("1")
         }
     }
-
 }

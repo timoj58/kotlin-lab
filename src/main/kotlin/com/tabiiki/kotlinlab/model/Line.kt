@@ -9,7 +9,7 @@ import kotlin.math.floor
 data class Line(
     val timeStep: Long,
     private val config: LineConfig,
-    private val transportConfig: List<TransportConfig>,
+    private val transportConfig: List<TransportConfig>
 ) {
     val id = config.id
     val name = config.name
@@ -53,17 +53,23 @@ data class Line(
         var duplicateCount = mutableMapOf<String, Int>()
 
         depots.forEach { depot ->
-            if (duplicateCount.containsKey(depot)) duplicateCount[depot] = duplicateCount[depot]!! + 1
-            else duplicateCount[depot] = 1
+            if (duplicateCount.containsKey(depot)) {
+                duplicateCount[depot] = duplicateCount[depot]!! + 1
+            } else {
+                duplicateCount[depot] = 1
+            }
         }
 
         return duplicateCount.filter { it.value > 1 }.keys.toList()
     }
 
     private fun transporterSlice(startIndex: Int, perDepot: Int, depot: String, nextStation: (String) -> String) {
-        if (perDepot == 0) transporters.first().addSection(Pair("$name:$depot", nextStation(depot)))
-        else transporters.slice(startIndex until startIndex + perDepot)
-            .forEach { transport -> transport.addSection(Pair("$name:$depot", nextStation(depot))) }
+        if (perDepot == 0) {
+            transporters.first().addSection(Pair("$name:$depot", nextStation(depot)))
+        } else {
+            transporters.slice(startIndex until startIndex + perDepot)
+                .forEach { transport -> transport.addSection(Pair("$name:$depot", nextStation(depot))) }
+        }
     }
 
     private fun nextStationFromDepot(currentStation: String): String =
@@ -76,5 +82,4 @@ data class Line(
         fun getStation(details: String): String = details.substringAfter(":")
         fun getLine(details: String): String = details.substringBefore(":")
     }
-
 }

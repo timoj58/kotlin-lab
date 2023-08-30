@@ -40,12 +40,10 @@ internal class LineTest {
 
     @Test
     fun `init line test with more than one train per station average`() {
-
         val line = Line(1, lineConfig, listOf(transportConfig))
 
         assertThat(line.transporters.count { t -> t.section() == Pair(":A", "B") }).isEqualTo(2)
         assertThat(line.transporters.count { t -> t.section() == Pair(":D", "C") }).isEqualTo(2)
-
     }
 
     @Test
@@ -61,7 +59,5 @@ internal class LineTest {
 
         assertThat(line.transporters.count { t -> t.section() == Pair(":A", "B") }).isEqualTo(3)
         assertThat(line.transporters.count { t -> t.section() == Pair(":A", "D") }).isEqualTo(3)
-
     }
-
 }

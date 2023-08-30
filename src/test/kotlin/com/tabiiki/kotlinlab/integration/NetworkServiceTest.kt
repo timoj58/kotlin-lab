@@ -38,5 +38,4 @@ class NetworkServiceTest @Autowired constructor(
         val running =
             async { integrationControl.status(channel, listOf(init, res), 10) {} }
     }
-
 }

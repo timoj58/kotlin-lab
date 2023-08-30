@@ -22,9 +22,9 @@ class RouteFactory(
     fun isSelectableStation(station: String) = interchangeFactory.stations.any { it == station }
 
     suspend fun generateAvailableRoutes(enquiry: RouteEnquiry) {
-        if (memoized.contains(enquiry.route) && memoized[enquiry.route]!!.isNotEmpty())
+        if (memoized.contains(enquiry.route) && memoized[enquiry.route]!!.isNotEmpty()) {
             memoized[enquiry.route]!!.forEach { enquiry.channel.send(it) }
-        else {
+        } else {
             memoized[enquiry.route] = mutableListOf()
             getDirectRoutes(enquiry)
             getInterchangeRoutes(enquiry)
@@ -69,7 +69,7 @@ class RouteFactory(
                 route = route,
                 links = route.children.toMutableList(),
                 linesTo = linesTo,
-                enquiry = enquiry,
+                enquiry = enquiry
             )
         }
     }
@@ -78,19 +78,19 @@ class RouteFactory(
         route: RouteNode,
         links: MutableList<RouteNode>,
         linesTo: List<String>,
-        enquiry: RouteEnquiry,
+        enquiry: RouteEnquiry
     ) {
         if (links.isEmpty() || links.first().parent.size > enquiry.depth) return
 
         do {
             val to = enquiry.route.second
             val link = links.removeFirst()
-            if (linesTo.any { interchangeFactory.getLineIdsByLink(link.key).contains(it) })
+            if (linesTo.any { interchangeFactory.getLineIdsByLink(link.key).contains(it) }) {
                 createAvailableRoute(node = link, to = to)?.let {
                     enquiry.channel.send(it)
                     memoized[enquiry.route]!!.add(it)
                 }
-            else {
+            } else {
                 val interchanges = interchangeFactory.getLinks(
                     key = link.key.first,
                     exclude = link.key.second,
@@ -106,7 +106,7 @@ class RouteFactory(
                                 RouteNode(
                                     key = next,
                                     children = mutableSetOf(),
-                                    parent = link.parent.plus(link.key).toMutableList(),
+                                    parent = link.parent.plus(link.key).toMutableList()
                                 )
                             }.toMutableList()
                         )
@@ -115,7 +115,7 @@ class RouteFactory(
                             links = link.children
                                 .sortedByDescending { child -> linesTo.contains(child.key.first) }.toMutableList(),
                             linesTo = linesTo,
-                            enquiry = enquiry,
+                            enquiry = enquiry
                         )
                     }
             }
@@ -133,7 +133,7 @@ class RouteFactory(
                     createRouteFromLine(
                         from = parentFrom,
                         to = parentTo,
-                        line = parentFrom.first,
+                        line = parentFrom.first
                     )
                 )
             }
@@ -142,7 +142,7 @@ class RouteFactory(
                 createRouteFromLine(
                     from = node.key,
                     to = Pair(node.key.first, to),
-                    line = node.key.first,
+                    line = node.key.first
                 )
             )
             return AvailableRoute(route = route)
@@ -179,14 +179,16 @@ class RouteFactory(
                 val lineFrom = linesFrom.firstOrNull { it.stations.contains(interchange) }
                 val lineTo = linesTo.firstOrNull { it.stations.contains(interchange) }
 
-                if (lineFrom != null && lineTo != null)
+                if (lineFrom != null && lineTo != null) {
                     return createRoute(line = lineFrom.name, from = from.second, to = interchange).toMutableList()
                         .plus(createRoute(line = lineTo.name, from = interchange, to = to.second))
-
+                }
             }
-            //do not want to connect lines to themselves across multiple links. (ie elizabeth). (or add code back TBC).
+            // do not want to connect lines to themselves across multiple links. (ie elizabeth). (or add code back TBC).
             throw NoRouteException("no route found for $from $isVirtualFrom $to $isVirtualTo and $line")
-        } else return createRoute(line = lineDetails.name, from = from.second, to = to.second)
+        } else {
+            return createRoute(line = lineDetails.name, from = from.second, to = to.second)
+        }
     }
 
     companion object {

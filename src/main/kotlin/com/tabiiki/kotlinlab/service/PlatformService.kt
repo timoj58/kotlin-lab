@@ -34,7 +34,7 @@ class PlatformServiceImpl(
     private val signalService: SignalService,
     private val sectionService: SectionService,
     private val lineRepo: LineRepo,
-    private val lineFactory: LineFactory,
+    private val lineFactory: LineFactory
 ) : PlatformService {
     private val platformMonitor = PlatformMonitor(sectionService, signalService)
     private var commuterChannel: Channel<Commuter>? = null
@@ -46,24 +46,28 @@ class PlatformServiceImpl(
 
     override fun isClear(transport: Transport): Boolean {
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
-        val platformClear = if (switchPlatform)
+        val platformClear = if (switchPlatform) {
             platformMonitor.isClear(
                 Pair(
                     "${transport.line.name}:${LineDirection.TERMINAL}",
                     transport.platformKey().second
                 )
             )
-        else platformMonitor.isClear(transport.platformKey())
+        } else {
+            platformMonitor.isClear(transport.platformKey())
+        }
 
-        return platformClear && (transport.line.overrideIsClear ||
+        return platformClear && (
+            transport.line.overrideIsClear ||
                 !transport.line.overrideIsClear && sectionService.isClear(
-            transport = transport,
-            switchFrom = switchPlatform,
-            approachingJunction = lineFactory.isJunction(
-                line = transport.line.name,
-                station = transport.section().second
+                transport = transport,
+                switchFrom = switchPlatform,
+                approachingJunction = lineFactory.isJunction(
+                    line = transport.line.name,
+                    station = transport.section().second
+                )
             )
-        ))
+            )
     }
 
     override fun dump() {
@@ -93,12 +97,13 @@ class PlatformServiceImpl(
         val key = getPlatformSignalKey(transport, instructions, switchPlatform)
 
         signalService.send(
-            key, SignalMessage(
+            key,
+            SignalMessage(
                 signalValue = SignalValue.RED,
                 id = transport.id,
                 key = key,
                 line = transport.line.id,
-                commuterChannel = transport.carriage.channel,
+                commuterChannel = transport.carriage.channel
             )
         )
 
@@ -107,7 +112,7 @@ class PlatformServiceImpl(
                 transport = transport,
                 key = key,
                 lineInstructions = instructions,
-                switchPlatform = switchPlatform,
+                switchPlatform = switchPlatform
             )
         }
     }
@@ -120,12 +125,13 @@ class PlatformServiceImpl(
         val key = getPlatformSignalKey(transport, lineInstructions, switchPlatform)
 
         signalService.send(
-            key, SignalMessage(
+            key,
+            SignalMessage(
                 signalValue = SignalValue.RED,
                 id = transport.id,
                 key = key,
                 line = transport.line.id,
-                commuterChannel = transport.carriage.channel,
+                commuterChannel = transport.carriage.channel
             )
         )
 
@@ -134,10 +140,9 @@ class PlatformServiceImpl(
                 transport = transport,
                 key = key,
                 lineInstructions = lineInstructions,
-                switchPlatform = switchPlatform,
+                switchPlatform = switchPlatform
             )
         }
-
     }
 
     private suspend fun holdActions(
@@ -168,19 +173,20 @@ class PlatformServiceImpl(
                 lineInstructions = lineInstructions
             )
 
-            if (counter.get() > minimumHold * 3 && !holdLogger.get())
+            if (counter.get() > minimumHold * 3 && !holdLogger.get()) {
                 holdLogger.set(true).also {
                     println("holding ${transport.id} at $key data: $canRelease")
                 }
-
-        } while (counter.incrementAndGet() < minimumHold
-            || !canRelease.first
-            || !canRelease.second
-            || !canRelease.third
+            }
+        } while (counter.incrementAndGet() < minimumHold ||
+            !canRelease.first ||
+            !canRelease.second ||
+            !canRelease.third
         )
 
-        if (holdLogger.get())
+        if (holdLogger.get()) {
             println("released ${transport.id} from hold")
+        }
 
         dispatch(
             transport = transport,
@@ -212,8 +218,9 @@ class PlatformServiceImpl(
             !switchPlatform || platformMonitor.isClear(
                 key = Pair(
                     "${transport.line.name}:${
-                        transport.lineDirection(true)
-                    }", key.second
+                    transport.lineDirection(true)
+                    }",
+                    key.second
                 )
             )
         )
@@ -226,7 +233,7 @@ class PlatformServiceImpl(
     ): Unit = coroutineScope {
         transport.startJourney(lineInstructions = lineInstructions)
         val job = launch { transport.motionLoop() }
-        //TESTING - should send a GREEN to relevant section
+        // TESTING - should send a GREEN to relevant section
         sectionService.accept(
             transport = transport
                 .also {

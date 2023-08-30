@@ -34,7 +34,6 @@ class StationServiceImplTest {
 
         `when`(signalService.getPlatformSignals()).thenReturn(listOf(Pair("", LineBuilder().stations[0].id)))
         `when`(signalService.getChannel(Pair("", LineBuilder().stations[0].id))).thenReturn(channel)
-
     }
 
     @Test
@@ -66,5 +65,4 @@ class StationServiceImplTest {
 
         job.cancel()
     }
-
 }

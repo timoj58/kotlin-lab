@@ -37,13 +37,11 @@ internal class TransportTest {
     @ParameterizedTest
     @CsvSource("1:A,B,POSITIVE", "1:D,A,POSITIVE", "1:A,D,NEGATIVE", "1:B,A,NEGATIVE")
     fun `line direction test for circle line`(from: String, to: String, direction: LineDirection) {
-
         val train = Transport(
             config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
             line = LineBuilder().getCircleLine(),
             timeStep = 10
         ).also { it.addSection(Pair(from, to)) }
-
 
         assertThat(train.lineDirection()).isEqualTo(direction)
     }
@@ -51,7 +49,6 @@ internal class TransportTest {
     @ParameterizedTest
     @CsvSource("1:B,A,POSITIVE", "1:A,B,NEGATIVE", "1:D,A,POSITIVE", "1:A,D,NEGATIVE", "1:C,A,NEGATIVE")
     fun `line direction test for circle line 2`(from: String, to: String, direction: LineDirection) {
-
         val train = Transport(
             config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
             line = LineBuilder().getCircleLine2(),
@@ -208,13 +205,13 @@ internal class TransportTest {
         train.startJourney(
             LineInstructions(
                 from = Station(
-                    StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second),
+                    StationConfig(id = "1", latitude = stratford.first, longitude = stratford.second)
                 ),
                 to = Station(
-                    StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second),
+                    StationConfig(id = "2", latitude = westHam.first, longitude = westHam.second)
                 ),
                 next = Station(
-                    StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second),
+                    StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second)
                 ),
                 direction = LineDirection.POSITIVE
             )
@@ -224,6 +221,4 @@ internal class TransportTest {
             train.motionLoop()
         }
     }
-
-
 }

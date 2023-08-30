@@ -44,16 +44,13 @@ internal class LineControllerTest {
             Transport(timeStep = 10, config = LineBuilder().transportConfig, line = LineBuilder().getLine())
         )
 
-
-        //ensure transporter only released once
+        // ensure transporter only released once
         verify(conductor, atMostOnce()).release(
             line.transporters[0]
         )
 
-
         res.cancel()
     }
-
 
     @Test
     fun `start line and expect two trains to arrive at station B`() = runBlocking {
@@ -74,5 +71,4 @@ internal class LineControllerTest {
 
         res.cancel()
     }
-
 }

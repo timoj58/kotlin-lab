@@ -34,7 +34,7 @@ class LineControllerTest(
     private val journeyRepo: JourneyRepo,
     private val switchService: SwitchService,
     private val stationFactory: StationFactory,
-    private val lineFactory: LineFactory,
+    private val lineFactory: LineFactory
 ) {
     private val integrationControl = IntegrationControl()
 
@@ -76,10 +76,9 @@ class LineControllerTest(
             }
         }.toList()
 
-
         val controller = LineControllerImpl(
             timeStep = timeStep,
-            conductor = lineConductor,
+            conductor = lineConductor
         )
 
         val globalCommuterChannel = Channel<Commuter>()
@@ -102,5 +101,4 @@ class LineControllerTest(
             integrationControl.status(listener, listOf(initJob, job, job2), timeout) { controller.dump() }
         }
     }
-
 }

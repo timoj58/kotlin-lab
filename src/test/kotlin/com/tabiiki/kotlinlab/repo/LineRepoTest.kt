@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class LineRepoTest {
-    //TODO issue relates to missing stations - signals are turning off the wrong light, ie not contiguous
+    // TODO issue relates to missing stations - signals are turning off the wrong light, ie not contiguous
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
     private val stationFactory = StationFactory(stationsConfig)
     private val stationRepo = StationRepoImpl(stationFactory)
@@ -49,13 +49,11 @@ class LineRepoTest {
 
     private val lineFactory = LineFactory(10, transportConfig, linesConfig)
 
-
     @BeforeEach
     fun init() {
         lineFactory.get().map { lineFactory.get(it) }.groupBy { it.name }.forEach {
             lineRepo.addLineDetails(it.key, it.value)
         }
-
     }
 
     @Test
@@ -64,5 +62,4 @@ class LineRepoTest {
         println("$sections")
         println(lineRepo.getPreviousSections(platformKey = Pair("River:POSITIVE", "River:673")))
     }
-
 }

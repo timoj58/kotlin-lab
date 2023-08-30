@@ -11,7 +11,6 @@ import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 
-
 private class Channels {
     private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
         ConcurrentHashMap()
@@ -44,7 +43,7 @@ interface SignalService {
     suspend fun receive(key: Pair<String, String>): SignalMessage?
     suspend fun send(
         key: Pair<String, String>,
-        signalMessage: SignalMessage,
+        signalMessage: SignalMessage
     )
 
     fun initConnected(line: String, lineRepo: LineRepo)
@@ -78,7 +77,7 @@ class SignalServiceImpl(
     override suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
     override suspend fun send(
         key: Pair<String, String>,
-        signalMessage: SignalMessage,
+        signalMessage: SignalMessage
     ) {
         channels.send(key = key, signalMessage = signalMessage)
         signalFactory.get(key).connected.forEach { signal ->
@@ -87,5 +86,4 @@ class SignalServiceImpl(
     }
 
     override fun initConnected(line: String, lineRepo: LineRepo) = signalFactory.updateConnected(line, lineRepo)
-
 }

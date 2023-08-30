@@ -10,9 +10,9 @@ import java.util.function.Consumer
 
 data class Commuter(
     val id: UUID = UUID.randomUUID(),
-    val commute: Pair<Pair<String, String>, Channel<RouteEnquiry>>, //TODO destroy commuter once completed?  makes sense.
+    val commute: Pair<Pair<String, String>, Channel<RouteEnquiry>>, // TODO destroy commuter once completed?  makes sense.
     val timeStep: Long,
-    val ready: Consumer<Commuter>,
+    val ready: Consumer<Commuter>
 ) {
 
     val channel: Channel<AvailableRoute> = Channel()
@@ -43,8 +43,7 @@ data class Commuter(
             if (enquiry.route.isEmpty()) throw RuntimeException("no routes for $commute")
             route.add(enquiry)
             if (route.size == 1) ready.accept(this@Commuter)
-        } while (true) //this needs to exit as well. TODO
-
+        } while (true) // this needs to exit as well. TODO
     }
 
     companion object {
@@ -90,7 +89,5 @@ data class Commuter(
         }
 
          */
-
-
     }
 }

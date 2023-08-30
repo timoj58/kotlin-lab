@@ -72,7 +72,6 @@ class LineControllerImpl(
                 }
             }
             transportersToDispatch.removeAll { released.contains(it.id) }
-
         } while (transportersToDispatch.isNotEmpty())
 
         if (linesToDispatch.isNotEmpty()) dispatchByLineId(line, linesToDispatch)

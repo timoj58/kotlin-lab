@@ -8,7 +8,5 @@ class KotlinLabApplicationTests {
 
     @Test
     fun contextLoads() {
-
     }
-
 }

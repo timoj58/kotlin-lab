@@ -26,5 +26,4 @@ class JourneyRepoImpl : JourneyRepo {
         val journey = journeyTimes[section]!!
         return Pair(journey.second / journey.first, journey.third)
     }
-
 }

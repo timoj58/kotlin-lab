@@ -41,7 +41,7 @@ class InterchangeFactoryBuilder {
                 "src/main/resources/network/cable/cable.yml"
             ),
             listOf(
-                "src/main/resources/network/river/river.yml",
+                "src/main/resources/network/river/river.yml"
             ),
             listOf("src/main/resources/network/dockland/dlr.yml")
         )
@@ -96,7 +96,7 @@ class InterchangeFactoryBuilder {
                     weight = 1500,
                     topSpeed = 20,
                     power = 2300
-                ),
+                )
             )
         )
         val transportConfig = TransportersConfig(transportersAdapter)

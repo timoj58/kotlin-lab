@@ -19,7 +19,7 @@ data class LineConfig(
     @JsonProperty("depots") val depots: List<String> = listOf(),
     @JsonProperty("transporters-per-section") val transportersPerSection: Int? = null,
     @JsonProperty("switch-track-distance") val switchTrackDistance: Double? = null,
-    @JsonProperty("override-is-clear") val overrideIsClear: Boolean? = null,
+    @JsonProperty("override-is-clear") val overrideIsClear: Boolean? = null
 ) {
     var type: LineType? = null
 }
@@ -54,5 +54,4 @@ class LinesConfig(linesAdapter: LinesAdapter) {
             }
         }
     }
-
 }

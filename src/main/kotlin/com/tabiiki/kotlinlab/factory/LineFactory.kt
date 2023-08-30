@@ -26,7 +26,7 @@ class LineFactory(
             Line(
                 timeStep = timeStep,
                 config = it,
-                transportConfig = transportConfig.get(),
+                transportConfig = transportConfig.get()
             )
         }
 
@@ -39,11 +39,11 @@ class LineFactory(
     fun getNetwork(id: String): LineNetwork? = lineNetworks[id]
 
     fun isSwitchStation(line: String, station: String): Boolean {
-        //TODO exposing the **, *** terminals for RIVER side effects elsewhere? or part of the other bug so safe to ignore.
+        // TODO exposing the **, *** terminals for RIVER side effects elsewhere? or part of the other bug so safe to ignore.
         val network = getNetwork(line) ?: return false
         return network.getNodes().any {
             (it.station == SwitchMonitor.replaceSwitch(station)) &&
-                    it.linked.any { n -> n.contains("*") } && it.linked.size > 1
+                it.linked.any { n -> n.contains("*") } && it.linked.size > 1
         }
     }
 

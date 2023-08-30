@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
-@Disabled //TODO these tests are most likely wrong.  ie switch lines occur on multiple lines, not a single line.
+@Disabled // TODO these tests are most likely wrong.  ie switch lines occur on multiple lines, not a single line.
 /*
     these do not make any sense:  review or leave.  testing data is wrong.
  */
@@ -32,7 +32,6 @@ internal class SwitchServiceImplTest {
         ).also { it.addSection(Pair("3:$to", from)) }
 
         assertThat(switchService.isSwitchSection(transport)).isEqualTo(res)
-
     }
 
     @ParameterizedTest
@@ -47,7 +46,6 @@ internal class SwitchServiceImplTest {
         ).also { it.addSection(Pair("3:$to", from)) }
 
         assertThat(switchService.isSwitchSection(transport)).isEqualTo(res)
-
     }
 
     @ParameterizedTest
@@ -63,5 +61,4 @@ internal class SwitchServiceImplTest {
 
         assertThat(switchService.isSwitchPlatform(transport, transport.section())).isEqualTo(res)
     }
-
 }

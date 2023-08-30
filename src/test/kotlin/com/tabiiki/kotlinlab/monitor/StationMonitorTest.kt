@@ -21,7 +21,6 @@ class StationMonitorTest {
 
     @Test
     fun `commuter embark test`() = runBlocking {
-
         val transporterId = UUID.randomUUID()
 
         val platformChannel = Channel<SignalMessage>()
@@ -33,10 +32,10 @@ class StationMonitorTest {
         val job = launch { stationMonitor.monitorCommuters(commuterChannel) }
         val job2 = launch { stationMonitor.monitorPlatform(platformChannel, stationChannel) }
 
-        //add a commuter.
+        // add a commuter.
         val commuter = Commuter(
             commute = Pair(Pair("A", "B"), routeEnquiryChannel),
-            timeStep = 10,
+            timeStep = 10
         ) {
         }
         val job3 = launch { commuter.initJourney() }
@@ -55,7 +54,7 @@ class StationMonitorTest {
 
         delay(100)
 
-        //send a RED
+        // send a RED
         launch {
             platformChannel.send(
                 SignalMessage(

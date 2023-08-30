@@ -17,24 +17,23 @@ internal class StationRepoTest {
     private val circleLine = listOf("A", "B", "C", "A")
     private val circleLine2 = listOf("E", "F", "A", "B", "C", "A")
 
-
     @BeforeEach
     fun `init`() {
         val allStations = mutableListOf<Station>()
         allStations.addAll(stations)
         allStations.add(
             Station(
-                StationConfig(id = "E", latitude = 51.5002551610895, longitude = 0.00358625912595083),
+                StationConfig(id = "E", latitude = 51.5002551610895, longitude = 0.00358625912595083)
             )
         )
         allStations.add(
             Station(
-                StationConfig(id = "F", latitude = 51.5002551610895, longitude = 0.00358625912595083),
+                StationConfig(id = "F", latitude = 51.5002551610895, longitude = 0.00358625912595083)
             )
         )
         allStations.add(
             Station(
-                StationConfig(id = "D", latitude = 51.5002551610895, longitude = 0.00358625912595083),
+                StationConfig(id = "D", latitude = 51.5002551610895, longitude = 0.00358625912595083)
             )
         )
 
@@ -46,7 +45,6 @@ internal class StationRepoTest {
         Mockito.`when`(stationFactory.get("E")).thenReturn(allStations[3])
         Mockito.`when`(stationFactory.get("F")).thenReturn(allStations[4])
     }
-
 
     @Test
     fun `next & previous when station is first in line`() {
@@ -118,12 +116,13 @@ internal class StationRepoTest {
         assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("C", "A")).id).isEqualTo("B")
         assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("A", "C")).id).isEqualTo("C")
 
-        assertThat(stationRepo.getPreviousStationsOnLine(
-            listOf(LineBuilder().getCircleLine()),
-            "A",
-            LineDirection.POSITIVE
-        ).map { it.id }).isEqualTo(listOf("B", "D"))
-
+        assertThat(
+            stationRepo.getPreviousStationsOnLine(
+                listOf(LineBuilder().getCircleLine()),
+                "A",
+                LineDirection.POSITIVE
+            ).map { it.id }
+        ).isEqualTo(listOf("B", "D"))
     }
 
     @Test
@@ -136,10 +135,12 @@ internal class StationRepoTest {
         assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("B", "A")).id).isEqualTo("C")
         assertThat(stationRepo.getPreviousStationOnLine(circleLine2, Pair("A", "B")).id).isEqualTo("F")
 
-        assertThat(stationRepo.getPreviousStationsOnLine(
-            listOf(LineBuilder().getCircleLine()),
-            "A",
-            LineDirection.NEGATIVE
-        ).map { it.id }).isEqualTo(listOf("B", "D"))
+        assertThat(
+            stationRepo.getPreviousStationsOnLine(
+                listOf(LineBuilder().getCircleLine()),
+                "A",
+                LineDirection.NEGATIVE
+            ).map { it.id }
+        ).isEqualTo(listOf("B", "D"))
     }
 }

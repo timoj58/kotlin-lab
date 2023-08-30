@@ -22,9 +22,11 @@ data class Carriage(
     override suspend fun embark(commuterChannel: Channel<Commuter>) = coroutineScope {
         do {
             val commuter = channel.receive()
-            if (commuters.size < capacity) commuters.add(commuter)
-            else commuterChannel.send(commuter)
-
+            if (commuters.size < capacity) {
+                commuters.add(commuter)
+            } else {
+                commuterChannel.send(commuter)
+            }
         } while (true)
     }
 
@@ -37,5 +39,4 @@ data class Carriage(
             }
         }
     }
-
 }

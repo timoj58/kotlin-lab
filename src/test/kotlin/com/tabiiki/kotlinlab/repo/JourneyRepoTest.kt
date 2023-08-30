@@ -22,7 +22,6 @@ internal class JourneyRepoTest {
         val train = line.transporters.first()
         train.addSection(Pair("1:B", "C"))
         //     assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isLessThan(0)
-
     }
 
     @Test
@@ -30,7 +29,6 @@ internal class JourneyRepoTest {
         val train = line.transporters.first()
         train.addSection(Pair("1:X", "Y"))
         //     assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(0)
-
     }
 
     @Test
@@ -40,5 +38,4 @@ internal class JourneyRepoTest {
         train.addSection(Pair("1:B", "C"))
         //    assertThat(journeyTimeRepoImpl.isJourneyTimeGreaterThanHoldingDelay(listOf(line), train)).isEqualTo(0)
     }
-
 }

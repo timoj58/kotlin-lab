@@ -8,10 +8,8 @@ import org.mockito.Mockito.`when`
 
 internal class LineConductorTest {
 
-
     private val stationRepo = mock(StationRepo::class.java)
     private val lineConductor = LineConductorImpl(mock(PlatformService::class.java))
-
 
     @BeforeEach
     fun `init`() {
@@ -23,7 +21,8 @@ internal class LineConductorTest {
         )
         `when`(
             stationRepo.getNextStationOnLine(
-                listOf(), Pair("1:A", "B")
+                listOf(),
+                Pair("1:A", "B")
             )
         ).thenReturn(
             LineBuilder().stations[2]

@@ -33,7 +33,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
 
     suspend fun monitorPlatform(
         platformChannel: Channel<SignalMessage>,
-        stationChannel: Channel<SignalMessage>,
+        stationChannel: Channel<SignalMessage>
     ) = coroutineScope {
         var previousSignal: SignalValue? = null
         do {
@@ -55,7 +55,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
     suspend fun monitorStation(
         station: Station,
         stationChannel: Channel<SignalMessage>,
-        globalListener: Channel<StationMessage>,
+        globalListener: Channel<StationMessage>
     ) = coroutineScope {
         do {
             val msg = stationChannel.receive()

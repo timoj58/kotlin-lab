@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Component
 class InterchangeFactory(
     private val lineFactory: LineFactory,
-    private val stationFactory: StationFactory,
+    private val stationFactory: StationFactory
 ) {
     final val lines: List<Line> = lineFactory.get().map { lineFactory.get(it) }
     final val stations = lines.map { it.stations }.flatten()
@@ -68,8 +68,8 @@ class InterchangeFactory(
 
         val stationsToTest = typesToTest.values.asSequence().flatten().filter { line ->
             line.stations.none {
-                interchangesWithLines.contains("${line.getType()}:$it")
-                        && typesToTest[line.getType()]!!.size != lines.filter { l -> l.getType() == line.getType() }.size
+                interchangesWithLines.contains("${line.getType()}:$it") &&
+                    typesToTest[line.getType()]!!.size != lines.filter { l -> l.getType() == line.getType() }.size
             }
         }.map { it.stations.map { s -> "${it.name}:$s" }.toList() }.flatten().distinct().toList()
 
@@ -91,7 +91,7 @@ class InterchangeFactory(
 
                 if (haversineCalculator.distanceBetween(
                         start = stationFactory.get(fromStation).position,
-                        end = stationFactory.get(toStation).position,
+                        end = stationFactory.get(toStation).position
                     ) < 500.0
                 ) {
                     val lineFrom = Line.getLine(toTest)
@@ -119,7 +119,7 @@ class InterchangeFactory(
             val interchanges = test.stations.filter { testAgainst.stations.contains(it) }
             if (interchanges.isEmpty() || interchanges.size <= 2) return interchanges
             val interchangeIndexes = interchanges.map { Pair(it, test.stations.indexOf(it)) }.sortedBy { it.second }
-                .toMutableList() //note circle.  will grab first. its ok.
+                .toMutableList() // note circle.  will grab first. its ok.
             var first = interchangeIndexes.removeFirst()
             val last = interchangeIndexes.removeLast()
 
@@ -131,19 +131,17 @@ class InterchangeFactory(
                         currentIdx = pair.second,
                         nextIdx = if (index < interchangeIndexes.size - 1) interchangeIndexes[index + 1].second else last.second
                     )
-                )
+                ) {
                     filteredInterchanges.add(pair.first)
+                }
 
                 first = pair
             }
-
 
             return filteredInterchanges.toList()
         }
 
         private fun isNotContiguous(previousIdx: Int, currentIdx: Int, nextIdx: Int): Boolean =
             (currentIdx > previousIdx + 1 || currentIdx < nextIdx - 1)
-
     }
-
 }

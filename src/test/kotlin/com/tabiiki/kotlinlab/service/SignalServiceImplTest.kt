@@ -29,12 +29,10 @@ internal class SignalServiceImplTest {
 
     @Test
     fun `test signal`() = runBlocking {
-
         val job = async { signalService.init(Pair("A", "B")) }
 
         delay(100)
         val channelOut = signalService.getChannel(Pair("A", "B"))!!
-
 
         val job2 = async { testChannel(channelOut, job) }
 
@@ -52,5 +50,4 @@ internal class SignalServiceImplTest {
 
         job.cancel()
     }
-
 }

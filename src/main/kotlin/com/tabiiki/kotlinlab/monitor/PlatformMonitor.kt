@@ -34,21 +34,25 @@ private class Platforms {
             SignalValue.GREEN -> true
             SignalValue.RED -> false
         }
-        if (new && (platformLockOwners[key]
-                ?: signal.id) != signal.id
-        ) throw RuntimeException("${signal.id} is not owner of $key lock, ${platformLockOwners[key]}")
+        if (new && (
+            platformLockOwners[key]
+                ?: signal.id
+            ) != signal.id
+        ) {
+            throw RuntimeException("${signal.id} is not owner of $key lock, ${platformLockOwners[key]}")
+        }
 
         val current = platforms[key]!!.acquire
         if (platformLockOwners[key] != null && current == new) throw RuntimeException("setting $key to same signal $signal.signalValue")
         if (!new) platformLockOwners[key] = signal.id else platformLockOwners.remove(key)
         platforms[key]!!.set(new)
-        //println(" ${signal.signalValue} for $key by ${signal.id}")
+        // println(" ${signal.signalValue} for $key by ${signal.id}")
     }
 }
 
 class PlatformMonitor(
     private val sectionService: SectionService,
-    private val signalService: SignalService,
+    private val signalService: SignalService
 ) {
     private val holdChannels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> = ConcurrentHashMap()
     private val platforms = Platforms()
@@ -70,7 +74,6 @@ class PlatformMonitor(
                     previousSignal = it
                 }
             }
-
         } while (true)
     }
 
@@ -83,9 +86,9 @@ class PlatformMonitor(
                 if (!platforms.isClear(it)) {
                     throw RuntimeException(
                         "${msg.id} arrived too quickly from ${msg.getJourneyTime().first} $it, owner: ${
-                            platforms.get(
-                                it
-                            )
+                        platforms.get(
+                            it
+                        )
                         }"
                     )
                 }
@@ -96,15 +99,17 @@ class PlatformMonitor(
 
     fun dump() {
         platforms.getPlatformKeys().forEach {
-            if (!platforms.isClear(it))
+            if (!platforms.isClear(it)) {
                 println("$it: holding ${platforms.get(it)}")
+            }
         }
     }
 
     private fun platformToKey(transport: Transport): Pair<String, String> {
         var switchStation = false
-        if (!transport.platformKey().first.contains(LineDirection.TERMINAL.name))
+        if (!transport.platformKey().first.contains(LineDirection.TERMINAL.name)) {
             switchStation = sectionService.isSwitchPlatform(transport, transport.getJourneyTime().first, true)
+        }
 
         return transport.platformToKey(switchStation)!!
     }

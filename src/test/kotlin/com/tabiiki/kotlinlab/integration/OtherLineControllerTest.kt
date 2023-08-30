@@ -47,7 +47,7 @@ class OtherLineControllerTest @Autowired constructor(
         "cable,cable",
         "tram,tram",
         "dockland,dlr",
-        "river,river",
+        "river,river"
     )
     fun `test all transports complete a full journey on an other line`(lineType: String, lineName: String) =
         runBlocking {

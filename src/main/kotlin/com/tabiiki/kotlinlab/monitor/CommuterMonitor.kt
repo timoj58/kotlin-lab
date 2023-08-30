@@ -7,7 +7,7 @@ class CommuterMonitor {
 
     suspend fun monitor(channel: Channel<Commuter>) {
         do {
-            val msg = channel.receive() //what to do with it?  for now nothing.
+            val msg = channel.receive() // what to do with it?  for now nothing.
         } while (true)
     }
 }

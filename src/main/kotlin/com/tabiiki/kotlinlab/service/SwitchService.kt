@@ -58,7 +58,6 @@ class SwitchServiceImpl(
     }
 
     override fun isSwitchSection(transport: Transport): Boolean {
-
         val section = getSection(transport.section())
         val isPossibleSwitch = lineFactory.isSwitchSection(transport.line.name, section)
         if (!isPossibleSwitch.first && !isPossibleSwitch.second) return false
@@ -66,8 +65,8 @@ class SwitchServiceImpl(
         val firstStation = getFirstStation(transport)
         val lastStation = getLastStation(transport)
 
-        return firstStation == SwitchMonitor.replaceSwitch(section.first) && isPossibleSwitch.first
-                || lastStation == SwitchMonitor.replaceSwitch(section.second) && isPossibleSwitch.second
+        return firstStation == SwitchMonitor.replaceSwitch(section.first) && isPossibleSwitch.first ||
+            lastStation == SwitchMonitor.replaceSwitch(section.second) && isPossibleSwitch.second
     }
 
     override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean {
@@ -81,8 +80,11 @@ class SwitchServiceImpl(
         val lastStation = transport.line.stations.last()
 
         return listOf(firstStation, lastStation).contains(
-            if (destination) section.second
-            else SwitchMonitor.replaceSwitch(Line.getStation(section.first))
+            if (destination) {
+                section.second
+            } else {
+                SwitchMonitor.replaceSwitch(Line.getStation(section.first))
+            }
         )
     }
 
@@ -101,7 +103,5 @@ class SwitchServiceImpl(
 
         private fun getLastStation(transport: Transport): String =
             if (transport.lineDirection() == LineDirection.NEGATIVE) transport.line.stations.first() else transport.line.stations.last()
-
     }
-
 }

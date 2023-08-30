@@ -27,7 +27,7 @@ interface StationService {
     suspend fun start(
         globalListener: Channel<StationMessage>,
         commuterChannel: Channel<Commuter>,
-        line: String? = null,
+        line: String? = null
     )
 }
 
@@ -60,5 +60,4 @@ class StationServiceImpl(
                 }
         }
     }
-
 }
