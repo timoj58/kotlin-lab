@@ -11,13 +11,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 17
+      - name: Set up JDK 19
         uses: actions/setup-java@v2
         with:
-          java-version: '17'
+          java-version: '19'
           distribution: 'adopt'
-      - name: mvn build
-        run: mvn kotlin:compile test && mvn jacoco:report
+      - name: gradle build
+        run: gradle build test jacocoTestReport
       - name: Generate JaCoCo Badge
         uses: cicirello/jacoco-badge-generator@v2
         with:
