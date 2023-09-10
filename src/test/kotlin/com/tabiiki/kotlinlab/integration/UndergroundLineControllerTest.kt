@@ -50,13 +50,13 @@ class UndergroundLineControllerTest @Autowired constructor(
         "district",
         "northern",
         "piccadilly",
-        "central",
+        "central", // longest running line
         "metropolitan",
         "bakerloo",
         "victoria",
         "hammersmith"
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
-        lineControllerTest.test("underground", lineName, 10)
+        lineControllerTest.test("underground", lineName, 5)
     }
 }

@@ -29,13 +29,12 @@ class NetworkServiceTest @Autowired constructor(
     }
 
     @Test
-    fun `test all trains travel the line route`() = runBlocking {
+    fun `test all trains travel the line route`(): Unit = runBlocking {
         val init = launch { networkService.init() }
         delay(2000)
         val channel = Channel<StationMessage>()
         val res = launch { networkService.start(channel) }
 
-        val running =
-            async { integrationControl.status(channel, listOf(init, res), 10) {} }
+        async { integrationControl.status(channel, listOf(init, res), 5) {} }
     }
 }
