@@ -21,7 +21,7 @@ jobs:
       - name: Generate JaCoCo Badge
         uses: cicirello/jacoco-badge-generator@v2
         with:
-          jacoco-csv-file: target/site/jacoco/jacoco.csv
+          jacoco-csv-file: build/reports/jacoco/test/jacocoTestReport.csv
           generate-branches-badge: true
           coverage-badge-filename: coverage.svg
           branches-badge-filename: branches.svg
@@ -38,5 +38,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
          name: jacoco-report
-         path: target/site/jacoco/
+         path: build/reports/jacoco/test/
 

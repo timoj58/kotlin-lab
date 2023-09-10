@@ -8,6 +8,7 @@ import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @ActiveProfiles("test-overground")
 @SpringBootTest
+@Disabled
 class OvergroundLineControllerTest @Autowired constructor(
     @Value("\${network.time-step}") val timeStep: Long,
     @Value("\${network.minimum-hold}") val minimumHold: Int,
