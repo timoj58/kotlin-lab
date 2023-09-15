@@ -51,6 +51,6 @@ class OtherLineControllerTest @Autowired constructor(
     )
     fun `test all transports complete a full journey on an other line`(lineType: String, lineName: String) =
         runBlocking {
-            lineControllerTest.test(lineType, lineName, 2)
+            lineControllerTest.test(lineType, lineName, 3)
         }
 }

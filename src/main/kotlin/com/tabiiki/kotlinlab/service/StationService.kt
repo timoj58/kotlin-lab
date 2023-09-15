@@ -20,6 +20,7 @@ enum class MessageType {
 }
 
 data class StationMessage(
+    val eventType: String = "STATION",
     val stationId: String? = null,
     val transportId: UUID? = null,
     val line: String? = null,

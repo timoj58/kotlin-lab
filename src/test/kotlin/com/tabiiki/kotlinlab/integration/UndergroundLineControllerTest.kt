@@ -64,6 +64,6 @@ class UndergroundLineControllerTest @Autowired constructor(
         "central" // longest running line
     )
     fun `test all transports complete a full journey on an underground line - longer`(lineName: String) = runBlocking {
-        lineControllerTest.test("underground", lineName, 6)
+        lineControllerTest.test("underground", lineName, 10)
     }
 }

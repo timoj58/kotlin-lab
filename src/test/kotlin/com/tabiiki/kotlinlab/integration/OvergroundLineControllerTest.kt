@@ -53,6 +53,6 @@ class OvergroundLineControllerTest @Autowired constructor(
         "stratford"
     )
     fun `test all transports complete a full journey on an overground line`(lineName: String) = runBlocking {
-        lineControllerTest.test("overground", lineName, 3)
+        lineControllerTest.test("overground", lineName, 4)
     }
 }

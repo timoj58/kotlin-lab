@@ -33,6 +33,7 @@ enum class Instruction {
 }
 
 data class TransportMessage(
+    val eventType: String = "TRANSPORT",
     val id: UUID,
     val lineId: String,
     val section: Pair<String, String>? = null,
