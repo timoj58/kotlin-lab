@@ -1,9 +1,15 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.configuration.LineConfig
+import com.tabiiki.kotlinlab.configuration.StationConfig
+import com.tabiiki.kotlinlab.configuration.TransportConfig
+import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Commuter
+import com.tabiiki.kotlinlab.model.Line
+import com.tabiiki.kotlinlab.model.Station
 import com.tabiiki.kotlinlab.util.LineBuilder
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -19,9 +25,15 @@ class StationServiceImplTest {
 
     private val signalService = mock(SignalService::class.java)
     private val stationFactory = mock(StationFactory::class.java)
+    private val lineFactory = mock(LineFactory::class.java)
 
     private val stationService =
-        StationServiceImpl(timeStep = 10, signalService = signalService, stationFactory = stationFactory)
+        StationServiceImpl(
+            timeStep = 10,
+            signalService = signalService,
+            stationFactory = stationFactory,
+            lineFactory = lineFactory
+        )
 
     private val channel: Channel<SignalMessage> = Channel()
 
@@ -64,5 +76,41 @@ class StationServiceImplTest {
         assertThat(received).isEqualTo(true)
 
         job.cancel()
+    }
+
+    @Test
+    fun `get Stratford station information`() {
+        `when`(stationFactory.get()).thenReturn(listOf("528"))
+        `when`(stationFactory.get("528")).thenReturn(
+            Station(
+                config = StationConfig(
+                    id = "528",
+                    name = "Stratford"
+                )
+            )
+        )
+        `when`(lineFactory.getStationLines("528")).thenReturn(
+            listOf(
+                Line(
+                    timeStep = 1,
+                    config = LineConfig(
+                        id = "1",
+                        name = "DLR",
+                        stations = emptyList(),
+                        transportId = 1,
+                        depots = emptyList(),
+                        lineCapacity = 1
+                    ),
+                    transportConfig = listOf(
+                        TransportConfig(transportId = 1, capacity = 1)
+                    )
+                )
+            )
+        )
+
+        val info = stationService.getInformation().first { it.id == "528" }
+
+        assertThat(info.name).isEqualTo("Stratford")
+        assertThat(info.lines.firstOrNull { it.name == "DLR" }).isNotNull
     }
 }

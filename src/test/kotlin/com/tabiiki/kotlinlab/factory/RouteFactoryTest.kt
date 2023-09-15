@@ -127,6 +127,7 @@ class RouteFactoryTest {
         val enquiries: MutableList<List<Pair<String, String>>> = mutableListOf()
         do {
             val enquiry = channel.receive()
+            println(enquiry)
             enquiries.add(enquiry.route)
         } while (!enquiries.containsAll(test))
 

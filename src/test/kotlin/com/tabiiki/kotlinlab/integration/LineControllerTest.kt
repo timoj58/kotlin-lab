@@ -53,7 +53,7 @@ class LineControllerTest(
         val lineConductor = LineConductorImpl(lineService)
 
         val stationService =
-            StationServiceImpl(timeStep = timeStep, signalService = signalService, stationFactory = stationFactory)
+            StationServiceImpl(timeStep = timeStep, signalService = signalService, stationFactory = stationFactory, lineFactory = lineFactory)
 
         val lineFactory = LineFactory(
             linesConfig = LinesConfig(

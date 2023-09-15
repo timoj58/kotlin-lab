@@ -4,7 +4,11 @@ import com.tabiiki.kotlinlab.configuration.LinesConfig
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.LineNetwork
+import com.tabiiki.kotlinlab.model.TransportMessage
 import com.tabiiki.kotlinlab.monitor.SwitchMonitor
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import javax.naming.ConfigurationException
@@ -38,6 +42,10 @@ class LineFactory(
     fun get(): List<String> = lines.map { it.id }
     fun getNetwork(id: String): LineNetwork? = lineNetworks[id]
 
+    fun getStationLines(stationId: String): List<Line> = get().map { get(it) }.filter {
+        it.stations.contains(stationId)
+    }
+
     fun isSwitchStation(line: String, station: String): Boolean {
         // TODO exposing the **, *** terminals for RIVER side effects elsewhere? or part of the other bug so safe to ignore.
         val network = getNetwork(line) ?: return false
@@ -54,4 +62,13 @@ class LineFactory(
 
     fun isSwitchSection(lineId: String, section: Pair<String, String>): Pair<Boolean, Boolean> =
         Pair(isSwitchStation(lineId, section.first), isSwitchStation(lineId, section.second))
+
+    suspend fun tracking(channel: Channel<TransportMessage>): Unit = coroutineScope {
+        lines.forEach {
+            it.transporters.forEach {
+                    transport ->
+                launch { transport.track(channel) }
+            }
+        }
+    }
 }

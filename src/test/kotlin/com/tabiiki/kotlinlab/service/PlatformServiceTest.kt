@@ -71,8 +71,6 @@ internal class PlatformServiceTest {
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 
-    private val stationService = StationServiceImpl(timeStep, signalService, stationFactory)
-
     private val jobs = mutableListOf<Job>()
 
     private suspend fun setup() = coroutineScope {

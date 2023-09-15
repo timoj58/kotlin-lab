@@ -1,5 +1,8 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.controller.LineInformation
+import com.tabiiki.kotlinlab.controller.StationInformation
+import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Commuter
@@ -29,13 +32,15 @@ interface StationService {
         commuterChannel: Channel<Commuter>,
         line: String? = null
     )
+    fun getInformation(): List<StationInformation>
 }
 
 @Service
 class StationServiceImpl(
     @Value("\${network.time-step}") val timeStep: Long,
     private val signalService: SignalService,
-    private val stationFactory: StationFactory
+    private val stationFactory: StationFactory,
+    private val lineFactory: LineFactory
 ) : StationService {
     private val stationMonitor = StationMonitor(timeStep = timeStep, stations = stationFactory.get())
 
@@ -60,4 +65,20 @@ class StationServiceImpl(
                 }
         }
     }
+
+    override fun getInformation(): List<StationInformation> =
+        stationFactory.get().map {
+            val station = stationFactory.get(it)
+
+            StationInformation(
+                id = station.id,
+                name = station.name,
+                lines = lineFactory.getStationLines(it).map { line ->
+                    LineInformation(
+                        id = line.id,
+                        name = line.name
+                    )
+                }
+            )
+        }
 }

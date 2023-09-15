@@ -58,4 +58,19 @@ internal class LineFactoryTest {
             LineFactory(0, transportsConfig, linesConfig).get("1")
         }
     }
+
+    @Test
+    fun `returns all the lines for a given station - Stratford`() {
+        Mockito.`when`(linesConfig.lines).thenReturn(
+            listOf(
+                LineConfig("1", "1", 1, 10, listOf("A", "C")),
+                LineConfig("2", "2", 2, 10, listOf("A", "B"))
+            )
+        )
+
+        val factory = LineFactory(100, transportsConfig, linesConfig)
+        val lines = factory.getStationLines("A")
+
+        assertThat(lines.size).isEqualTo(2)
+    }
 }

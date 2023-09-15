@@ -32,6 +32,14 @@ enum class Instruction {
     fun isMoving(): Boolean = THROTTLE_ON == this
 }
 
+data class TransportMessage(
+    val id: UUID,
+    val lineId: String,
+    val section: Pair<String, String>? = null,
+    val velocity: Double? = null,
+    val displacement: Double? = null
+)
+
 data class Transport(
     val id: UUID = UUID.randomUUID(),
     private val config: TransportConfig,
@@ -109,6 +117,21 @@ data class Transport(
 
     fun getMainlineForSwitch(): Pair<String, String> =
         Pair("${line.name}:${journey!!.from.id}", journey!!.to.id)
+
+    suspend fun track(tracker: Channel<TransportMessage>) {
+        do {
+            delay(timeStep * 10)
+            tracker.send(
+                TransportMessage(
+                    id = id,
+                    lineId = line.id,
+                    section = section(),
+                    velocity = physics.velocity,
+                    displacement = physics.displacement
+                )
+            )
+        } while (true)
+    }
 
     suspend fun signal(channel: Channel<SignalMessage>, departedConsumer: Consumer<Transport>? = null) {
         val timeRegistered = System.currentTimeMillis()

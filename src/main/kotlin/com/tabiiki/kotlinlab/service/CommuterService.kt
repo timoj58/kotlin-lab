@@ -25,7 +25,7 @@ class CommuterServiceImpl(
 
     override suspend fun generate(): Unit = coroutineScope {
         launch { routeService.listen() }
-        // launch { commuterMonitor.monitor(trackingChannel) }
+        //   launch { commuterMonitor.monitor(trackingChannel) }
 
         do {
             delay(timeStep * 100)

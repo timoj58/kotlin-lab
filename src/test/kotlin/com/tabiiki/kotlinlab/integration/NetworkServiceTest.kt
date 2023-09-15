@@ -1,6 +1,7 @@
 package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.factory.LineFactory
+import com.tabiiki.kotlinlab.model.TransportMessage
 import com.tabiiki.kotlinlab.service.NetworkService
 import com.tabiiki.kotlinlab.service.StationMessage
 import com.tabiiki.kotlinlab.util.IntegrationControl
@@ -33,8 +34,8 @@ class NetworkServiceTest @Autowired constructor(
         val init = launch { networkService.init() }
         delay(2000)
         val channel = Channel<StationMessage>()
-        val res = launch { networkService.start(channel) }
-
+        val tracker = Channel<TransportMessage>()
+        val res = launch { networkService.start(stationReceiver = channel, transportReceiver = tracker) }
         async { integrationControl.status(channel, listOf(init, res), 5) {} }
     }
 }
