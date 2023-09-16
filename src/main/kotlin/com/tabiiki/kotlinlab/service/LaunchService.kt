@@ -9,7 +9,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
 
-@Profile("!test")
+@Profile(value = ["default", "socket"])
 @Service
 class LaunchService(
     private val networkService: NetworkService,
