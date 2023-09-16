@@ -11,18 +11,13 @@ import org.springframework.stereotype.Service
 
 data class RouteEnquiry(val route: Pair<String, String>, val channel: Channel<AvailableRoute>, val depth: Int = 2)
 
-interface RouteService {
-    fun generate(): Pair<Pair<String, String>, Channel<RouteEnquiry>>
-    suspend fun listen()
-}
-
 @Service
-class RouteServiceImpl(
+class RouteService(
     private val stationRepo: StationRepo,
     private val routeFactory: RouteFactory
-) : RouteService {
+) {
     private val channel: Channel<RouteEnquiry> = Channel()
-    override fun generate(): Pair<Pair<String, String>, Channel<RouteEnquiry>> {
+    fun generate(): Pair<Pair<String, String>, Channel<RouteEnquiry>> {
         val stations = stationRepo.get()
         val from = generateStation(stations)
         return Pair(
@@ -34,7 +29,7 @@ class RouteServiceImpl(
         )
     }
 
-    override suspend fun listen() = coroutineScope {
+    suspend fun listen() = coroutineScope {
         do {
             val enquiry = channel.receive()
             launch { routeFactory.generateAvailableRoutes(enquiry) }

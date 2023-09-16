@@ -17,27 +17,19 @@ data class LineChannelMessage(
     val transporters: List<UUID>
 )
 
-interface LineController {
-    fun init(commuterChannel: Channel<Commuter>)
-    suspend fun init(line: List<Line>)
-    suspend fun start(line: List<Line>)
-
-    fun dump()
-}
-
 @Service
-class LineControllerImpl(
+class LineController(
     @Value("\${network.time-step}") private val timeStep: Long,
     private val conductor: LineConductor
-) : LineController {
+) {
 
-    override fun init(commuterChannel: Channel<Commuter>) = conductor.init(commuterChannel)
+    fun init(commuterChannel: Channel<Commuter>) = conductor.init(commuterChannel)
 
-    override suspend fun init(line: List<Line>): Unit = coroutineScope {
+    suspend fun init(line: List<Line>): Unit = coroutineScope {
         launch { conductor.init(line.map { it.name }.distinct().first(), line) }
     }
 
-    override suspend fun start(line: List<Line>): Unit = coroutineScope {
+    suspend fun start(line: List<Line>): Unit = coroutineScope {
         val transportersToDispatch = conductor.getTransportersToDispatch(line)
         val linesToDispatch = mutableListOf<MutableList<Transport>>()
 
@@ -48,7 +40,7 @@ class LineControllerImpl(
         launch { dispatchByLineId(line.first().name, linesToDispatch) }
     }
 
-    override fun dump() = conductor.dump()
+    fun dump() = conductor.dump()
 
     private suspend fun dispatchByLineId(line: String, linesToDispatch: MutableList<MutableList<Transport>>) {
         val transportersToDispatch = linesToDispatch.removeFirst()

@@ -8,15 +8,15 @@ import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import com.tabiiki.kotlinlab.repo.LineRepoImpl
+import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
-import com.tabiiki.kotlinlab.service.LineConductorImpl
-import com.tabiiki.kotlinlab.service.LineControllerImpl
-import com.tabiiki.kotlinlab.service.PlatformServiceImpl
-import com.tabiiki.kotlinlab.service.SectionServiceImpl
-import com.tabiiki.kotlinlab.service.SignalServiceImpl
+import com.tabiiki.kotlinlab.service.LineConductor
+import com.tabiiki.kotlinlab.service.LineController
+import com.tabiiki.kotlinlab.service.PlatformService
+import com.tabiiki.kotlinlab.service.SectionService
+import com.tabiiki.kotlinlab.service.SignalService
 import com.tabiiki.kotlinlab.service.StationMessage
-import com.tabiiki.kotlinlab.service.StationServiceImpl
+import com.tabiiki.kotlinlab.service.StationService
 import com.tabiiki.kotlinlab.service.SwitchService
 import com.tabiiki.kotlinlab.util.IntegrationControl
 import kotlinx.coroutines.async
@@ -39,21 +39,21 @@ class LineControllerTest(
     private val integrationControl = IntegrationControl()
 
     suspend fun test(lineType: String, lineName: String, timeout: Int) = runBlocking {
-        val signalService = SignalServiceImpl(signalFactory)
-        val sectionService = SectionServiceImpl(45, switchService, signalService, journeyRepo)
+        val signalService = SignalService(signalFactory)
+        val sectionService = SectionService(45, switchService, signalService, journeyRepo)
 
         val lineService =
-            PlatformServiceImpl(
+            PlatformService(
                 minimumHold,
                 signalService,
                 sectionService,
-                LineRepoImpl(stationRepo),
+                LineRepo(stationRepo),
                 lineFactory
             )
-        val lineConductor = LineConductorImpl(lineService)
+        val lineConductor = LineConductor(lineService)
 
         val stationService =
-            StationServiceImpl(timeStep = timeStep, signalService = signalService, stationFactory = stationFactory, lineFactory = lineFactory)
+            StationService(timeStep = timeStep, signalService = signalService, stationFactory = stationFactory, lineFactory = lineFactory)
 
         val lineFactory = LineFactory(
             linesConfig = LinesConfig(
@@ -76,7 +76,7 @@ class LineControllerTest(
             }
         }.toList()
 
-        val controller = LineControllerImpl(
+        val controller = LineController(
             timeStep = timeStep,
             conductor = lineConductor
         )

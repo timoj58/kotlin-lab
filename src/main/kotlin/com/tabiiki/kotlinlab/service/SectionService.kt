@@ -75,42 +75,18 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
     fun getChannel(key: Pair<String, String>): Channel<Transport> = queues[key]!!.first
 }
 
-interface SectionService {
-    suspend fun accept(transport: Transport, motionJob: Job, jobs: List<Job>?)
-    suspend fun init(line: String)
-    fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean
-    fun isClear(
-        transport: Transport,
-        switchFrom: Boolean,
-        incoming: Boolean = false,
-        approachingJunction: Boolean
-    ): Boolean
-
-    fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
-    fun isSwitchSection(transport: Transport): Pair<Boolean, Boolean>
-    fun initQueues(key: Pair<String, String>)
-    fun arePreviousSectionsClear(
-        transport: Transport,
-        lineInstructions: LineInstructions,
-        sections: (Pair<String, String>) -> List<Pair<String, String>>
-    ): Boolean
-
-    fun isStationTerminal(station: String): Boolean
-    fun dump()
-}
-
 @Service
-class SectionServiceImpl(
+class SectionService(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val switchService: SwitchService,
     private val signalService: SignalService,
     private val journeyRepo: JourneyRepo
-) : SectionService {
+) {
 
     private val queues = Queues(minimumHold, journeyRepo)
     private val sectionMonitor = SectionMonitor()
 
-    override suspend fun accept(transport: Transport, motionJob: Job, jobs: List<Job>?): Unit =
+    suspend fun accept(transport: Transport, motionJob: Job, jobs: List<Job>?): Unit =
         coroutineScope {
             if (queues.getQueue(transport.section()).stream().anyMatch { it.id == transport.id }) {
                 throw RuntimeException("${transport.id} being added twice to ${transport.section()}")
@@ -119,7 +95,7 @@ class SectionServiceImpl(
             prepareRelease(transport) { t -> launch { release(t, motionJob, jobs) } }
         }
 
-    override suspend fun init(line: String): Unit = coroutineScope {
+    suspend fun init(line: String): Unit = coroutineScope {
         queues.getQueueKeys().filter { it.first.contains(line) }.forEach {
             launch { signalService.init(it) }
             launch {
@@ -128,13 +104,13 @@ class SectionServiceImpl(
         }
     }
 
-    override fun isClear(section: Pair<String, String>, incoming: Boolean): Boolean =
+    fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean =
         queues.isClear(section, incoming).first
 
-    override fun isClear(
+    fun isClear(
         transport: Transport,
         switchFrom: Boolean,
-        incoming: Boolean,
+        incoming: Boolean = false,
         approachingJunction: Boolean
     ): Boolean {
         val section = transport.section()
@@ -154,15 +130,15 @@ class SectionServiceImpl(
         return isSectionClear && isTerminalSectionFromClear
     }
 
-    override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean =
+    fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean =
         switchService.isSwitchPlatform(transport, section, destination)
 
-    override fun isSwitchSection(transport: Transport): Pair<Boolean, Boolean> =
+    fun isSwitchSection(transport: Transport): Pair<Boolean, Boolean> =
         switchService.isSwitchSectionByTerminal(transport)
 
-    override fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
+    fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
 
-    override fun arePreviousSectionsClear(
+    fun arePreviousSectionsClear(
         transport: Transport,
         lineInstructions: LineInstructions,
         sections: (Pair<String, String>) -> List<Pair<String, String>>
@@ -180,8 +156,8 @@ class SectionServiceImpl(
         return isClear
     }
 
-    override fun isStationTerminal(station: String): Boolean = switchService.isStationTerminal(station)
-    override fun dump() {
+    fun isStationTerminal(station: String): Boolean = switchService.isStationTerminal(station)
+    fun dump() {
         queues.getQueueKeys().forEach { k ->
             if (queues.getQueue(k).isNotEmpty()) {
                 queues.getQueue(k).forEach { t ->

@@ -18,7 +18,7 @@ import org.mockito.Mockito.`when`
 internal class SignalServiceImplTest {
 
     private val signalFactory = mock(SignalFactory::class.java)
-    private val signalService = SignalServiceImpl(signalFactory)
+    private val signalService = SignalService(signalFactory)
 
     @BeforeEach
     fun init() {

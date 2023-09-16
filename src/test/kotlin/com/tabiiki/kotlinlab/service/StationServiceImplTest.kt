@@ -28,7 +28,7 @@ class StationServiceImplTest {
     private val lineFactory = mock(LineFactory::class.java)
 
     private val stationService =
-        StationServiceImpl(
+        StationService(
             timeStep = 10,
             signalService = signalService,
             stationFactory = stationFactory,

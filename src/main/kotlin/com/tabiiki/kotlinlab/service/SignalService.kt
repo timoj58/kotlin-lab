@@ -34,28 +34,13 @@ private class Channels {
     fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channelsOut[key]
 }
 
-interface SignalService {
-    suspend fun init(key: Pair<String, String>)
-    fun getSignal(key: Pair<String, String>): Signal
-    fun getPlatformSignals(): List<Pair<String, String>>
-    fun getSectionSignals(): List<Pair<String, String>>
-    fun getChannel(key: Pair<String, String>): Channel<SignalMessage>?
-    suspend fun receive(key: Pair<String, String>): SignalMessage?
-    suspend fun send(
-        key: Pair<String, String>,
-        signalMessage: SignalMessage
-    )
-
-    fun initConnected(line: String, lineRepo: LineRepo)
-}
-
 @Service
-class SignalServiceImpl(
+class SignalService(
     private val signalFactory: SignalFactory
-) : SignalService {
+) {
     private val channels = Channels()
 
-    override suspend fun init(
+    suspend fun init(
         key: Pair<String, String>
     ): Unit = coroutineScope {
         val channelIn = channels.initIn(key)
@@ -64,18 +49,18 @@ class SignalServiceImpl(
         launch { signalFactory.get(key).start(channelIn, channelOut) }
     }
 
-    override fun getSignal(key: Pair<String, String>): Signal = signalFactory.get(key)
+    fun getSignal(key: Pair<String, String>): Signal = signalFactory.get(key)
 
-    override fun getPlatformSignals(): List<Pair<String, String>> =
+    fun getPlatformSignals(): List<Pair<String, String>> =
         signalFactory.get(SignalType.PLATFORM).map { it.section }
 
-    override fun getSectionSignals(): List<Pair<String, String>> =
+    fun getSectionSignals(): List<Pair<String, String>> =
         signalFactory.get(SignalType.SECTION).map { it.section }
 
-    override fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channels.getChannel(key)
+    fun getChannel(key: Pair<String, String>): Channel<SignalMessage>? = channels.getChannel(key)
 
-    override suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
-    override suspend fun send(
+    suspend fun receive(key: Pair<String, String>): SignalMessage? = channels.receive(key)
+    suspend fun send(
         key: Pair<String, String>,
         signalMessage: SignalMessage
     ) {
@@ -85,5 +70,5 @@ class SignalServiceImpl(
         }
     }
 
-    override fun initConnected(line: String, lineRepo: LineRepo) = signalFactory.updateConnected(line, lineRepo)
+    fun initConnected(line: String, lineRepo: LineRepo) = signalFactory.updateConnected(line, lineRepo)
 }

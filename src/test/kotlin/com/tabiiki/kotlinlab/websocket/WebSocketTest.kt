@@ -9,7 +9,7 @@ import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClien
 import java.net.URI
 import java.time.Duration
 
-@ActiveProfiles("test")
+@ActiveProfiles("socket")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class WebSocketTest {
 

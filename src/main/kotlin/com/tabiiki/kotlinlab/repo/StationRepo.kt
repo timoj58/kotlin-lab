@@ -6,21 +6,13 @@ import com.tabiiki.kotlinlab.model.Station
 import org.springframework.stereotype.Repository
 import kotlin.math.abs
 
-interface StationRepo {
-    fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station
-    fun getPreviousStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station
-    fun getPreviousStationsOnLine(lineStations: List<Line>, stationTo: String, direction: LineDirection): List<Station>
-    fun get(): List<Station>
-    fun get(id: String): Station
-}
-
 @Repository
-class StationRepoImpl(
+class StationRepo(
     stationFactory: StationFactory
-) : StationRepo {
+) {
     private val stations = stationFactory.get().map { stationFactory.get(it) }
 
-    override fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
+    fun getNextStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
         val config = getConfig(lineStations, section)
         val toStationIdx = config.second
         val direction = config.third
@@ -30,7 +22,7 @@ class StationRepoImpl(
         }
     }
 
-    override fun getPreviousStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
+    fun getPreviousStationOnLine(lineStations: List<String>, section: Pair<String, String>): Station {
         val config = getConfig(lineStations, section)
         val fromStationIdx = config.first
         val direction = config.third
@@ -40,7 +32,7 @@ class StationRepoImpl(
         }
     }
 
-    override fun getPreviousStationsOnLine(
+    fun getPreviousStationsOnLine(
         lineStations: List<Line>,
         stationTo: String,
         direction: LineDirection
@@ -66,8 +58,8 @@ class StationRepoImpl(
         return stations
     }
 
-    override fun get(): List<Station> = stations.toList()
-    override fun get(id: String): Station =
+    fun get(): List<Station> = stations.toList()
+    fun get(id: String): Station =
         stations.firstOrNull { it.id == id } ?: throw Exception("missing details for $id")
 
     private fun getConfig(lineStations: List<String>, section: Pair<String, String>): Triple<Int, Int, Int> {

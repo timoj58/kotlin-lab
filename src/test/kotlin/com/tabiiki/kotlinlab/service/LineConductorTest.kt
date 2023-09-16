@@ -9,7 +9,7 @@ import org.mockito.Mockito.`when`
 internal class LineConductorTest {
 
     private val stationRepo = mock(StationRepo::class.java)
-    private val lineConductor = LineConductorImpl(mock(PlatformService::class.java))
+    private val lineConductor = LineConductor(mock(PlatformService::class.java))
 
     @BeforeEach
     fun `init`() {

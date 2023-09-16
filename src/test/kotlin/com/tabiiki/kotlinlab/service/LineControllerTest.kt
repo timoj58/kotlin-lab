@@ -35,7 +35,7 @@ internal class LineControllerTest {
             .forEach { `when`(conductor.isClear(it)).thenReturn(true) }
 
         val lineControllerService =
-            LineControllerImpl(1000, conductor)
+            LineController(1000, conductor)
 
         val res = async { lineControllerService.start(listOf(line)) }
         delay(2000)
@@ -59,7 +59,7 @@ internal class LineControllerTest {
             mutableListOf(line.transporters[0], line.transporters[1])
         )
         val lineControllerService =
-            LineControllerImpl(1000, conductor)
+            LineController(1000, conductor)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(listOf(line)/*, channel*/) }

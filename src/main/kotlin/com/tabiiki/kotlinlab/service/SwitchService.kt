@@ -9,26 +9,13 @@ import kotlinx.coroutines.Job
 import org.springframework.stereotype.Service
 import java.util.function.Consumer
 
-interface SwitchService {
-    fun isStationTerminal(station: String): Boolean
-    fun isSwitchSectionByTerminal(transport: Transport): Pair<Boolean, Boolean>
-    fun doesFirstStationInSectionContainTerminal(transport: Transport): Boolean
-    fun isSwitchSection(transport: Transport): Boolean
-    fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean
-    suspend fun switch(
-        transport: Transport,
-        jobs: List<Job>,
-        completeSection: Consumer<Pair<Transport, Pair<String, String>>>
-    )
-}
-
 @Service
-class SwitchServiceImpl(
+class SwitchService(
     private val lineFactory: LineFactory
-) : SwitchService {
+) {
 
     private val switchMonitor = SwitchMonitor()
-    override fun isStationTerminal(station: String): Boolean {
+    fun isStationTerminal(station: String): Boolean {
         val lineName = station.substringBefore(":")
         val stationCode = station.substringAfter(":")
         val isPossibleSwitch = lineFactory.isSwitchSection(lineName, Pair(stationCode, stationCode))
@@ -36,7 +23,7 @@ class SwitchServiceImpl(
         return isPossibleSwitch.first
     }
 
-    override fun isSwitchSectionByTerminal(transport: Transport): Pair<Boolean, Boolean> {
+    fun isSwitchSectionByTerminal(transport: Transport): Pair<Boolean, Boolean> {
         val section = getSection(transport.section())
         val isPossibleSwitch = lineFactory.isSwitchSection(transport.line.name, section)
         if (!isPossibleSwitch.first && !isPossibleSwitch.second) return Pair(false, false)
@@ -50,14 +37,14 @@ class SwitchServiceImpl(
         )
     }
 
-    override fun doesFirstStationInSectionContainTerminal(transport: Transport): Boolean {
+    fun doesFirstStationInSectionContainTerminal(transport: Transport): Boolean {
         val section = getSection(transport.section())
         val isPossibleSwitch = lineFactory.isSwitchSection(transport.line.name, section)
 
         return isPossibleSwitch.first
     }
 
-    override fun isSwitchSection(transport: Transport): Boolean {
+    fun isSwitchSection(transport: Transport): Boolean {
         val section = getSection(transport.section())
         val isPossibleSwitch = lineFactory.isSwitchSection(transport.line.name, section)
         if (!isPossibleSwitch.first && !isPossibleSwitch.second) return false
@@ -69,7 +56,7 @@ class SwitchServiceImpl(
             lastStation == SwitchMonitor.replaceSwitch(section.second) && isPossibleSwitch.second
     }
 
-    override fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean): Boolean {
+    fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean {
         val switchSection = lineFactory.isSwitchStation(
             transport.line.name,
             if (destination) section.second else getSection(section).first
@@ -88,7 +75,7 @@ class SwitchServiceImpl(
         )
     }
 
-    override suspend fun switch(
+    suspend fun switch(
         transport: Transport,
         jobs: List<Job>,
         completeSection: Consumer<Pair<Transport, Pair<String, String>>>

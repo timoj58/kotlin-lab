@@ -18,7 +18,7 @@ import org.mockito.Mockito.`when`
 internal class SwitchServiceImplTest {
 
     private val lineFactory = mock(LineFactory::class.java)
-    private val switchService = SwitchServiceImpl(lineFactory)
+    private val switchService = SwitchService(lineFactory)
 
     @ParameterizedTest
     @CsvSource("B,C,TRUE", "C,B,TRUE", "C,D,FALSE")

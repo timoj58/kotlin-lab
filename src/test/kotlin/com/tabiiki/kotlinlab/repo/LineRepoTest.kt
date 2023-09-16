@@ -15,8 +15,8 @@ class LineRepoTest {
     // TODO issue relates to missing stations - signals are turning off the wrong light, ie not contiguous
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
     private val stationFactory = StationFactory(stationsConfig)
-    private val stationRepo = StationRepoImpl(stationFactory)
-    private val lineRepo = LineRepoImpl(stationRepo)
+    private val stationRepo = StationRepo(stationFactory)
+    private val lineRepo = LineRepo(stationRepo)
 
     private val linesAdapter = LinesAdapter(
         listOf("src/main/resources/network/river/river.yml"),

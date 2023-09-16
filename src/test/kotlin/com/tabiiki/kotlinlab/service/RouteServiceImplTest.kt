@@ -3,7 +3,7 @@ package com.tabiiki.kotlinlab.service
 import com.tabiiki.kotlinlab.configuration.StationsConfig
 import com.tabiiki.kotlinlab.factory.RouteFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.repo.StationRepoImpl
+import com.tabiiki.kotlinlab.repo.StationRepo
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -14,10 +14,10 @@ class RouteServiceImplTest {
 
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
     private val stationFactory = StationFactory(stationsConfig)
-    private val stationRepo = StationRepoImpl(stationFactory)
+    private val stationRepo = StationRepo(stationFactory)
     private val routeFactory = mock(RouteFactory::class.java)
 
-    private val routeServiceImpl = RouteServiceImpl(stationRepo, routeFactory)
+    private val routeServiceImpl = RouteService(stationRepo, routeFactory)
 
     @Test
     fun `route service generation test`() {

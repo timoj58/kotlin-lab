@@ -48,7 +48,7 @@ internal class StationRepoTest {
 
     @Test
     fun `next & previous when station is first in line`() {
-        val stationRepo = StationRepoImpl(stationFactory)
+        val stationRepo = StationRepo(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("B", "A")).id).isEqualTo("B")
         assertThat(stationRepo.getPreviousStationOnLine(line, Pair("B", "A")).id).isEqualTo("C")
 
@@ -63,7 +63,7 @@ internal class StationRepoTest {
 
     @Test
     fun `next & previous when station is last in line`() {
-        val stationRepo = StationRepoImpl(stationFactory)
+        val stationRepo = StationRepo(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("B", "C")).id).isEqualTo("B")
         assertThat(stationRepo.getPreviousStationOnLine(line, Pair("B", "C")).id).isEqualTo("A")
 
@@ -78,7 +78,7 @@ internal class StationRepoTest {
 
     @Test
     fun `next & previous when station is going forwards`() {
-        val stationRepo = StationRepoImpl(stationFactory)
+        val stationRepo = StationRepo(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("A", "B")).id).isEqualTo("C")
         assertThat(stationRepo.getPreviousStationOnLine(line, Pair("A", "B")).id).isEqualTo("B")
 
@@ -93,7 +93,7 @@ internal class StationRepoTest {
 
     @Test
     fun `next & previous when station is going reverse`() {
-        val stationRepo = StationRepoImpl(stationFactory)
+        val stationRepo = StationRepo(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(line, Pair("C", "B")).id).isEqualTo("A")
         assertThat(stationRepo.getPreviousStationOnLine(line, Pair("C", "B")).id).isEqualTo("B")
 
@@ -108,7 +108,7 @@ internal class StationRepoTest {
 
     @Test
     fun `next & previous circle line test where start and end is same`() {
-        val stationRepo = StationRepoImpl(stationFactory)
+        val stationRepo = StationRepo(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("C", "A")).id).isEqualTo("C")
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "C")).id).isEqualTo("B")
         assertThat(stationRepo.getPreviousStationOnLine(circleLine, Pair("C", "A")).id).isEqualTo("B")
@@ -127,7 +127,7 @@ internal class StationRepoTest {
 
     @Test
     fun `next & previous circle line test where start and end is same reversed`() {
-        val stationRepo = StationRepoImpl(stationFactory)
+        val stationRepo = StationRepo(stationFactory)
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("B", "A")).id).isEqualTo("B")
         assertThat(stationRepo.getNextStationOnLine(circleLine, Pair("A", "B")).id).isEqualTo("C")
         assertThat(stationRepo.getPreviousStationOnLine(circleLine, Pair("B", "A")).id).isEqualTo("C")

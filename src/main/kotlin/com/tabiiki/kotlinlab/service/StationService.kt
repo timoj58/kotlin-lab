@@ -27,28 +27,19 @@ data class StationMessage(
     val type: MessageType
 )
 
-interface StationService {
-    suspend fun start(
-        globalListener: Channel<StationMessage>,
-        commuterChannel: Channel<Commuter>,
-        line: String? = null
-    )
-    fun getInformation(): List<StationInformation>
-}
-
 @Service
-class StationServiceImpl(
+class StationService(
     @Value("\${network.time-step}") val timeStep: Long,
     private val signalService: SignalService,
     private val stationFactory: StationFactory,
     private val lineFactory: LineFactory
-) : StationService {
+) {
     private val stationMonitor = StationMonitor(timeStep = timeStep, stations = stationFactory.get())
 
-    override suspend fun start(
+    suspend fun start(
         globalListener: Channel<StationMessage>,
         commuterChannel: Channel<Commuter>,
-        line: String?
+        line: String? = null
     ) = coroutineScope {
         launch { stationMonitor.monitorCommuters(commuterChannel) }
         launch { stationMonitor.healthTest(globalListener) }
@@ -67,7 +58,7 @@ class StationServiceImpl(
         }
     }
 
-    override fun getInformation(): List<StationInformation> =
+    fun getInformation(): List<StationInformation> =
         stationFactory.get().map {
             val station = stationFactory.get(it)
 

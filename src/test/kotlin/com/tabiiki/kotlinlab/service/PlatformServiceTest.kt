@@ -9,9 +9,9 @@ import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.repo.JourneyRepoImpl
-import com.tabiiki.kotlinlab.repo.LineRepoImpl
-import com.tabiiki.kotlinlab.repo.StationRepoImpl
+import com.tabiiki.kotlinlab.repo.JourneyRepo
+import com.tabiiki.kotlinlab.repo.LineRepo
+import com.tabiiki.kotlinlab.repo.StationRepo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -58,16 +58,16 @@ internal class PlatformServiceTest {
     private val lineFactory = LineFactory(timeStep, transportConfig, linesConfig)
     private val stationFactory = StationFactory(stationsConfig)
 
-    private val journeyRepo = JourneyRepoImpl()
-    private val stationRepo = StationRepoImpl(stationFactory)
-    private val lineRepo = LineRepoImpl(stationRepo)
+    private val journeyRepo = JourneyRepo()
+    private val stationRepo = StationRepo(stationFactory)
+    private val lineRepo = LineRepo(stationRepo)
     private val signalFactory = SignalFactory(lineFactory)
-    private val signalService = SignalServiceImpl(signalFactory)
-    private val switchService = SwitchServiceImpl(lineFactory)
+    private val signalService = SignalService(signalFactory)
+    private val switchService = SwitchService(lineFactory)
 
-    private val sectionService = SectionServiceImpl(minimumHold, switchService, signalService, journeyRepo)
+    private val sectionService = SectionService(minimumHold, switchService, signalService, journeyRepo)
     private val platformService =
-        PlatformServiceImpl(minimumHold, signalService, sectionService, lineRepo, lineFactory)
+        PlatformService(minimumHold, signalService, sectionService, lineRepo, lineFactory)
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 

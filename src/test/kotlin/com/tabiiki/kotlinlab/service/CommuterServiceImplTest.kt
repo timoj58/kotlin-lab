@@ -12,7 +12,7 @@ import org.springframework.test.annotation.DirtiesContext
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class CommuterServiceImplTest {
     private val routeService = Mockito.mock(RouteService::class.java)
-    private val commuterServiceImpl = CommuterServiceImpl(10, routeService)
+    private val commuterServiceImpl = CommuterService(10, routeService)
 
     @Test
     fun `commuter service test check commuter added to channel`() = runBlocking {

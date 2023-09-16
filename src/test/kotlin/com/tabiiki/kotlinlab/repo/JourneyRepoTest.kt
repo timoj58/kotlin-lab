@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 
 internal class JourneyRepoTest {
 
-    private val journeyTimeRepoImpl = JourneyRepoImpl()
+    private val journeyTimeRepoImpl = JourneyRepo()
     private val line = LineBuilder().getLine()
 
     @Test

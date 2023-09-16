@@ -20,22 +20,14 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-interface PlatformService {
-    fun initCommuterChannel(commuterChannel: Channel<Commuter>)
-    suspend fun initLines(line: String, lineDetails: List<Line>)
-    suspend fun signalAndDispatch(transport: Transport)
-    fun isClear(transport: Transport): Boolean
-    fun dump()
-}
-
 @Service
-class PlatformServiceImpl(
+class PlatformService(
     @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
     private val sectionService: SectionService,
     private val lineRepo: LineRepo,
     private val lineFactory: LineFactory
-) : PlatformService {
+) {
     private val platformMonitor = PlatformMonitor(sectionService, signalService)
     private var commuterChannel: Channel<Commuter>? = null
 
@@ -44,7 +36,7 @@ class PlatformServiceImpl(
         signalService.getPlatformSignals().forEach { platformMonitor.init(it) }
     }
 
-    override fun isClear(transport: Transport): Boolean {
+    fun isClear(transport: Transport): Boolean {
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val platformClear = if (switchPlatform) {
             platformMonitor.isClear(
@@ -70,16 +62,16 @@ class PlatformServiceImpl(
             )
     }
 
-    override fun dump() {
+    fun dump() {
         platformMonitor.dump()
         sectionService.dump()
     }
 
-    override fun initCommuterChannel(commuterChannel: Channel<Commuter>) {
+    fun initCommuterChannel(commuterChannel: Channel<Commuter>) {
         this.commuterChannel = commuterChannel
     }
 
-    override suspend fun initLines(line: String, lineDetails: List<Line>): Unit =
+    suspend fun initLines(line: String, lineDetails: List<Line>): Unit =
         coroutineScope {
             lineRepo.addLineDetails(line, lineDetails)
             launch { sectionService.init(line) }
@@ -91,7 +83,7 @@ class PlatformServiceImpl(
             signalService.initConnected(line, lineRepo)
         }
 
-    override suspend fun signalAndDispatch(transport: Transport): Unit = coroutineScope {
+    suspend fun signalAndDispatch(transport: Transport): Unit = coroutineScope {
         val instructions = lineRepo.getLineInstructions(transport)
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val key = getPlatformSignalKey(transport, instructions, switchPlatform)
