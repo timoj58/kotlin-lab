@@ -55,7 +55,7 @@ class UndergroundLineControllerTest @Autowired constructor(
         "hammersmith"
     )
     fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
-        lineControllerTest.test("underground", lineName, 3)
+        lineControllerTest.test("underground", lineName, 4)
     }
 
     @ParameterizedTest
@@ -64,6 +64,6 @@ class UndergroundLineControllerTest @Autowired constructor(
         "central" // longest running line
     )
     fun `test all transports complete a full journey on an underground line - longer`(lineName: String) = runBlocking {
-        lineControllerTest.test("underground", lineName, 5)
+        lineControllerTest.test("underground", lineName, 7)
     }
 }

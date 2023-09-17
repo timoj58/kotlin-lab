@@ -86,7 +86,7 @@ class LineControllerTest(
 
         val initJob = launch { controller.init(line) }
 
-        delay(1000)
+        delay(2000)
 
         val listener = Channel<StationMessage>()
 

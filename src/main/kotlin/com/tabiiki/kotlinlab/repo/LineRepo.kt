@@ -16,7 +16,7 @@ data class LineInstructions(
     val to: Station,
     val next: Station,
     val direction: LineDirection,
-    val minimumHold: Int = 45
+    val minimumHold: Int
 )
 
 @Repository
@@ -29,14 +29,15 @@ class LineRepo(private val stationRepo: StationRepo) {
         lineDetails[key] = details
     }
 
-    fun getLineInstructions(transport: Transport): LineInstructions = LineInstructions(
+    fun getLineInstructions(transport: Transport, minimumHold: Int): LineInstructions = LineInstructions(
         from = stationRepo.get(transport.getSectionStationCode()),
         to = stationRepo.get(transport.section().second),
         next = stationRepo.getNextStationOnLine(
             lineStations = getLineStations(transport),
             section = Pair(transport.getSectionStationCode(), transport.section().second)
         ),
-        direction = transport.lineDirection()
+        direction = transport.lineDirection(),
+        minimumHold = minimumHold
     )
 
     fun getLineStations(transport: Transport): List<String> {

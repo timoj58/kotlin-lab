@@ -15,7 +15,7 @@ management:
 
 network:
   time-step: 1000
-  minimum-hold: 45
+  minimum-hold: 45000
   stations-csv: src/main/resources/network/stations.csv
   transporters:
     ferries:

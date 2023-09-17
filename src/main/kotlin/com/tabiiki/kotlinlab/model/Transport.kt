@@ -210,9 +210,9 @@ data class Transport(
             }
         } while (physics.displacement <= physics.distance)
 
-        if (logged.get()) {
-            println("released $id")
-        }
+        // if (logged.get()) {
+        //     println("released $id")
+        // }
 
         stopJourney()
     }

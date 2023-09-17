@@ -19,7 +19,7 @@ class LineConductor(
     suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
-        println("start ${transport.id} - ${transport.line.id} ${transport.section()}")
+        //  println("start ${transport.id} - ${transport.line.id} ${transport.section()}")
         platformService.signalAndDispatch(transport = transport)
     }
 

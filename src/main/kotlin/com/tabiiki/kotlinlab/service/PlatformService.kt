@@ -84,7 +84,7 @@ class PlatformService(
         }
 
     suspend fun signalAndDispatch(transport: Transport): Unit = coroutineScope {
-        val instructions = lineRepo.getLineInstructions(transport)
+        val instructions = lineRepo.getLineInstructions(transport, minimumHold)
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val key = getPlatformSignalKey(transport, instructions, switchPlatform)
 
@@ -112,7 +112,7 @@ class PlatformService(
     private suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {
-        val lineInstructions = lineRepo.getLineInstructions(transport)
+        val lineInstructions = lineRepo.getLineInstructions(transport, minimumHold)
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val key = getPlatformSignalKey(transport, lineInstructions, switchPlatform)
 
@@ -176,9 +176,9 @@ class PlatformService(
             !canRelease.third
         )
 
-        if (holdLogger.get()) {
-            println("released ${transport.id} from hold")
-        }
+        //   if (holdLogger.get()) {
+        //       println("released ${transport.id} from hold")
+        //   }
 
         dispatch(
             transport = transport,

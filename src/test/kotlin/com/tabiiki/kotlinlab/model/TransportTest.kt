@@ -77,7 +77,8 @@ internal class TransportTest {
                 from = LineBuilder().stations[0],
                 to = LineBuilder().stations[1],
                 next = LineBuilder().stations[2],
-                direction = LineDirection.POSITIVE
+                direction = LineDirection.POSITIVE,
+                minimumHold = 45
             )
         )
         val job = launch { train.motionLoop() }
@@ -213,7 +214,8 @@ internal class TransportTest {
                 next = Station(
                     StationConfig(id = "3", latitude = northGreenwich.first, longitude = northGreenwich.second)
                 ),
-                direction = LineDirection.POSITIVE
+                direction = LineDirection.POSITIVE,
+                minimumHold = 45
             )
         )
 

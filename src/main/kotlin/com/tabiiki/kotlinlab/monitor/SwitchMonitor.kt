@@ -29,7 +29,7 @@ class SwitchMonitor {
             section = Pair("${Line.getLine(sectionLeft.first)}:${sectionLeft.second}", "${sectionLeft.second}|")
         )
         completeSection.accept(Pair(transport.also { it.addSection() }, sectionLeft))
-        println("switching ${transport.id} $sectionLeft to ${transport.section()}")
+        //   println("switching ${transport.id} $sectionLeft to ${transport.section()}")
     }
 
     companion object {
