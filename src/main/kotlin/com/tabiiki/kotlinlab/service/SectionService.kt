@@ -156,17 +156,6 @@ class SectionService(
         return isClear
     }
 
-    fun isStationTerminal(station: String): Boolean = switchService.isStationTerminal(station)
-    fun dump() {
-        queues.getQueueKeys().forEach { k ->
-            if (queues.getQueue(k).isNotEmpty()) {
-                queues.getQueue(k).forEach { t ->
-                    println("$k contains ${t.id}")
-                }
-            }
-        }
-    }
-
     private suspend fun arrive(transport: Transport) = coroutineScope {
         journeyRepo.addJourneyTime(transport.getJourneyTime())
         launch { transport.arrived() }

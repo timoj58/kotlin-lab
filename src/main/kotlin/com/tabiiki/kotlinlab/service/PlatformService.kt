@@ -17,7 +17,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @Service
@@ -60,11 +59,6 @@ class PlatformService(
                 )
             )
             )
-    }
-
-    fun dump() {
-        platformMonitor.dump()
-        sectionService.dump()
     }
 
     fun initCommuterChannel(commuterChannel: Channel<Commuter>) {
@@ -151,8 +145,6 @@ class PlatformService(
             transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!)
         }
 
-        val holdLogger = AtomicBoolean(false)
-
         var canRelease: Triple<Boolean, Boolean, Boolean>
 
         do {
@@ -164,21 +156,11 @@ class PlatformService(
                 key = key,
                 lineInstructions = lineInstructions
             )
-
-            if (counter.get() > minimumHold * 3 && !holdLogger.get()) {
-                holdLogger.set(true).also {
-                    println("holding ${transport.id} at $key data: $canRelease")
-                }
-            }
         } while (counter.incrementAndGet() < minimumHold ||
             !canRelease.first ||
             !canRelease.second ||
             !canRelease.third
         )
-
-        //   if (holdLogger.get()) {
-        //       println("released ${transport.id} from hold")
-        //   }
 
         dispatch(
             transport = transport,

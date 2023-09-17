@@ -19,7 +19,6 @@ class LineConductor(
     suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
-        //  println("start ${transport.id} - ${transport.line.id} ${transport.section()}")
         platformService.signalAndDispatch(transport = transport)
     }
 
@@ -32,7 +31,5 @@ class LineConductor(
     }
 
     fun isClear(transport: Transport): Boolean =
-        platformService.isClear(transport) // removing can launch for now.
-
-    fun dump() = platformService.dump()
+        platformService.isClear(transport)
 }

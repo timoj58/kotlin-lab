@@ -12,7 +12,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import kotlin.math.abs
@@ -189,7 +188,6 @@ data class Transport(
     suspend fun motionLoop() {
         val emergencyStop = AtomicInteger(0)
         val counter = AtomicInteger(0)
-        val logged = AtomicBoolean(false)
 
         do {
             delay(timeStep)
@@ -203,16 +201,7 @@ data class Transport(
             }
 
             if (emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
-
-            if (counter.getAndIncrement() - (counter.get() - emergencyStop.get()) > 60 && !logged.get()) {
-                logged.set(true)
-                println("$id stopped for over 1 minutes at ${section()}")
-            }
         } while (physics.displacement <= physics.distance)
-
-        // if (logged.get()) {
-        //     println("released $id")
-        // }
 
         stopJourney()
     }

@@ -8,15 +8,12 @@ import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @ActiveProfiles("test-underground")
 @SpringBootTest
 class UndergroundLineControllerTest @Autowired constructor(
@@ -42,28 +39,58 @@ class UndergroundLineControllerTest @Autowired constructor(
         lineFactory
     )
 
-    @ParameterizedTest
-    @CsvSource(
-        "city",
-        "jubilee",
-        "district",
-        "northern",
-        "piccadilly",
-        "metropolitan",
-        "bakerloo",
-        "victoria",
-        "hammersmith"
-    )
-    fun `test all transports complete a full journey on an underground line`(lineName: String) = runBlocking {
-        lineControllerTest.test("underground", lineName, 4)
+    @Test
+    fun `test city`() = runBlocking {
+        lineControllerTest.test("underground", "city", 1)
     }
 
-    @ParameterizedTest
-    @CsvSource(
-        "circle",
-        "central" // longest running line
-    )
-    fun `test all transports complete a full journey on an underground line - longer`(lineName: String) = runBlocking {
-        lineControllerTest.test("underground", lineName, 7)
+    @Test
+    fun `test jubilee`() = runBlocking {
+        lineControllerTest.test("underground", "jubilee", 4)
+    }
+
+    @Test
+    fun `test district`() = runBlocking {
+        lineControllerTest.test("underground", "district", 4)
+    }
+
+    @Test
+    fun `test northern`() = runBlocking {
+        lineControllerTest.test("underground", "northern", 4)
+    }
+
+    @Test
+    fun `test piccadilly`() = runBlocking {
+        lineControllerTest.test("underground", "piccadilly", 4)
+    }
+
+    @Test
+    fun `test metropolitan`() = runBlocking {
+        lineControllerTest.test("underground", "metropolitan", 4)
+    }
+
+    @Test
+    fun `test bakerloo`() = runBlocking {
+        lineControllerTest.test("underground", "bakerloo", 4)
+    }
+
+    @Test
+    fun `test victoria`() = runBlocking {
+        lineControllerTest.test("underground", "victoria", 2)
+    }
+
+    @Test
+    fun `test hammersmith`() = runBlocking {
+        lineControllerTest.test("underground", "hammersmith", 4)
+    }
+
+    @Test
+    fun `test circle`() = runBlocking {
+        lineControllerTest.test("underground", "circle", 5)
+    }
+
+    @Test
+    fun `test central`() = runBlocking {
+        lineControllerTest.test("underground", "central", 5)
     }
 }

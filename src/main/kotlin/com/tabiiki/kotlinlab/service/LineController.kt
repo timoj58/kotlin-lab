@@ -10,13 +10,6 @@ import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.UUID
-
-data class LineChannelMessage(
-    val line: String,
-    val section: Pair<String, String>,
-    val transporters: List<UUID>
-)
-
 @Service
 class LineController(
     @Value("\${network.time-step}") private val timeStep: Long,
@@ -39,8 +32,6 @@ class LineController(
 
         launch { dispatchByLineId(line.first().name, linesToDispatch) }
     }
-
-    fun dump() = conductor.dump()
 
     private suspend fun dispatchByLineId(line: String, linesToDispatch: MutableList<MutableList<Transport>>) {
         val transportersToDispatch = linesToDispatch.removeFirst()

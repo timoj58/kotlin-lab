@@ -46,7 +46,6 @@ private class Platforms {
         if (platformLockOwners[key] != null && current == new) throw RuntimeException("setting $key to same signal $signal.signalValue")
         if (!new) platformLockOwners[key] = signal.id else platformLockOwners.remove(key)
         platforms[key]!!.set(new)
-        // println(" ${signal.signalValue} for $key by ${signal.id}")
     }
 }
 
@@ -95,14 +94,6 @@ class PlatformMonitor(
                 holdConsumer.accept(msg)
             }
         } while (true)
-    }
-
-    fun dump() {
-        platforms.getPlatformKeys().forEach {
-            if (!platforms.isClear(it)) {
-                println("$it: holding ${platforms.get(it)}")
-            }
-        }
     }
 
     private fun platformToKey(transport: Transport): Pair<String, String> {

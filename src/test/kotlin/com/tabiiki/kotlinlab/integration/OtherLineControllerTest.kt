@@ -8,15 +8,13 @@ import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @ActiveProfiles("test-other")
 @SpringBootTest
 class OtherLineControllerTest @Autowired constructor(
@@ -42,15 +40,31 @@ class OtherLineControllerTest @Autowired constructor(
         lineFactory
     )
 
-    @ParameterizedTest
-    @CsvSource(
-        "cable,cable",
-        "tram,tram",
-        "dockland,dlr",
-        "river,river"
-    )
-    fun `test all transports complete a full journey on an other line`(lineType: String, lineName: String) =
+    @BeforeEach
+    fun init() {
+    }
+
+    @Test
+    fun `test cable`() =
         runBlocking {
-            lineControllerTest.test(lineType, lineName, 3)
+            lineControllerTest.test("cable", "cable", 1)
+        }
+
+    @Test
+    fun `test tram`() =
+        runBlocking {
+            lineControllerTest.test("tram", "tram", 5)
+        }
+
+    @Test
+    fun `test dlr`() =
+        runBlocking {
+            lineControllerTest.test("dockland", "dlr", 4)
+        }
+
+    @Test
+    fun `test river`() =
+        runBlocking {
+            lineControllerTest.test("river", "river", 4)
         }
 }
