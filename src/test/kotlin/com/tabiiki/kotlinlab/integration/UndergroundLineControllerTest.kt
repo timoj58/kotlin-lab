@@ -61,12 +61,12 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test piccadilly`() = runBlocking {
-        lineControllerTest.test("underground", "piccadilly", 4)
+        lineControllerTest.test("underground", "piccadilly", 5)
     }
 
     @Test
     fun `test metropolitan`() = runBlocking {
-        lineControllerTest.test("underground", "metropolitan", 4)
+        lineControllerTest.test("underground", "metropolitan", 5)
     }
 
     @Test
@@ -81,16 +81,16 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test hammersmith`() = runBlocking {
-        lineControllerTest.test("underground", "hammersmith", 4)
+        lineControllerTest.test("underground", "hammersmith", 5)
     }
 
     @Test
     fun `test circle`() = runBlocking {
-        lineControllerTest.test("underground", "circle", 5)
+        lineControllerTest.test("underground", "circle", 8)
     }
 
     @Test
     fun `test central`() = runBlocking {
-        lineControllerTest.test("underground", "central", 5)
+        lineControllerTest.test("underground", "central", 8)
     }
 }

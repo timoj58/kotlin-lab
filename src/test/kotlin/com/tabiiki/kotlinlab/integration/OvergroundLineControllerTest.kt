@@ -71,6 +71,6 @@ class OvergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test stratford line`() = runBlocking {
-        lineControllerTest.test("overground", "stratford", 5)
+        lineControllerTest.test("overground", "stratford", 6)
     }
 }

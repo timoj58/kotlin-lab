@@ -40,10 +40,6 @@ class OtherLineControllerTest @Autowired constructor(
         lineFactory
     )
 
-    @BeforeEach
-    fun init() {
-    }
-
     @Test
     fun `test cable`() =
         runBlocking {
@@ -53,7 +49,7 @@ class OtherLineControllerTest @Autowired constructor(
     @Test
     fun `test tram`() =
         runBlocking {
-            lineControllerTest.test("tram", "tram", 5)
+            lineControllerTest.test("tram", "tram", 6)
         }
 
     @Test
