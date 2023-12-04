@@ -1,7 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.controller.LineInformation
 import com.tabiiki.kotlinlab.controller.StationInformation
+import com.tabiiki.kotlinlab.controller.StationLineInformation
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.StationFactory
@@ -22,6 +22,7 @@ enum class MessageType {
 data class StationMessage(
     val eventType: String = "STATION",
     val stationId: String? = null,
+    val name: String? = null,
     val transportId: UUID? = null,
     val line: String? = null,
     val type: MessageType
@@ -65,12 +66,14 @@ class StationService(
             StationInformation(
                 id = station.id,
                 name = station.name,
+                latitude = station.position.first,
+                longitude = station.position.second,
                 lines = lineFactory.getStationLines(it).map { line ->
-                    LineInformation(
+                    StationLineInformation(
                         id = line.id,
                         name = line.name
                     )
                 }
             )
-        }
+        }.filter { it.lines.isNotEmpty() }
 }

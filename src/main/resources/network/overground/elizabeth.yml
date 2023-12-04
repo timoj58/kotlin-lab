@@ -1,7 +1,7 @@
 lines:
   - id: ELIZ-4
     transport-id: 3
-    line-capacity: 8
+    line-capacity: 10
     name: Elizabeth
     transporters-per-section: 3
     stations:
@@ -20,7 +20,7 @@ lines:
 
   - id: ELIZ-3
     transport-id: 3
-    line-capacity: 4
+    line-capacity: 10
     name: Elizabeth
     transporters-per-section: 3
     stations:
@@ -39,7 +39,7 @@ lines:
 
   - id: ELIZ-2
     transport-id: 3
-    line-capacity: 4
+    line-capacity: 10
     name: Elizabeth
     transporters-per-section: 3
     stations:
@@ -59,7 +59,7 @@ lines:
 
   - id: ELIZ-5
     transport-id: 3
-    line-capacity: 8
+    line-capacity: 10
     name: Elizabeth
     stations:
       - 418
@@ -84,7 +84,7 @@ lines:
 
   - id: ELIZ-1
     transport-id: 3
-    line-capacity: 8
+    line-capacity: 10
     name: Elizabeth
     transporters-per-section: 3
     stations:

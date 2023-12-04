@@ -60,11 +60,14 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
         do {
             val msg = stationChannel.receive()
             msg.id?.let {
+                //TODO logically seems correct, map not rendering.  but bad example.
                 val messageType = if (msg.signalValue == SignalValue.GREEN) MessageType.DEPART else MessageType.ARRIVE
+
                 launch {
                     globalListener.send(
                         StationMessage(
                             stationId = station.id,
+                            name = station.name,
                             transportId = it,
                             line = msg.line!!,
                             type = messageType

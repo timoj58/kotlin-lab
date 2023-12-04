@@ -1,7 +1,7 @@
 lines:
   - id: MET-1
     transport-id: 3
-    line-capacity: 4
+    line-capacity: 20
     name: Metropolitan
     stations:
       - 14
@@ -33,7 +33,7 @@ lines:
 
   - id: MET-2
     transport-id: 3
-    line-capacity: 4
+    line-capacity: 20
     name: Metropolitan
     stations:
       - 116
@@ -65,7 +65,7 @@ lines:
 
   - id: MET-3
     transport-id: 3
-    line-capacity: 4
+    line-capacity: 20
     name: Metropolitan
     stations:
       - 600
@@ -95,7 +95,7 @@ lines:
 
   - id: MET-4
     transport-id: 3
-    line-capacity: 4
+    line-capacity: 20
     name: Metropolitan
     stations:
       - 580

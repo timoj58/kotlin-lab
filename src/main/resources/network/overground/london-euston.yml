@@ -1,7 +1,7 @@
 lines:
   - id: EUST-1
     transport-id: 3
-    line-capacity: 8
+    line-capacity: 20
     name: London Euston
     stations:
       - 201

@@ -17,7 +17,7 @@ class SwitchMonitor {
         val distance = distanceToSwitch(transport)
 
         do {
-            delay(transport.timeStep)
+          //  delay(transport.timeStep)
         } while (distance >= transport.getPosition())
 
         jobs.forEach { it.cancel() }

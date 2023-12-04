@@ -24,40 +24,37 @@ class LineController(
 
     suspend fun start(line: List<Line>): Unit = coroutineScope {
         val transportersToDispatch = conductor.getTransportersToDispatch(line)
-        val linesToDispatch = mutableListOf<MutableList<Transport>>()
+        val linesToDispatch = mutableListOf<Transport>()
 
         line.map { it.id }.sortedBy { getLineIdAsInt(it) }.forEach { lineId ->
-            linesToDispatch.add(transportersToDispatch.filter { it.line.id == lineId }.toMutableList())
+            linesToDispatch.addAll(transportersToDispatch.filter { it.line.id == lineId }.toMutableList())
         }
 
-        launch { dispatchByLineId(line.first().name, linesToDispatch) }
+        launch { dispatch(linesToDispatch) }
     }
 
-    private suspend fun dispatchByLineId(line: String, linesToDispatch: MutableList<MutableList<Transport>>) {
-        val transportersToDispatch = linesToDispatch.removeFirst()
+    private suspend fun dispatch(toDispatch: MutableList<Transport>) {
         val released = mutableListOf<UUID>()
 
-        transportersToDispatch.distinctBy { it.section() }.forEach {
+        toDispatch.distinctBy { it.section() }.forEach {
             released.add(it.id)
             release(it)
         }
 
-        transportersToDispatch.removeAll { released.contains(it.id) }
+        toDispatch.removeAll { released.contains(it.id) }
 
         do {
             released.clear()
             delay(timeStep * startDelayScalar)
 
-            transportersToDispatch.distinctBy { it.section() }.forEach {
+            toDispatch.distinctBy { it.section() }.forEach {
                 if (conductor.isClear(it)) {
                     released.add(it.id)
                     release(it)
                 }
             }
-            transportersToDispatch.removeAll { released.contains(it.id) }
-        } while (transportersToDispatch.isNotEmpty())
-
-        if (linesToDispatch.isNotEmpty()) dispatchByLineId(line, linesToDispatch)
+            toDispatch.removeAll { released.contains(it.id) }
+        } while (toDispatch.isNotEmpty())
     }
 
     private suspend fun release(transport: Transport) = coroutineScope {
@@ -65,7 +62,7 @@ class LineController(
     }
 
     companion object {
-        private const val startDelayScalar = 200
+        private const val startDelayScalar = 100
         fun getLineIdAsInt(id: String): Int = id.substringAfter("-").toInt()
     }
 }

@@ -1,7 +1,7 @@
 lines:
   - id: STRAT-1
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 16
     name: Stratford
     stations:
       - 528
@@ -33,7 +33,7 @@ lines:
 
   - id: STRAT-2
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 16
     name: Stratford
     stations:
       - 528

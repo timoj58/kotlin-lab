@@ -1,13 +1,13 @@
 network:
-  time-step: 1
-  minimum-hold: 12
+  time-step: 15
+  minimum-hold: 450
   lines:
     river:
       - src/main/resources/network/river/river.yml
     tram:
       - src/main/resources/network/tram/tram.yml
     dockland:
-      - src/main/resources/network/dockland/dlr.yml
+      #- src/main/resources/network/dockland/dlr.yml
     cable:
       - src/main/resources/network/cable/cable.yml
     overground:
@@ -28,5 +28,5 @@ network:
       - src/main/resources/network/underground/central.yml
       - src/main/resources/network/underground/district.yml
       - src/main/resources/network/underground/northern.yml
-      - src/main/resources/network/underground/circle.yml
+      #- src/main/resources/network/underground/circle.yml
       - src/main/resources/network/underground/piccadilly.yml

@@ -24,7 +24,7 @@ class WebSocketTest {
                 .doOnNext {
                     val jsonObject = JSONObject(it.payloadAsText)
                     when (jsonObject.getString("eventType")) {
-                        "STATION" -> receivedStationMessage = true
+                        "STATION" -> if (jsonObject.getString("type") != "HEALTH") receivedStationMessage = true
                         "TRANSPORT" -> receivedTransportMessage = true
                         else -> {}
                     }

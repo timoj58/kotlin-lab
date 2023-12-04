@@ -16,9 +16,11 @@ class MessageService(
     suspend fun stationTracker() {
         do {
             val msg = stationReceiver.receive()
-            kotlinLabSocketHandler.send(
-                gson.toJson(msg)
-            )
+            if (msg.type != MessageType.HEALTH) {
+                kotlinLabSocketHandler.send(
+                    gson.toJson(msg)
+                )
+            }
         } while (true)
     }
 

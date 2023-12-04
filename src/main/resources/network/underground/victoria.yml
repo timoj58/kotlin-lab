@@ -1,7 +1,7 @@
 lines:
   - id: VIC-1
     transport-id: 3
-    line-capacity: 10
+    line-capacity: 24
     name: Victoria
     stations:
       - 74

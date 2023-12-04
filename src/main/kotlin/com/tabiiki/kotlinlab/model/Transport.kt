@@ -36,8 +36,9 @@ data class TransportMessage(
     val id: UUID,
     val lineId: String,
     val section: Pair<String, String>? = null,
-    val velocity: Double? = null,
-    val displacement: Double? = null
+    val latitude: Double,
+    val longitude: Double,
+    val velocity: Double,
 )
 
 data class Transport(
@@ -121,13 +122,15 @@ data class Transport(
     suspend fun track(tracker: Channel<TransportMessage>) {
         do {
             delay(timeStep * 10)
+            val position = if(!isStationary()) physics.getPosition() else (physics.lastPosition ?: Pair(0.0,0.0))
             tracker.send(
                 TransportMessage(
                     id = id,
                     lineId = line.id,
                     section = section(),
                     velocity = physics.velocity,
-                    displacement = physics.displacement
+                    latitude = position.first,
+                    longitude = position.second,
                 )
             )
         } while (true)
@@ -244,6 +247,9 @@ data class Transport(
         class Physics(config: TransportConfig) {
             private val haversineCalculator = HaversineCalculator()
             private val drag = 0.88
+            private var bearing: Double = 0.0
+            private var positioning: Pair<
+                    Pair<Double, Double>, Pair<Double, Double>>? = null
 
             var distance: Double = 0.0
             var velocity: Double = 0.0
@@ -251,6 +257,7 @@ data class Transport(
             private val weight = config.weight
             private val topSpeed = config.topSpeed
             private val power = config.power
+            var lastPosition: Pair<Double, Double>? = null
 
             fun reset() {
                 displacement = 0.0
@@ -259,13 +266,20 @@ data class Transport(
 
             fun init(from: Station, to: Station): Double {
                 distance = haversineCalculator.distanceBetween(start = from.position, end = to.position)
+                positioning = Pair(from.position, to.position)
+                bearing = haversineCalculator.calculateBearing(
+                    currentLat = from.position.first,
+                    currentLong = from.position.second,
+                    destLat = to.position.first,
+                    destLong = to.position.second,
+                )
                 return distance
             }
 
             private fun calculateForce(instruction: Instruction, percentage: Double = 100.0): Double {
                 return when (instruction) {
                     Instruction.THROTTLE_ON -> percentage * (power.toDouble() / 100.0)
-                    Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 1000.0) * -1
+                    Instruction.SCHEDULED_STOP -> percentage * (power.toDouble() / 100.0)
                     Instruction.EMERGENCY_STOP -> power.toDouble() * -1
                     else -> 0.0
                 }
@@ -274,7 +288,8 @@ data class Transport(
             private fun calculateAcceleration(force: Double): Double = force / weight.toDouble()
 
             fun calcTimeStep(instruction: Instruction, approachingTerminal: Boolean) {
-                var percentage = if (approachingTerminal) 25.0 else 100.0
+                var percentage = if (approachingTerminal ||
+                        this.distance - this.displacement < 750) 25.0 else 100.0
                 var force = calculateForce(
                     instruction = instruction,
                     percentage = percentage
@@ -305,6 +320,24 @@ data class Transport(
                     Instruction.THROTTLE_ON -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
                     else -> ceil(iterationsToPlatform) == floor(iterationsToBrakeToPlatform)
                 }
+            }
+
+            fun getPosition(): Pair<Double, Double> {
+                val latitude =  haversineCalculator.getLatitude(
+                    latitude = positioning!!.first.first,
+                    distance = displacement,
+                    bearing = bearing
+                )
+                lastPosition = Pair(latitude,
+                    haversineCalculator.getLongitude(
+                        latitude = positioning!!.first.first,
+                        longitude = positioning!!.first.second,
+                        newLatitude =  latitude,
+                        distance = displacement,
+                        bearing = bearing
+                    )
+                )
+                return lastPosition!!
             }
         }
     }

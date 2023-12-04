@@ -15,14 +15,6 @@ class SwitchService(
 ) {
 
     private val switchMonitor = SwitchMonitor()
-    fun isStationTerminal(station: String): Boolean {
-        val lineName = station.substringBefore(":")
-        val stationCode = station.substringAfter(":")
-        val isPossibleSwitch = lineFactory.isSwitchSection(lineName, Pair(stationCode, stationCode))
-
-        return isPossibleSwitch.first
-    }
-
     fun isSwitchSectionByTerminal(transport: Transport): Pair<Boolean, Boolean> {
         val section = getSection(transport.section())
         val isPossibleSwitch = lineFactory.isSwitchSection(transport.line.name, section)
@@ -35,13 +27,6 @@ class SwitchService(
             firstStation == SwitchMonitor.replaceSwitch(section.first) && isPossibleSwitch.first,
             lastStation == SwitchMonitor.replaceSwitch(section.second) && isPossibleSwitch.second
         )
-    }
-
-    fun doesFirstStationInSectionContainTerminal(transport: Transport): Boolean {
-        val section = getSection(transport.section())
-        val isPossibleSwitch = lineFactory.isSwitchSection(transport.line.name, section)
-
-        return isPossibleSwitch.first
     }
 
     fun isSwitchSection(transport: Transport): Boolean {

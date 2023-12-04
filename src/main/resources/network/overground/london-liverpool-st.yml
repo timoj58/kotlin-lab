@@ -1,7 +1,7 @@
 lines:
   - id: LIV-1
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 10
     name: London Liverpool St
     stations:
       - 343
@@ -21,7 +21,7 @@ lines:
 
   - id: LIV-2
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 10
     name: London Liverpool St
     stations:
       - 343
@@ -45,7 +45,7 @@ lines:
 
   - id: LIV-3
     transport-id: 3
-    line-capacity: 2
+    line-capacity: 10
     name: London Liverpool St
     stations:
       - 343

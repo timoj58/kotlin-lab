@@ -104,9 +104,6 @@ class SectionService(
         }
     }
 
-    fun isClear(section: Pair<String, String>, incoming: Boolean = false): Boolean =
-        queues.isClear(section, incoming).first
-
     fun isClear(
         transport: Transport,
         switchFrom: Boolean,

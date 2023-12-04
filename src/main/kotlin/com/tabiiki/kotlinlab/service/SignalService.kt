@@ -1,6 +1,5 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.factory.Signal
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalType
@@ -9,13 +8,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
-import java.util.concurrent.ConcurrentHashMap
 
 private class Channels {
-    private val channelsIn: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
-        ConcurrentHashMap()
-    private val channelsOut: ConcurrentHashMap<Pair<String, String>, Channel<SignalMessage>> =
-        ConcurrentHashMap()
+    private val channelsIn: MutableMap<Pair<String, String>, Channel<SignalMessage>> =
+        HashMap()
+    private val channelsOut: MutableMap<Pair<String, String>, Channel<SignalMessage>> =
+        HashMap()
 
     fun initIn(key: Pair<String, String>): Channel<SignalMessage> {
         channelsIn[key] = Channel()
@@ -49,8 +47,6 @@ class SignalService(
         launch { signalFactory.get(key).start(channelIn, channelOut) }
     }
 
-    fun getSignal(key: Pair<String, String>): Signal = signalFactory.get(key)
-
     fun getPlatformSignals(): List<Pair<String, String>> =
         signalFactory.get(SignalType.PLATFORM).map { it.section }
 
@@ -64,10 +60,10 @@ class SignalService(
         key: Pair<String, String>,
         signalMessage: SignalMessage
     ) {
-        channels.send(key = key, signalMessage = signalMessage)
         signalFactory.get(key).connected.forEach { signal ->
             channels.send(key = signal, signalMessage = signalMessage)
         }
+        channels.send(key = key, signalMessage = signalMessage)
     }
 
     fun initConnected(line: String, lineRepo: LineRepo) = signalFactory.updateConnected(line, lineRepo)

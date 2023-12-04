@@ -17,6 +17,7 @@ data class Line(
     val transportersPerSection = config.transportersPerSection ?: 2
     val overrideIsClear = config.overrideIsClear ?: false
     val switchTrackDistance = config.switchTrackDistance ?: 350.0
+    val transportType = transportConfig.first().transportId
     val transporters =
         generateSequence {
             transportConfig.map {

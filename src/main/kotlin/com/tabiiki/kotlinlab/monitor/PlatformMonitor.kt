@@ -81,6 +81,7 @@ class PlatformMonitor(
         holdChannels[key] = channel
         do {
             val msg = channel.receive()
+
             platformToKey(msg).let {
                 if (!platforms.isClear(it)) {
                     throw RuntimeException(

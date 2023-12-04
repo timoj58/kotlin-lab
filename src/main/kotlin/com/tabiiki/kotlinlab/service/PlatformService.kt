@@ -82,6 +82,7 @@ class PlatformService(
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val key = getPlatformSignalKey(transport, instructions, switchPlatform)
 
+
         signalService.send(
             key,
             SignalMessage(
@@ -148,7 +149,7 @@ class PlatformService(
         var canRelease: Triple<Boolean, Boolean, Boolean>
 
         do {
-            delay(transport.timeStep)
+            delay(transport.timeStep / 2)
 
             canRelease = platformConductor(
                 transport = transport,
@@ -156,7 +157,7 @@ class PlatformService(
                 key = key,
                 lineInstructions = lineInstructions
             )
-        } while (counter.incrementAndGet() < minimumHold ||
+        } while ((counter.incrementAndGet() < minimumHold / transport.timeStep) ||
             !canRelease.first ||
             !canRelease.second ||
             !canRelease.third
@@ -239,6 +240,7 @@ class PlatformService(
     }
 
     companion object {
+
         private fun platformKey(transport: Transport, instructions: LineInstructions): Pair<String, String> {
             val line = transport.line.name
             val dir = instructions.direction

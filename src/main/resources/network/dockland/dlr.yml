@@ -1,7 +1,7 @@
 lines:
   - id: DLR-5
     transport-id: 5
-    line-capacity: 4
+    line-capacity: 8
     name: DLR
     stations:
       - 26
@@ -25,7 +25,7 @@ lines:
 
   - id: DLR-1
     transport-id: 5
-    line-capacity: 4
+    line-capacity: 8
     name: DLR
     stations:
       - 26
@@ -47,7 +47,7 @@ lines:
 
   - id: DLR-2
     transport-id: 5
-    line-capacity: 4
+    line-capacity: 8
     name: DLR
     stations:
       - 528
@@ -65,7 +65,7 @@ lines:
 
   - id: DLR-3
     transport-id: 5
-    line-capacity: 4
+    line-capacity: 8
     name: DLR
     stations:
       - 530
@@ -86,7 +86,7 @@ lines:
 
   - id: DLR-4
     transport-id: 5
-    line-capacity: 4
+    line-capacity: 8
     name: DLR
     stations:
       - 565

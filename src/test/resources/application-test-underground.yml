@@ -1,6 +1,6 @@
 network:
-  time-step: 1
-  minimum-hold: 5
+  time-step: 5
+  minimum-hold: 1000
   lines:
     river:
     tram:

@@ -1,7 +1,7 @@
 lines:
   - id: JUB-3
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 14
     name: Jubilee
     stations:
       - 528
@@ -37,7 +37,7 @@ lines:
 
   - id: JUB-1
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 14
     name: Jubilee
     stations:
       - 396
@@ -61,7 +61,7 @@ lines:
 
   - id: JUB-2
     transport-id: 3
-    line-capacity: 6
+    line-capacity: 14
     name: Jubilee
     stations:
       - 528
