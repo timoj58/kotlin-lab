@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController
 
 data class LineStation(
     val id: String,
-    val name : String,
+    val name: String,
     val latitude: Double,
     val longitude: Double
 )

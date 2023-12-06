@@ -3,7 +3,6 @@ lines:
     transport-id: 3
     line-capacity: 10
     name: Elizabeth
-    transporters-per-section: 3
     stations:
       - 2
       - 650
@@ -22,7 +21,6 @@ lines:
     transport-id: 3
     line-capacity: 10
     name: Elizabeth
-    transporters-per-section: 3
     stations:
       - 418
       - 4
@@ -41,7 +39,6 @@ lines:
     transport-id: 3
     line-capacity: 10
     name: Elizabeth
-    transporters-per-section: 3
     stations:
       - 418
       - 4
@@ -86,7 +83,6 @@ lines:
     transport-id: 3
     line-capacity: 10
     name: Elizabeth
-    transporters-per-section: 3
     stations:
       - 479
       - 72

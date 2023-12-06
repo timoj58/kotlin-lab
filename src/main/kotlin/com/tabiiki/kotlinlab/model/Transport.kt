@@ -38,7 +38,7 @@ data class TransportMessage(
     val section: Pair<String, String>? = null,
     val latitude: Double,
     val longitude: Double,
-    val velocity: Double,
+    val velocity: Double
 )
 
 data class Transport(
@@ -58,7 +58,6 @@ data class Transport(
     private var journey: LineInstructions? = null
     private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
-    private var holdChannel: Channel<Transport>? = null
     private var sectionChannel: Channel<Transport>? = null
 
     fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
@@ -66,14 +65,6 @@ data class Transport(
     fun isStationary() = physics.velocity == 0.0 || instruction == Instruction.STATIONARY
     fun getSectionStationCode(): String = SwitchMonitor.replaceSwitch(Line.getStation(section().first))
     fun getPosition(): Double = this.physics.displacement
-    fun setHoldChannel(holdChannel: Channel<Transport>) {
-        this.holdChannel = holdChannel
-    }
-
-    suspend fun arrived() {
-        holdChannel!!.send(this)
-    }
-
     fun switchSection(section: Pair<String, String>) {
         if (this.actualSection == null) {
             this.actualSection = section
@@ -122,7 +113,7 @@ data class Transport(
     suspend fun track(tracker: Channel<TransportMessage>) {
         do {
             delay(timeStep * 10)
-            val position = if(!isStationary()) physics.getPosition() else (physics.lastPosition ?: Pair(0.0,0.0))
+            val position = if (!isStationary()) physics.getPosition() else (physics.lastPosition ?: Pair(0.0, 0.0))
             tracker.send(
                 TransportMessage(
                     id = id,
@@ -130,7 +121,7 @@ data class Transport(
                     section = section(),
                     velocity = physics.velocity,
                     latitude = position.first,
-                    longitude = position.second,
+                    longitude = position.second
                 )
             )
         } while (true)
@@ -249,7 +240,7 @@ data class Transport(
             private val drag = 0.88
             private var bearing: Double = 0.0
             private var positioning: Pair<
-                    Pair<Double, Double>, Pair<Double, Double>>? = null
+                Pair<Double, Double>, Pair<Double, Double>>? = null
 
             var distance: Double = 0.0
             var velocity: Double = 0.0
@@ -271,7 +262,7 @@ data class Transport(
                     currentLat = from.position.first,
                     currentLong = from.position.second,
                     destLat = to.position.first,
-                    destLong = to.position.second,
+                    destLong = to.position.second
                 )
                 return distance
             }
@@ -289,7 +280,12 @@ data class Transport(
 
             fun calcTimeStep(instruction: Instruction, approachingTerminal: Boolean) {
                 var percentage = if (approachingTerminal ||
-                        this.distance - this.displacement < 750) 25.0 else 100.0
+                    this.distance - this.displacement < 750
+                ) {
+                    25.0
+                } else {
+                    100.0
+                }
                 var force = calculateForce(
                     instruction = instruction,
                     percentage = percentage
@@ -323,16 +319,17 @@ data class Transport(
             }
 
             fun getPosition(): Pair<Double, Double> {
-                val latitude =  haversineCalculator.getLatitude(
+                val latitude = haversineCalculator.getLatitude(
                     latitude = positioning!!.first.first,
                     distance = displacement,
                     bearing = bearing
                 )
-                lastPosition = Pair(latitude,
+                lastPosition = Pair(
+                    latitude,
                     haversineCalculator.getLongitude(
                         latitude = positioning!!.first.first,
                         longitude = positioning!!.first.second,
-                        newLatitude =  latitude,
+                        newLatitude = latitude,
                         distance = displacement,
                         bearing = bearing
                     )

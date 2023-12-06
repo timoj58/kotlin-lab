@@ -3,8 +3,6 @@ lines:
     transport-id: 2
     line-capacity: 2
     name: Emirates Air Line
-    transporters-per-section: 2
-    override-is-clear: true
     stations:
       - 654
       - 655

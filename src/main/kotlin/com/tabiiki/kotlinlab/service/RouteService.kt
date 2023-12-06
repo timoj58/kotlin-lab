@@ -9,7 +9,11 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 
-data class RouteEnquiry(val route: Pair<String, String>, val channel: Channel<AvailableRoute>, val depth: Int = 2)
+data class RouteEnquiry(
+    val route: Pair<String, String>,
+    val channel: Channel<AvailableRoute>,
+    val depth: Int = 2
+)
 
 @Service
 class RouteService(

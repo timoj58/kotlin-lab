@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test
 
 internal class PlatformServiceTest {
 
-    private val minimumHold = 45
     private val timeStep = 7L
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
     private val linesAdapter = LinesAdapter(
@@ -65,9 +64,9 @@ internal class PlatformServiceTest {
     private val signalService = SignalService(signalFactory)
     private val switchService = SwitchService(lineFactory)
 
-    private val sectionService = SectionService(minimumHold, switchService, signalService, journeyRepo)
+    private val sectionService = SectionService(switchService, signalService, journeyRepo)
     private val platformService =
-        PlatformService(minimumHold, signalService, sectionService, lineRepo, lineFactory)
+        PlatformService(signalService, sectionService, lineRepo, lineFactory)
 
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 
@@ -115,12 +114,12 @@ internal class PlatformServiceTest {
 
         listOf(/*t1, t2, t3, t4*/t3).forEach {
             println("releasing ${it.id} ${it.section()}")
-            jobs.add(launch { platformService.signalAndDispatch(it) })
+            jobs.add(launch { platformService.release(it) })
         }
 
         delay(1000)
 
-        jobs.add(launch { platformService.signalAndDispatch(t4) })
+        jobs.add(launch { platformService.release(t4) })
 
         delay(20000)
 

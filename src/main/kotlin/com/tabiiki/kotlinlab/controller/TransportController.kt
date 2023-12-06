@@ -10,7 +10,7 @@ import java.util.UUID
 
 data class TransporterInformation(
     val id: UUID,
-    val type: String,
+    val type: String
 )
 
 @RestController

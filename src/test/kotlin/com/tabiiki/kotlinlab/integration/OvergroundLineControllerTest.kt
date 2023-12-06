@@ -18,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles
 @SpringBootTest
 class OvergroundLineControllerTest @Autowired constructor(
     @Value("\${network.time-step}") val timeStep: Long,
-    @Value("\${network.minimum-hold}") val minimumHold: Int,
     transportersConfig: TransportersConfig,
     stationRepo: StationRepo,
     signalFactory: SignalFactory,
@@ -29,7 +28,6 @@ class OvergroundLineControllerTest @Autowired constructor(
 ) {
     val lineControllerTest = LineControllerTest(
         timeStep,
-        minimumHold,
         transportersConfig,
         stationRepo,
         signalFactory,
@@ -56,7 +54,7 @@ class OvergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test euston line`() = runBlocking {
-        lineControllerTest.test("overground", "london-euston", 5)
+        lineControllerTest.test("overground", "london-euston", 8)
     }
 
     @Test

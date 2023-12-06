@@ -11,7 +11,6 @@ class HaversineCalculator {
     private val earthRadius = 6371000
 
     fun distanceBetween(start: Pair<Double, Double>, end: Pair<Double, Double>): Double {
-
         val phi: Double = Math.toRadians(start.first)
         val phi2: Double = Math.toRadians(end.first)
         val deltaPhi: Double = Math.toRadians(end.first - start.first)

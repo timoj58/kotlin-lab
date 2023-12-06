@@ -1,7 +1,7 @@
 lines:
   - id: HIGH-1
     transport-id: 3
-    line-capacity: 10
+    line-capacity: 8
     name: Highbury & Islington
     stations:
       - 279
@@ -23,7 +23,7 @@ lines:
 
   - id: HIGH-2
     transport-id: 3
-    line-capacity: 10
+    line-capacity: 8
     name: Highbury & Islington
     stations:
       - 279
@@ -50,7 +50,7 @@ lines:
 
   - id: HIGH-3
     transport-id: 3
-    line-capacity: 10
+    line-capacity: 8
     name: Highbury & Islington
     stations:
       - 279
@@ -80,7 +80,7 @@ lines:
 
   - id: HIGH-4
     transport-id: 3
-    line-capacity: 10
+    line-capacity: 8
     name: Highbury & Islington
     stations:
       - 279

@@ -1,6 +1,6 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.factory.LineFactory
+import com.tabiiki.kotlinlab.factory.Origin
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
@@ -15,50 +15,21 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicInteger
 
 @Service
 class PlatformService(
-    @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val signalService: SignalService,
     private val sectionService: SectionService,
-    private val lineRepo: LineRepo,
-    private val lineFactory: LineFactory
+    private val lineRepo: LineRepo
 ) {
-    private val platformMonitor = PlatformMonitor(sectionService, signalService)
+    private val platformMonitor = PlatformMonitor(signalService)
     private var commuterChannel: Channel<Commuter>? = null
 
     init {
         signalService.getSectionSignals().forEach { sectionService.initQueues(it) }
         signalService.getPlatformSignals().forEach { platformMonitor.init(it) }
-    }
-
-    fun isClear(transport: Transport): Boolean {
-        val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
-        val platformClear = if (switchPlatform) {
-            platformMonitor.isClear(
-                Pair(
-                    "${transport.line.name}:${LineDirection.TERMINAL}",
-                    transport.platformKey().second
-                )
-            )
-        } else {
-            platformMonitor.isClear(transport.platformKey())
-        }
-
-        return platformClear && (
-            transport.line.overrideIsClear ||
-                !transport.line.overrideIsClear && sectionService.isClear(
-                transport = transport,
-                switchFrom = switchPlatform,
-                approachingJunction = lineFactory.isJunction(
-                    line = transport.line.name,
-                    station = transport.section().second
-                )
-            )
-            )
     }
 
     fun initCommuterChannel(commuterChannel: Channel<Commuter>) {
@@ -68,66 +39,103 @@ class PlatformService(
     suspend fun initLines(line: String, lineDetails: List<Line>): Unit =
         coroutineScope {
             lineRepo.addLineDetails(line, lineDetails)
-            launch { sectionService.init(line) }
+            launch { sectionService.init(line) { t -> launch { hold(t) } } }
 
             platformMonitor.getPlatformKeys().filter { it.first.contains(line) }.forEach {
                 launch { init(it) }
-                launch { platformMonitor.monitorPlatformHold(it) { t -> launch { hold(t) } } }
             }
             signalService.initConnected(line, lineRepo)
         }
 
-    suspend fun signalAndDispatch(transport: Transport): Unit = coroutineScope {
-        val instructions = lineRepo.getLineInstructions(transport, minimumHold)
+    suspend fun buffer(transporters: MutableList<Transport>) = coroutineScope {
+        val line = transporters.first().line.name
+        println("buffering $line")
+
+        do {
+            val first = transporters.first()
+            val releasePack = releasePack(first)
+            val platformClear = if (releasePack.second) {
+                platformMonitor.isClear(
+                    Pair(
+                        "${first.line.name}:${LineDirection.TERMINAL}",
+                        first.platformKey().second
+                    )
+                )
+            } else {
+                platformMonitor.isClear(first.platformKey())
+            }
+            val canRelease = sectionService.isSectionClear(
+                transport = first,
+                isTerminalSection = releasePack.second
+            )
+
+            if (platformClear && canRelease) {
+                release(transport = first, releasePack = releasePack)
+                transporters.remove(first)
+            }
+
+            delay(first.timeStep * 10)
+        } while (transporters.isNotEmpty())
+
+        println("$line all dispatched")
+    }
+
+    suspend fun release(
+        transport: Transport,
+        releasePack: Triple<LineInstructions, Boolean, Pair<String, String>>? = null
+    ): Unit = coroutineScope {
+        println("releasing ${transport.id}")
+        signalAndHold(transport = transport, releasePack = releasePack ?: releasePack(transport))
+    }
+
+    private fun releasePack(transport: Transport): Triple<LineInstructions, Boolean, Pair<String, String>> {
+        val instructions = lineRepo.getLineInstructions(transport, transport.timeStep.toInt() * 50)
         val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val key = getPlatformSignalKey(transport, instructions, switchPlatform)
 
+        return Triple(instructions, switchPlatform, key)
+    }
 
-        signalService.send(
-            key,
-            SignalMessage(
-                signalValue = SignalValue.RED,
-                id = transport.id,
-                key = key,
-                line = transport.line.id,
-                commuterChannel = transport.carriage.channel
-            )
-        )
-
-        launch {
-            holdActions(
-                transport = transport,
-                key = key,
-                lineInstructions = instructions,
-                switchPlatform = switchPlatform
-            )
+    private fun platformToKey(transport: Transport): Pair<String, String> {
+        var switchStation = false
+        if (!transport.platformKey().first.contains(LineDirection.TERMINAL.name)) {
+            switchStation = sectionService.isSwitchPlatform(transport, transport.getJourneyTime().first, true)
         }
+
+        return transport.platformToKey(switchStation)!!
     }
 
     private suspend fun hold(
         transport: Transport
     ): Unit = coroutineScope {
-        val lineInstructions = lineRepo.getLineInstructions(transport, minimumHold)
-        val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
-        val key = getPlatformSignalKey(transport, lineInstructions, switchPlatform)
+        val platformToKey = platformToKey(transport)
+        // get a flavour for this,  then consider a virtual buffer.
+        if (!platformMonitor.isClear(platformToKey)) throw RuntimeException("${transport.id} platform not clear $platformToKey owner: ${platformMonitor.getOwner(platformToKey)}")
+        signalAndHold(transport = transport, releasePack = releasePack(transport))
+    }
 
+    private suspend fun signalAndHold(
+        transport: Transport,
+        releasePack: Triple<LineInstructions, Boolean, Pair<String, String>>
+    ) = coroutineScope {
         signalService.send(
-            key,
+            releasePack.third,
             SignalMessage(
                 signalValue = SignalValue.RED,
                 id = transport.id,
-                key = key,
+                key = releasePack.third,
                 line = transport.line.id,
-                commuterChannel = transport.carriage.channel
+                commuterChannel = transport.carriage.channel,
+                origin = Origin.RELEASE
             )
         )
 
         launch {
             holdActions(
                 transport = transport,
-                key = key,
-                lineInstructions = lineInstructions,
-                switchPlatform = switchPlatform
+                key = releasePack.third,
+                lineInstructions = releasePack.first,
+                switchPlatform = releasePack.second
             )
         }
     }
@@ -138,6 +146,7 @@ class PlatformService(
         lineInstructions: LineInstructions,
         switchPlatform: Boolean
     ) = coroutineScope {
+        val minimumHold = transport.timeStep.toInt() * 50
         val counter = AtomicInteger(0)
         val embarkJob = launch {
             transport.carriage.embark(commuterChannel!!)
@@ -146,22 +155,17 @@ class PlatformService(
             transport.carriage.disembark(Line.getStation(key.second), commuterChannel!!)
         }
 
-        var canRelease: Triple<Boolean, Boolean, Boolean>
+        var canRelease = false
 
         do {
-            delay(transport.timeStep / 2)
-
-            canRelease = platformConductor(
-                transport = transport,
-                switchPlatform = switchPlatform,
-                key = key,
-                lineInstructions = lineInstructions
-            )
-        } while ((counter.incrementAndGet() < minimumHold / transport.timeStep) ||
-            !canRelease.first ||
-            !canRelease.second ||
-            !canRelease.third
-        )
+            delay(transport.timeStep)
+            if ((counter.incrementAndGet() > minimumHold / transport.timeStep)) {
+                canRelease = sectionService.isSectionClear(
+                    transport = transport,
+                    isTerminalSection = switchPlatform
+                )
+            }
+        } while (!canRelease)
 
         dispatch(
             transport = transport,
@@ -171,35 +175,6 @@ class PlatformService(
         )
     }
 
-    private fun platformConductor(
-        transport: Transport,
-        switchPlatform: Boolean,
-        lineInstructions: LineInstructions,
-        key: Pair<String, String>
-    ): Triple<Boolean, Boolean, Boolean> =
-        Triple(
-            sectionService.isClear(
-                transport = transport,
-                switchFrom = switchPlatform,
-                approachingJunction = lineFactory.isJunction(
-                    line = transport.line.name,
-                    station = lineInstructions.to.id
-                )
-            ),
-            sectionService.arePreviousSectionsClear(
-                transport = transport,
-                lineInstructions = lineInstructions
-            ) { k -> lineRepo.getPreviousSections(k) },
-            !switchPlatform || platformMonitor.isClear(
-                key = Pair(
-                    "${transport.line.name}:${
-                    transport.lineDirection(true)
-                    }",
-                    key.second
-                )
-            )
-        )
-
     private suspend fun dispatch(
         transport: Transport,
         jobs: List<Job>? = null,
@@ -208,7 +183,6 @@ class PlatformService(
     ): Unit = coroutineScope {
         transport.startJourney(lineInstructions = lineInstructions)
         val job = launch { transport.motionLoop() }
-        // TESTING - should send a GREEN to relevant section
         sectionService.accept(
             transport = transport
                 .also {
@@ -216,7 +190,6 @@ class PlatformService(
                         val section = it.section()
                         it.addSwitchSection(Pair("${section.first}|", Line.getStation(section.first)))
                     }
-                    it.setHoldChannel(platformMonitor.getHoldChannel(it))
                 },
             motionJob = job,
             jobs = jobs

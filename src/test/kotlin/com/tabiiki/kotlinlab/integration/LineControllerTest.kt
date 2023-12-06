@@ -27,7 +27,6 @@ import kotlinx.coroutines.runBlocking
 
 class LineControllerTest(
     val timeStep: Long,
-    private val minimumHold: Int,
     private val transportersConfig: TransportersConfig,
     private val stationRepo: StationRepo,
     private val signalFactory: SignalFactory,
@@ -40,11 +39,10 @@ class LineControllerTest(
 
     suspend fun test(lineType: String, lineName: String, timeout: Int) = runBlocking {
         val signalService = SignalService(signalFactory)
-        val sectionService = SectionService(45, switchService, signalService, journeyRepo)
+        val sectionService = SectionService(switchService, signalService, journeyRepo)
 
         val lineService =
             PlatformService(
-                minimumHold,
                 signalService,
                 sectionService,
                 LineRepo(stationRepo),

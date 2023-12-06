@@ -13,21 +13,7 @@ import java.util.function.Consumer
 class SwitchService(
     private val lineFactory: LineFactory
 ) {
-
     private val switchMonitor = SwitchMonitor()
-    fun isSwitchSectionByTerminal(transport: Transport): Pair<Boolean, Boolean> {
-        val section = getSection(transport.section())
-        val isPossibleSwitch = lineFactory.isSwitchSection(transport.line.name, section)
-        if (!isPossibleSwitch.first && !isPossibleSwitch.second) return Pair(false, false)
-
-        val firstStation = getFirstStation(transport)
-        val lastStation = getLastStation(transport)
-
-        return Pair(
-            firstStation == SwitchMonitor.replaceSwitch(section.first) && isPossibleSwitch.first,
-            lastStation == SwitchMonitor.replaceSwitch(section.second) && isPossibleSwitch.second
-        )
-    }
 
     fun isSwitchSection(transport: Transport): Boolean {
         val section = getSection(transport.section())

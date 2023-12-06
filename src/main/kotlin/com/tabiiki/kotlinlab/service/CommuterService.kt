@@ -14,13 +14,10 @@ class CommuterService(
     private val routeService: RouteService
 ) {
     private val commuterChannel = Channel<Commuter>()
-    // private val commuterMonitor = CommuterMonitor()
-
     fun getCommuterChannel(): Channel<Commuter> = commuterChannel
 
     suspend fun generate(): Unit = coroutineScope {
         launch { routeService.listen() }
-        //   launch { commuterMonitor.monitor(trackingChannel) }
 
         do {
             delay(timeStep * 100)

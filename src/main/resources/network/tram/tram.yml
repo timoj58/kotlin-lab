@@ -3,7 +3,6 @@ lines:
     transport-id: 6
     line-capacity: 6
     switch-track-distance: 150
-    transporters-per-section: 3
     name: Tram
     stations:
       - 39
@@ -42,7 +41,6 @@ lines:
     line-capacity: 20
     name: Tram
     switch-track-distance: 150
-    transporters-per-section: 3
     stations:
       - 187
       - 20
@@ -75,7 +73,6 @@ lines:
     transport-id: 6
     line-capacity: 8
     switch-track-distance: 150
-    transporters-per-section: 3
     name: Tram
     stations:
       - 381

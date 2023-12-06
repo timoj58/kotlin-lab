@@ -8,7 +8,6 @@ import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -19,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles
 @SpringBootTest
 class UndergroundLineControllerTest @Autowired constructor(
     @Value("\${network.time-step}") val timeStep: Long,
-    @Value("\${network.minimum-hold}") val minimumHold: Int,
     transportersConfig: TransportersConfig,
     stationRepo: StationRepo,
     signalFactory: SignalFactory,
@@ -30,7 +28,6 @@ class UndergroundLineControllerTest @Autowired constructor(
 ) {
     val lineControllerTest = LineControllerTest(
         timeStep,
-        minimumHold,
         transportersConfig,
         stationRepo,
         signalFactory,
@@ -62,7 +59,7 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test piccadilly`() = runBlocking {
-        lineControllerTest.test("underground", "piccadilly", 5)
+        lineControllerTest.test("underground", "piccadilly", 10)
     }
 
     @Test
@@ -72,7 +69,7 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test bakerloo`() = runBlocking {
-        lineControllerTest.test("underground", "bakerloo", 4)
+        lineControllerTest.test("underground", "bakerloo", 8)
     }
 
     @Test

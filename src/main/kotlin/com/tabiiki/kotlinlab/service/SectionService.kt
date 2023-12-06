@@ -1,22 +1,21 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.factory.Origin
 import com.tabiiki.kotlinlab.factory.SignalMessage
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.monitor.SectionMonitor
 import com.tabiiki.kotlinlab.repo.JourneyRepo
-import com.tabiiki.kotlinlab.repo.LineInstructions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 
-private class Queues(private val minimumHold: Int, private val journeyRepo: JourneyRepo) {
+private class Queues {
     val queues: ConcurrentHashMap<Pair<String, String>, Pair<Channel<Transport>, ArrayDeque<Transport>>> =
         ConcurrentHashMap()
 
@@ -26,48 +25,13 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
         queues[key] = Pair(Channel(), ArrayDeque())
     }
 
-    fun isClear(section: Pair<String, String>, incoming: Boolean, max: Int = 0): Pair<Boolean, Int> = Pair(
-        queues[section]!!.second.isEmpty() ||
-            (
-                queues[section]!!.second.size < max &&
-                    journeyRepo.getJourneyTime(section, minimumHold * 2 + 1).first > minimumHold * 2 &&
-                    (if (incoming) incomingCheck(section) else defaultCheck(section))
-                ),
-        journeyTimeInSection(section)
-    )
-
-    private fun defaultCheck(section: Pair<String, String>) =
-        checkDistanceTravelled(
-            section,
-            queues[section]!!.second.last().getPosition(),
-            false
-        ) && !queues[section]!!.second.last().isStationary()
-
-    private fun incomingCheck(section: Pair<String, String>) =
-        checkDistanceTravelled(
-            section,
-            queues[section]!!.second.first().getPosition(),
-            true
-        )
-
-    private fun journeyTimeInSection(section: Pair<String, String>) =
-        queues[section]!!.second.lastOrNull()?.getJourneyTime()?.second ?: 0
-
-    private fun checkDistanceTravelled(
-        section: Pair<String, String>,
-        currentPosition: Double,
-        incoming: Boolean
-    ): Boolean {
-        val journey = journeyRepo.getJourneyTime(section, 0)
-        if (journey.second == 0.0 && !incoming) return true
-        val predictedDistance = (journey.second / journey.first) * minimumHold * 2
-        return if (!incoming) currentPosition > predictedDistance else currentPosition < predictedDistance
-    }
+    fun isQueueClear(section: Pair<String, String>): Boolean =
+        queues[section]!!.second.isEmpty()
 
     fun getQueueKeys(): List<Pair<String, String>> = queues.keys().toList()
 
     fun release(key: Pair<String, String>, transport: Transport) {
-        val limit = transport.line.transportersPerSection
+        val limit = 1
         if (queues[key]!!.second.size > limit) throw RuntimeException("${transport.id} Only $limit transporters ${queues[key]!!.second.map { it.id }} allowed in $key")
         queues[key]!!.second.addLast(transport)
     }
@@ -77,13 +41,12 @@ private class Queues(private val minimumHold: Int, private val journeyRepo: Jour
 
 @Service
 class SectionService(
-    @Value("\${network.minimum-hold}") private val minimumHold: Int,
     private val switchService: SwitchService,
     private val signalService: SignalService,
     private val journeyRepo: JourneyRepo
 ) {
 
-    private val queues = Queues(minimumHold, journeyRepo)
+    private val queues = Queues()
     private val sectionMonitor = SectionMonitor()
 
     suspend fun accept(transport: Transport, motionJob: Job, jobs: List<Job>?): Unit =
@@ -95,68 +58,35 @@ class SectionService(
             prepareRelease(transport) { t -> launch { release(t, motionJob, jobs) } }
         }
 
-    suspend fun init(line: String): Unit = coroutineScope {
+    suspend fun init(line: String, holdConsumer: Consumer<Transport>): Unit = coroutineScope {
         queues.getQueueKeys().filter { it.first.contains(line) }.forEach {
             launch { signalService.init(it) }
             launch {
-                sectionMonitor.monitor(it, queues.getChannel(it)) { k -> queues.getQueue(k.second).removeFirstOrNull()?.let { launch { arrive(k.first) } } }
+                sectionMonitor.monitor(it, queues.getChannel(it)) { k ->
+                    queues.getQueue(k.second).removeFirstOrNull()?.let {
+                        journeyRepo.addJourneyTime(k.first.getJourneyTime())
+                        holdConsumer.accept(k.first)
+                    }
+                }
             }
         }
     }
 
-    fun isClear(
-        transport: Transport,
-        switchFrom: Boolean,
-        incoming: Boolean = false,
-        approachingJunction: Boolean
-    ): Boolean {
-        val section = transport.section()
-        val max =
-            if (approachingJunction) 0 else if (transport.line.overrideIsClear) transport.line.transportersPerSection else 2
-        val isSectionClear = queues.isClear(section, incoming, max).first
-        val isTerminalSectionFromClear = if (switchFrom) {
-            queues.isClear(
-                section = Pair("${section.first}|", Line.getStation(section.first)),
-                incoming = incoming,
-                max = 0
-            ).first
-        } else {
-            true
-        }
+    fun isSectionClear(transport: Transport, isTerminalSection: Boolean): Boolean {
+        val isClear = queues.isQueueClear(section = transport.section())
 
-        return isSectionClear && isTerminalSectionFromClear
+        return when (isTerminalSection) {
+            true -> isClear && queues.isQueueClear(
+                section = Pair("${transport.section().first}|", Line.getStation(transport.section().first))
+            )
+            false -> isClear
+        }
     }
 
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean =
         switchService.isSwitchPlatform(transport, section, destination)
 
-    fun isSwitchSection(transport: Transport): Pair<Boolean, Boolean> =
-        switchService.isSwitchSectionByTerminal(transport)
-
     fun initQueues(key: Pair<String, String>) = queues.initQueues(key)
-
-    fun arePreviousSectionsClear(
-        transport: Transport,
-        lineInstructions: LineInstructions,
-        sections: (Pair<String, String>) -> List<Pair<String, String>>
-    ): Boolean {
-        var isClear = true
-        val line = transport.line.name
-        val platformToKey = Pair("$line:${lineInstructions.direction}", "$line:${lineInstructions.to.id}")
-
-        outer@ for (key in sections(platformToKey)) {
-            if (!queues.isClear(key, true).first) {
-                isClear = false
-                break@outer
-            }
-        }
-        return isClear
-    }
-
-    private suspend fun arrive(transport: Transport) = coroutineScope {
-        journeyRepo.addJourneyTime(transport.getJourneyTime())
-        launch { transport.arrived() }
-    }
 
     private suspend fun release(transport: Transport, motionJob: Job, jobs: List<Job>?) = coroutineScope {
         val job =
@@ -181,7 +111,8 @@ class SectionService(
                 id = transport.id,
                 key = transport.section(),
                 line = transport.line.id,
-                commuterChannel = transport.carriage.channel
+                commuterChannel = transport.carriage.channel,
+                origin = Origin.DEPART
             )
         )
     }
@@ -200,7 +131,8 @@ class SectionService(
                             id = t.id,
                             key = sectionLeft,
                             line = t.line.id,
-                            commuterChannel = t.carriage.channel
+                            commuterChannel = t.carriage.channel,
+                            origin = Origin.SWITCH
                         ).also {
                             signalService.send(
                                 key = t.getMainlineForSwitch(),

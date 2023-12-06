@@ -19,7 +19,7 @@ class SectionServiceTest {
     private val signalService = mock(SignalService::class.java)
     private val journeyRepo = mock(JourneyRepo::class.java)
     private val switchService = mock(SwitchService::class.java)
-    private val sectionService = SectionService(45, switchService, signalService, journeyRepo)
+    private val sectionService = SectionService(switchService, signalService, journeyRepo)
 
     private val transport = Transport(
         config = TransportConfig(transportId = 1, capacity = 10, power = 3800, weight = 1000, topSpeed = 28),
@@ -41,9 +41,7 @@ class SectionServiceTest {
         delay(100)
         val job = launch {
             sectionService.accept(
-                transport.also {
-                    it.setHoldChannel(Channel())
-                },
+                transport,
                 Job(),
                 listOf(testJob)
             )
@@ -63,9 +61,7 @@ class SectionServiceTest {
         delay(100)
         val job = launch {
             sectionService.accept(
-                transport.also {
-                    it.setHoldChannel(Channel())
-                },
+                transport,
                 Job(),
                 listOf()
             )
@@ -73,9 +69,7 @@ class SectionServiceTest {
         delay(100)
         try {
             sectionService.accept(
-                transport.also {
-                    it.setHoldChannel(Channel())
-                },
+                transport,
                 Job(),
                 listOf()
             )
@@ -85,4 +79,14 @@ class SectionServiceTest {
 
         job.cancel()
     }
+
+  /*  @Test
+    fun `is clear ` () {
+        sectionService.isClear(
+            transport = transport,
+            switchFrom = false,
+            approachingJunction = false,
+            minimumHold = 0
+        )
+    } */
 }

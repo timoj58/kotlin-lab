@@ -1,8 +1,7 @@
 lines:
   - id: ROM-1
     transport-id: 3
-    transporters-per-section: 3
-    line-capacity: 6
+    line-capacity: 4
     name: Romford - Upminster
     stations:
       - 464

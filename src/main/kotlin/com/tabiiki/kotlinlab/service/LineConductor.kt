@@ -19,7 +19,13 @@ class LineConductor(
     suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
-        platformService.signalAndDispatch(transport = transport)
+        platformService.release(transport = transport)
+    }
+
+    suspend fun buffer(
+        transporters: MutableList<Transport>
+    ) {
+        platformService.buffer(transporters)
     }
 
     suspend fun init(line: String, lines: List<Line>): Unit = coroutineScope {
@@ -29,7 +35,4 @@ class LineConductor(
     fun init(commuterChannel: Channel<Commuter>) {
         platformService.initCommuterChannel(commuterChannel)
     }
-
-    fun isClear(transport: Transport): Boolean =
-        platformService.isClear(transport)
 }

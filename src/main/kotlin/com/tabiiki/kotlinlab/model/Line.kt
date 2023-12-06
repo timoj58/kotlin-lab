@@ -14,8 +14,6 @@ data class Line(
     val id = config.id
     val name = config.name
     val stations = config.stations
-    val transportersPerSection = config.transportersPerSection ?: 2
-    val overrideIsClear = config.overrideIsClear ?: false
     val switchTrackDistance = config.switchTrackDistance ?: 350.0
     val transportType = transportConfig.first().transportId
     val transporters =

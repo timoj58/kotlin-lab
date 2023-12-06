@@ -17,7 +17,7 @@ class SwitchMonitor {
         val distance = distanceToSwitch(transport)
 
         do {
-          //  delay(transport.timeStep)
+            delay(transport.timeStep / 3)
         } while (distance >= transport.getPosition())
 
         jobs.forEach { it.cancel() }
@@ -34,6 +34,10 @@ class SwitchMonitor {
     companion object {
         fun replaceSwitch(station: String): String = station.replace("|", "")
         fun distanceToSwitch(transport: Transport): Double =
-            if (transport.section().first.contains("|")) transport.line.switchTrackDistance else transport.getJourneyTime().third - transport.line.switchTrackDistance
+            if (transport.section().first.contains("|")) {
+                transport.line.switchTrackDistance
+            } else {
+                transport.getJourneyTime().third - transport.line.switchTrackDistance
+            }
     }
 }

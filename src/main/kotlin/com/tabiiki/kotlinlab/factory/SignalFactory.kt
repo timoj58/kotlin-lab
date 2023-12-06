@@ -14,6 +14,10 @@ enum class SignalType {
     PLATFORM, SECTION, TEST
 }
 
+enum class Origin {
+    RELEASE, HOLD, DEPART, INIT, SWITCH, DEFAULT,
+}
+
 enum class SignalValue {
     RED, GREEN
 }
@@ -25,7 +29,8 @@ data class SignalMessage(
     val line: String? = null,
     val commuterChannel: Channel<Commuter>? = null,
     var timesStamp: Long = System.currentTimeMillis(),
-    val init: Boolean = false
+    val init: Boolean = false,
+    val origin: Origin = Origin.DEFAULT
 ) {
     override fun equals(other: Any?): Boolean {
         if (other !is SignalMessage) return false
@@ -49,7 +54,8 @@ data class Signal(
     var status: SignalMessage = SignalMessage(
         signalValue = SignalValue.GREEN,
         key = section,
-        init = true
+        init = true,
+        origin = Origin.INIT
     ),
     val timeStep: Long = 10,
     val connected: MutableList<Pair<String, String>> = mutableListOf()
@@ -68,7 +74,8 @@ data class Signal(
                     id = msg.id,
                     key = msg.key,
                     line = msg.line,
-                    commuterChannel = msg.commuterChannel
+                    commuterChannel = msg.commuterChannel,
+                    origin = msg.origin
                 )
             }
         } while (true)
