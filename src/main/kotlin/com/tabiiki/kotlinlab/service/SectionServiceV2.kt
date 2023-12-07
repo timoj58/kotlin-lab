@@ -56,9 +56,7 @@ class SectionServiceV2(
     }
 
     fun removeFromQueue(key: Pair<String, String>) {
-        queues.getQueue(key).removeFirstOrNull()?.let {
-            println("removing from queue $key")
-        }
+        queues.getQueue(key).removeFirstOrNull()
     }
 
     fun isSwitchPlatform(transport: Transport, section: Pair<String, String>, destination: Boolean = false): Boolean =
@@ -74,13 +72,11 @@ class SectionServiceV2(
     }
 
     private suspend fun release(transport: Transport, motionJob: Job, jobs: List<Job>?) = coroutineScope {
-        println("departing ${transport.id} ${transport.section()}")
         val lastMessage = signalService.getLastMessage(transport.section())
         val job =
             launch {
                 transport.signal(signalService.getChannel(transport.section())!!) { }
                 lastMessage?.let {
-                    println("${transport.id} sending latest message $it")
                     signalService.send(
                         transport.section(),
                         it.also { msg ->
@@ -130,7 +126,6 @@ class SectionServiceV2(
                         }
                     }
                     lastMessage?.let {
-                        println("sending latest switch message")
                         signalService.send(
                             sectionEntering,
                             it.also { msg ->

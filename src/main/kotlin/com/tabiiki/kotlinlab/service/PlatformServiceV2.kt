@@ -89,8 +89,6 @@ class PlatformServiceV2(
             monitorTransportArrivedChannel(channel = transportArrivedChannel)
         }
 
-        println("releasing ${transport.id} into ${transport.section()}")
-
         val job = launch {
             transport.motionLoop(channel = transportArrivedChannel) {
                 sectionService.removeFromQueue(key = transport.section())
