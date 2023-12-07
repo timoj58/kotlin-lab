@@ -8,30 +8,34 @@ import com.tabiiki.kotlinlab.configuration.adapter.LinesAdapter
 import com.tabiiki.kotlinlab.configuration.adapter.TransportersAdapter
 import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
+import com.tabiiki.kotlinlab.factory.SignalMessage
+import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.repo.JourneyRepo
+import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Disabled
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
-internal class PlatformServiceTest {
+class PlatformServiceTest {
 
-    private val timeStep = 7L
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
+    private val stationFactory = StationFactory(stationsConfig)
+    private val stationRepo = StationRepo(stationFactory)
+    private val journeyRepo = JourneyRepo()
     private val linesAdapter = LinesAdapter(
         listOf(
             "src/main/resources/network/overground/elizabeth.yml",
             "src/main/resources/network/tram/tram.yml",
             "src/main/resources/network/river/river.yml",
             "src/main/resources/network/underground/jubilee.yml",
-            "src/main/resources/network/dockland/dlr.yml"
+            "src/main/resources/network/dockland/dlr.yml",
+            "src/main/resources/network/underground/circle.yml"
         ),
         listOf(),
         listOf(),
@@ -39,6 +43,7 @@ internal class PlatformServiceTest {
         listOf(),
         listOf()
     )
+    private val lineRepo = LineRepo(stationRepo)
     private val linesConfig = LinesConfig(linesAdapter)
     private val transportersAdapter = TransportersAdapter(
         IntRange(1, 7).map {
@@ -54,110 +59,145 @@ internal class PlatformServiceTest {
     )
     private val transportConfig = TransportersConfig(transportersAdapter)
 
-    private val lineFactory = LineFactory(timeStep, transportConfig, linesConfig)
-    private val stationFactory = StationFactory(stationsConfig)
-
-    private val journeyRepo = JourneyRepo()
-    private val stationRepo = StationRepo(stationFactory)
-    private val lineRepo = LineRepo(stationRepo)
+    private val lineFactory = LineFactory(
+        timeStep = 3L,
+        transportConfig = transportConfig,
+        linesConfig = linesConfig
+    )
     private val signalFactory = SignalFactory(lineFactory)
     private val signalService = SignalService(signalFactory)
     private val switchService = SwitchService(lineFactory)
+    private val sectionService = SectionServiceV2(switchService, signalService)
+    private val platformServiceV2 = PlatformServiceV2(
+        sectionService = sectionService,
+        signalService = signalService,
+        lineFactory = lineFactory,
+        lineRepo = lineRepo
+    )
 
-    private val sectionService = SectionService(switchService, signalService, journeyRepo)
-    private val platformService =
-        PlatformService(signalService, sectionService, lineRepo, lineFactory)
+    @Test
+    fun `init service and ensure all signals are green `() = runBlocking {
+        val job = launch { platformServiceV2.init(Channel()) }
+        delay(1000)
 
-    private val lines = lineFactory.get().map { lineFactory.get(it) }
-
-    private val jobs = mutableListOf<Job>()
-
-    private suspend fun setup() = coroutineScope {
-        jobs.clear()
-
-        platformService.initCommuterChannel(Channel())
-        lines.groupBy { it.name }.values.forEach { line ->
-            val startJob = launch {
-                platformService.initLines(line.map { it.name }.distinct().first(), line)
-            }
-            jobs.add(startJob)
+        signalService.getPlatformSignals().forEach {
+                key ->
+            Assertions.assertThat(signalService.receive(key)?.signalValue).isEqualTo(SignalValue.GREEN)
         }
+
+        job.cancel()
     }
 
-    private suspend fun finish() {
+    @Test
+    fun `releasing a transporter sets the transporter in motion and sets the platform exit flag to RED`() = runBlocking {
+        val job = launch { platformServiceV2.init(Channel()) }
         delay(100)
-        jobs.forEach { it.cancel() }
-    }
 
-    @Test
-    @Disabled
-    fun `testing terminal junction with incoming and outgoing traffic - Tram`() = runBlocking {
-        /*
-          173, 221, 127, 589 - TRAM01
-          173, 221, 127, 589 - TRAM02
-          173, 221, 127 - TRAM03
-
-         */
-        jobs.add(launch { setup() })
-        delay(1000)
-
-        // 173 - POSITIVE
-        val t1 = lines.first { it.id == "TRAM01" }.transporters.first().also { it.addSection(Pair("Tram:173", "221")) }
-        // 221 - POSITIVE
-        val t2 = lines.first { it.id == "TRAM01" }.transporters.last().also { it.addSection(Pair("Tram:221", "127")) }
-        // 127 - NEGATIVE
-        val t3 = lines.first { it.id == "TRAM03" }.transporters.first().also { it.addSection(Pair("Tram:221", "127")) }
-        // 589 - NEGATIVE
-        val t4 = lines.first { it.id == "TRAM03" }.transporters.last().also { it.addSection(Pair("Tram:221", "127")) }
-
-        // works, issue now how to recreate the issue, ie forcing transporters into sections to simulate it.
-
-        listOf(/*t1, t2, t3, t4*/t3).forEach {
-            println("releasing ${it.id} ${it.section()}")
-            jobs.add(launch { platformService.release(it) })
+        val transport = lineFactory.get(lineFactory.get().first()).transporters.first()
+        Assertions.assertThat(transport.isStationary()).isTrue
+        val releaseJob = launch {
+            platformServiceV2.release(
+                transport = transport
+            )
         }
-
         delay(1000)
+        Assertions.assertThat(transport.isStationary()).isFalse
+        Assertions.assertThat(signalService.receive(Pair("${transport.platformKey().first}:${PlatformSignalType.EXIT}", transport.platformKey().second))?.signalValue).isEqualTo(SignalValue.RED)
 
-        jobs.add(launch { platformService.release(t4) })
-
-        delay(20000)
-
-        finish()
+        job.cancel()
+        releaseJob.cancel()
     }
 
     @Test
-    fun `testing terminals in close proximity same direction - Elizabeth line`() = runBlocking {
-        /*
-           267, 271, 269 - ELIZ02
-           267, 271, 269, 270 - ELIZ03
-         */
-        jobs.add(launch { setup() })
+    fun `releasing a transporter from a terminal sets the transporter in motion and sets the platform exit flag to RED`() = runBlocking {
+        val job = launch { platformServiceV2.init(Channel()) }
+        delay(100)
+
+        val transport = lineFactory.get("CIRCLE-2").transporters.first()
+        Assertions.assertThat(transport.isStationary()).isTrue
+        val releaseJob = launch {
+            platformServiceV2.release(
+                transport = transport
+            )
+        }
         delay(1000)
-        finish()
+        Assertions.assertThat(transport.isStationary()).isFalse
+        Assertions.assertThat(signalService.receive(Pair("${transport.platformKey().first.substringBefore(":")}:${LineDirection.TERMINAL}", transport.platformKey().second))?.signalValue).isEqualTo(SignalValue.RED)
+
+        job.cancel()
+        releaseJob.cancel()
     }
 
     @Test
-    fun `testing problematic junction - River`() = runBlocking {
-        /*
-          670, 671, 673 - RIVER01
-          670, 671, 672 - RIVER02
-          671, 672 - RIVER03
-          670, 671 - RIVER04
-         */
-        jobs.add(launch { setup() })
-        delay(1000)
-        finish()
+    fun `buffered release will add release a transporter if platform ENTRY is GREEN and platform EXIT is GREEN, and set platform entry to RED`() = runBlocking {
+        val job = launch { platformServiceV2.init(Channel()) }
+        delay(100)
+
+        val transport = lineFactory.get(lineFactory.get().first()).transporters.first()
+        val transport2 = lineFactory.get(transport.line.id).transporters.first { it.section() == transport.section() && it.id != transport.id }
+        Assertions.assertThat(transport.isStationary()).isTrue
+        val releaseJob = launch {
+            platformServiceV2.release(
+                transport = transport
+            )
+        }
+        delay(2000)
+        Assertions.assertThat(transport.isStationary()).isFalse
+        Assertions.assertThat(transport2.isStationary()).isTrue
+
+        val releaseJob2 = launch {
+            platformServiceV2.release(
+                transporters = mutableListOf(transport2)
+            )
+        }
+        // NOTE this tests the previous platform exit is now GREEN
+        delay(2000)
+        Assertions.assertThat(transport2.isStationary()).isFalse
+
+        job.cancel()
+        releaseJob.cancel()
+        releaseJob2.cancel()
     }
 
     @Test
-    fun `testing problematic junction - DLR`() = runBlocking {
-        /*
-          628, 94, 275 DLR01
-          435, 619, 94 DLR03
-         */
-        jobs.add(launch { setup() })
+    fun `a transporter being held sets the platform entry signal to RED and is not released if the platform exit is RED`() = runBlocking {
+        val job = launch { platformServiceV2.init(Channel()) }
+        delay(100)
+
+        val transport = lineFactory.get(lineFactory.get().first()).transporters.first()
+
+        Assertions.assertThat(signalService.receive(Pair("${transport.platformKey().first}:${PlatformSignalType.ENTRY}", transport.platformKey().second))?.signalValue).isEqualTo(SignalValue.GREEN)
+        val hold = launch { platformServiceV2.hold(transport) }
+        delay(100)
+        Assertions.assertThat(signalService.receive(Pair("${transport.platformKey().first}:${PlatformSignalType.ENTRY}", transport.platformKey().second))?.signalValue).isEqualTo(SignalValue.RED)
+        Assertions.assertThat(transport.isStationary()).isTrue
+
         delay(1000)
-        finish()
+        Assertions.assertThat(transport.isStationary()).isFalse
+
+        job.cancel()
+        hold.cancel()
+    }
+
+    @Test
+    fun `a transporter is released from hold after the minimum time and a GREEN signal to platform exit, and sets platform entry signal to GREEN`() = runBlocking {
+        val job = launch { platformServiceV2.init(Channel()) }
+        delay(100)
+
+        val transport = lineFactory.get(lineFactory.get().first()).transporters.first()
+
+        signalService.send(
+            key = Pair("${transport.platformKey().first}:${PlatformSignalType.EXIT}", transport.platformKey().second),
+            signalMessage = SignalMessage(
+                signalValue = SignalValue.RED,
+                line = null
+            )
+        )
+        val hold = launch { platformServiceV2.hold(transport) }
+        delay(2000)
+        Assertions.assertThat(transport.isStationary()).isTrue
+
+        job.cancel()
+        hold.cancel()
     }
 }

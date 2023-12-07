@@ -7,13 +7,12 @@ import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Commuter
-import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.LineRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.LineConductor
 import com.tabiiki.kotlinlab.service.LineController
-import com.tabiiki.kotlinlab.service.PlatformService
-import com.tabiiki.kotlinlab.service.SectionService
+import com.tabiiki.kotlinlab.service.PlatformServiceV2
+import com.tabiiki.kotlinlab.service.SectionServiceV2
 import com.tabiiki.kotlinlab.service.SignalService
 import com.tabiiki.kotlinlab.service.StationMessage
 import com.tabiiki.kotlinlab.service.StationService
@@ -30,29 +29,14 @@ class LineControllerTest(
     private val transportersConfig: TransportersConfig,
     private val stationRepo: StationRepo,
     private val signalFactory: SignalFactory,
-    private val journeyRepo: JourneyRepo,
     private val switchService: SwitchService,
-    private val stationFactory: StationFactory,
-    private val lineFactory: LineFactory
+    private val stationFactory: StationFactory
 ) {
     private val integrationControl = IntegrationControl()
 
     suspend fun test(lineType: String, lineName: String, timeout: Int) = runBlocking {
         val signalService = SignalService(signalFactory)
-        val sectionService = SectionService(switchService, signalService, journeyRepo)
-
-        val lineService =
-            PlatformService(
-                signalService,
-                sectionService,
-                LineRepo(stationRepo),
-                lineFactory
-            )
-        val lineConductor = LineConductor(lineService)
-
-        val stationService =
-            StationService(timeStep = timeStep, signalService = signalService, stationFactory = stationFactory, lineFactory = lineFactory)
-
+        val sectionService = SectionServiceV2(switchService, signalService)
         val lineFactory = LineFactory(
             linesConfig = LinesConfig(
                 LinesAdapter().also {
@@ -67,6 +51,17 @@ class LineControllerTest(
             timeStep = timeStep,
             transportConfig = transportersConfig
         )
+        val lineService =
+            PlatformServiceV2(
+                sectionService,
+                signalService,
+                lineFactory,
+                LineRepo(stationRepo)
+            )
+        val lineConductor = LineConductor(lineService)
+
+        val stationService =
+            StationService(timeStep = timeStep, signalService = signalService, stationFactory = stationFactory, lineFactory = lineFactory)
 
         val line = lineFactory.get().map {
             lineFactory.get(it).also { l ->
@@ -75,14 +70,11 @@ class LineControllerTest(
         }.toList()
 
         val controller = LineController(
-            timeStep = timeStep,
             conductor = lineConductor
         )
 
         val globalCommuterChannel = Channel<Commuter>()
-        controller.init(globalCommuterChannel)
-
-        val initJob = launch { controller.init(line) }
+        val initJob = launch { controller.init(globalCommuterChannel) }
 
         delay(2000)
 

@@ -131,7 +131,6 @@ data class Transport(
         val timeRegistered = System.currentTimeMillis()
         var previousMsg: SignalMessage? = null
         departedConsumer?.accept(this)
-
         do {
             val msg = channel.receive()
 
@@ -179,7 +178,7 @@ data class Transport(
         }
     }
 
-    suspend fun motionLoop() {
+    suspend fun motionLoop(channel: Channel<Transport>, consumer: Consumer<Transport>) {
         val emergencyStop = AtomicInteger(0)
         val counter = AtomicInteger(0)
 
@@ -197,11 +196,11 @@ data class Transport(
             if (emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
         } while (physics.displacement <= physics.distance)
 
-        stopJourney()
+        stopJourney(channel = channel, consumer = consumer)
     }
 
     fun startJourney(lineInstructions: LineInstructions) {
-        instruction = Instruction.STATIONARY
+        instruction = Instruction.THROTTLE_ON
         journey = lineInstructions
         status = Status.ACTIVE
 
@@ -218,7 +217,7 @@ data class Transport(
         it + 1 == idx || it - 1 == idx
     }
 
-    private suspend fun stopJourney() = coroutineScope {
+    private suspend fun stopJourney(channel: Channel<Transport>, consumer: Consumer<Transport>) = coroutineScope {
         physics.reset()
         actualSection = null
         journey!!.let {
@@ -229,7 +228,10 @@ data class Transport(
         }
         status = Status.PLATFORM
 
-        launch { sectionChannel!!.send(this@Transport) }
+        launch {
+            consumer.accept(this@Transport)
+            channel.send(this@Transport)
+        }
     }
 
     companion object {

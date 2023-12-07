@@ -37,7 +37,13 @@ internal class SignalServiceImplTest {
         val job2 = async { testChannel(channelOut, job) }
 
         delay(100)
-        signalService.send(Pair("A", "B"), SignalMessage(SignalValue.RED))
+        signalService.send(
+            Pair("A", "B"),
+            SignalMessage(
+                SignalValue.RED,
+                line = null
+            )
+        )
         delay(200)
         job2.cancel()
     }

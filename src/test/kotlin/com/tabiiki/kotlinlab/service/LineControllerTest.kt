@@ -32,7 +32,7 @@ internal class LineControllerTest {
         )
 
         val lineControllerService =
-            LineController(1000, conductor)
+            LineController(conductor)
 
         val res = async { lineControllerService.start(listOf(line)) }
         delay(2000)
@@ -56,7 +56,7 @@ internal class LineControllerTest {
             mutableListOf(line.transporters[0], line.transporters[1])
         )
         val lineControllerService =
-            LineController(1000, conductor)
+            LineController(conductor)
 
         val channel = Channel<Transport>()
         val res = async { lineControllerService.start(listOf(line)/*, channel*/) }

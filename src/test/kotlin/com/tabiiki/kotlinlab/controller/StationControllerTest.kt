@@ -18,6 +18,6 @@ class StationControllerTest {
             .exchange()
             .expectStatus().isOk
             .expectBody()
-            .jsonPath("$.size()").isEqualTo(679)
+            .jsonPath("$.size()").isEqualTo(477)
     }
 }

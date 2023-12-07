@@ -61,7 +61,9 @@ class StationMonitorTest {
                     id = transporterId,
                     signalValue = SignalValue.RED,
                     commuterChannel = carriageChannel,
-                    key = Pair("B", "A")
+                    key = Pair("B", "A"),
+                    line = null
+
                 )
             )
         }
@@ -77,7 +79,9 @@ class StationMonitorTest {
                     id = transporterId,
                     signalValue = SignalValue.GREEN,
                     commuterChannel = carriageChannel,
-                    key = Pair("A", "B")
+                    key = Pair("A", "B"),
+                    line = null
+
                 )
             )
         }

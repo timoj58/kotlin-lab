@@ -81,13 +81,13 @@ internal class TransportTest {
                 minimumHold = 45
             )
         )
-        val job = launch { train.motionLoop() }
+        val job = launch { train.motionLoop(Channel()) {} }
 
         val channel = Channel<SignalMessage>()
 
         val job2 = launch { train.signal(channel) }
         delay(100)
-        channel.send(SignalMessage(signalValue = SignalValue.GREEN))
+        channel.send(SignalMessage(signalValue = SignalValue.GREEN, line = null))
         do {
             delay(100)
         } while (!train.atPlatform())
@@ -132,7 +132,7 @@ internal class TransportTest {
         val res = async { train.signal(channel) }
         delay(50)
 
-        channel.send(SignalMessage(signal))
+        channel.send(SignalMessage(signal, line = null))
         do {
             delay(1000)
         } while (!train.atPlatform())
@@ -150,15 +150,15 @@ internal class TransportTest {
         val res = async { train.signal(channel) }
         delay(50)
 
-        channel.send(SignalMessage(SignalValue.GREEN))
+        channel.send(SignalMessage(SignalValue.GREEN, line = null))
         delay(500)
-        channel.send(SignalMessage(SignalValue.RED))
+        channel.send(SignalMessage(SignalValue.RED, line = null))
 
         do {
             delay(10)
         } while (!train.isStationary())
         assertThat(train.isStationary()).isEqualTo(true)
-        channel.send(SignalMessage(SignalValue.GREEN))
+        channel.send(SignalMessage(SignalValue.GREEN, line = null))
 
         do {
             delay(1000)
@@ -177,19 +177,19 @@ internal class TransportTest {
 
         delay(50)
 
-        channel.send(SignalMessage(SignalValue.GREEN))
+        channel.send(SignalMessage(SignalValue.GREEN, line = null))
 
         do {
             delay(10)
         } while (train.instruction != Instruction.SCHEDULED_STOP)
 
-        channel.send(SignalMessage(SignalValue.RED))
+        channel.send(SignalMessage(SignalValue.RED, line = null))
 
         delay(1000)
 
         assertThat(train.atPlatform()).isEqualTo(false)
 
-        channel.send(SignalMessage(SignalValue.GREEN))
+        channel.send(SignalMessage(SignalValue.GREEN, line = null))
 
         do {
             delay(1000)
@@ -220,7 +220,7 @@ internal class TransportTest {
         )
 
         launch {
-            train.motionLoop()
+            train.motionLoop(Channel()) {}
         }
     }
 }

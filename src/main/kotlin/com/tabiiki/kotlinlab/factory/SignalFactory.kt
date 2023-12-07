@@ -4,6 +4,7 @@ import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.repo.LineDirection
 import com.tabiiki.kotlinlab.repo.LineRepo
+import com.tabiiki.kotlinlab.service.PlatformSignalType
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -26,7 +27,7 @@ data class SignalMessage(
     var signalValue: SignalValue,
     val id: UUID? = null,
     val key: Pair<String, String>? = null,
-    val line: String? = null,
+    val line: String?,
     val commuterChannel: Channel<Commuter>? = null,
     var timesStamp: Long = System.currentTimeMillis(),
     val init: Boolean = false,
@@ -55,6 +56,7 @@ data class Signal(
         signalValue = SignalValue.GREEN,
         key = section,
         init = true,
+        line = null,
         origin = Origin.INIT
     ),
     val timeStep: Long = 10,
@@ -141,8 +143,10 @@ class SignalFactory(
         val pairs = mutableSetOf<Pair<String, String>>()
         lines.forEach { line ->
             val id = line.name
-            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.POSITIVE}", "$id:$it") })
-            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.NEGATIVE}", "$id:$it") })
+            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.POSITIVE}:${PlatformSignalType.ENTRY}", "$id:$it") })
+            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.POSITIVE}:${PlatformSignalType.EXIT}", "$id:$it") })
+            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.NEGATIVE}:${PlatformSignalType.ENTRY}", "$id:$it") })
+            pairs.addAll(line.stations.map { Pair("$id:${LineDirection.NEGATIVE}:${PlatformSignalType.EXIT}", "$id:$it") })
             pairs.addAll(
                 line.stations.filter { lineFactory.isSwitchStation(id, it) }
                     .map { Pair("$id:${LineDirection.TERMINAL}", "$id:$it") }

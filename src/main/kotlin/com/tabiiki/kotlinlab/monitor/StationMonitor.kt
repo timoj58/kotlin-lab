@@ -69,7 +69,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
                             stationId = station.id,
                             name = station.name,
                             transportId = it,
-                            line = msg.line!!,
+                            line = msg.line, // should be set?
                             type = messageType
                         )
                     )

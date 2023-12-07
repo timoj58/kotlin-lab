@@ -7,23 +7,18 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 @Service
 class LineController(
-    @Value("\${network.time-step}") private val timeStep: Long,
     private val conductor: LineConductor
 ) {
 
-    fun init(commuterChannel: Channel<Commuter>) = conductor.init(commuterChannel)
-
-    suspend fun init(line: List<Line>): Unit = coroutineScope {
-        launch { conductor.init(line.map { it.name }.distinct().first(), line) }
+    suspend fun init(commuterChannel: Channel<Commuter>) = coroutineScope {
+        launch { conductor.init(commuterChannel = commuterChannel) }
     }
 
     suspend fun start(line: List<Line>): Unit = coroutineScope {
-        println("starting ${line.first().name}")
         val transportersToDispatch = conductor.getTransportersToDispatch(line)
         val linesToDispatch = mutableListOf<Transport>()
 
@@ -32,11 +27,9 @@ class LineController(
         }
 
         launch { dispatch(toDispatch = linesToDispatch) }
-        println("finishing ${line.first().name}")
     }
 
     private suspend fun dispatch(toDispatch: MutableList<Transport>) = coroutineScope {
-        val line = toDispatch.first().line.name
         val toRelease = toDispatch.distinctBy { it.section() }
         toRelease.forEach {
             release(it)
@@ -46,8 +39,6 @@ class LineController(
             delay(toDispatch.first().timeStep * 100)
             launch { conductor.buffer(toDispatch) }
         }
-
-        println("completed $line")
     }
 
     private suspend fun release(transport: Transport) = coroutineScope {

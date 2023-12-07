@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class LineConductor(
-    private val platformService: PlatformService
+    private val platformService: PlatformServiceV2
 ) {
 
     fun getTransportersToDispatch(lines: List<Line>): MutableList<Transport> =
@@ -25,14 +25,10 @@ class LineConductor(
     suspend fun buffer(
         transporters: MutableList<Transport>
     ) {
-        platformService.buffer(transporters)
+        platformService.release(transporters = transporters)
     }
 
-    suspend fun init(line: String, lines: List<Line>): Unit = coroutineScope {
-        launch { platformService.initLines(line, lines) }
-    }
-
-    fun init(commuterChannel: Channel<Commuter>) {
-        platformService.initCommuterChannel(commuterChannel)
+    suspend fun init(commuterChannel: Channel<Commuter>) = coroutineScope {
+        launch { platformService.init(commuterChannel = commuterChannel) }
     }
 }

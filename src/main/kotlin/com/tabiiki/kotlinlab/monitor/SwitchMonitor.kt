@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.monitor
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -17,12 +18,12 @@ class SwitchMonitor {
         val distance = distanceToSwitch(transport)
 
         do {
-            delay(transport.timeStep / 3)
+            delay(transport.timeStep)
         } while (distance >= transport.getPosition())
 
         jobs.forEach { it.cancel() }
 
-        launch { transport.motionLoop() }
+        launch { transport.motionLoop(Channel()) {} }
 
         val sectionLeft = transport.section()
         transport.switchSection(

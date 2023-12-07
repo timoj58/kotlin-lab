@@ -50,7 +50,7 @@ class LineRepo(private val stationRepo: StationRepo) {
 
     fun getPreviousSections(platformKey: Pair<String, String>): List<Pair<String, String>> {
         val line = Line.getLine(platformKey.first)
-        val direction = platformKey.first.substringAfter(":")
+        val direction = platformKey.first.substringAfter(":").substringBefore(":")
         val stationTo = Line.getStation(platformKey.second)
         val stationsFrom = stationRepo.getPreviousStationsOnLine(
             getLineStations(line),

@@ -1,10 +1,8 @@
 package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
-import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
-import com.tabiiki.kotlinlab.repo.JourneyRepo
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.SwitchService
 import kotlinx.coroutines.runBlocking
@@ -21,20 +19,16 @@ class OvergroundLineControllerTest @Autowired constructor(
     transportersConfig: TransportersConfig,
     stationRepo: StationRepo,
     signalFactory: SignalFactory,
-    journeyRepo: JourneyRepo,
     switchService: SwitchService,
-    stationFactory: StationFactory,
-    lineFactory: LineFactory
+    stationFactory: StationFactory
 ) {
     val lineControllerTest = LineControllerTest(
         timeStep,
         transportersConfig,
         stationRepo,
         signalFactory,
-        journeyRepo,
         switchService,
-        stationFactory,
-        lineFactory
+        stationFactory
     )
 
     @Test

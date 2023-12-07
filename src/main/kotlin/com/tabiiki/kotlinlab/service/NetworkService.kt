@@ -18,10 +18,6 @@ class NetworkService(
 
     suspend fun init() = coroutineScope {
         lineController.init(commuterService.getCommuterChannel())
-
-        lines.groupBy { it.name }.values.forEach { line ->
-            launch { lineController.init(line) }
-        }
     }
 
     suspend fun start(
