@@ -91,7 +91,7 @@ class PlatformServiceV2(
 
         val job = launch {
             transport.motionLoop(channel = transportArrivedChannel) {
-                //sectionService.removeFromQueue(key = transport.section())
+                // sectionService.removeFromQueue(key = transport.section())
                 launch {
                     signalService.send(
                         key = platformSignalExitKey,
@@ -123,7 +123,7 @@ class PlatformServiceV2(
         transporters.groupBy { it.section().first }.forEach { (_, u) ->
             launch { releaseBySection(transporters = u.toMutableList()) }
         }
-     }
+    }
 
     suspend fun hold(transport: Transport) = coroutineScope {
         val platformSignalEntryKey = transport.platformKey().getPlatformEntryKey(
@@ -187,9 +187,9 @@ class PlatformServiceV2(
 
                 release =
                     platformEntrySignal?.signalValue == SignalValue.GREEN &&
-                            platformExitSignal?.signalValue == SignalValue.GREEN &&
-                            platformExitSignal.timesStamp > startedAt &&
-                            platformEntrySignal.timesStamp > startedAt
+                    platformExitSignal?.signalValue == SignalValue.GREEN &&
+                    platformExitSignal.timesStamp > startedAt &&
+                    platformEntrySignal.timesStamp > startedAt
             } while (!release)
 
             release(transport = transport)

@@ -17,9 +17,8 @@ class SectionServiceV2(
     private val switchService: SwitchService,
     private val signalService: SignalService
 ) {
-   val channels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> =
-       ConcurrentHashMap()
-
+    val channels: ConcurrentHashMap<Pair<String, String>, Channel<Transport>> =
+        ConcurrentHashMap()
 
     init {
         signalService.getSectionSignals().forEach {
@@ -28,7 +27,7 @@ class SectionServiceV2(
     }
 
     suspend fun init() = coroutineScope {
-        channels.forEach{ (k, _) ->
+        channels.forEach { (k, _) ->
             launch { signalService.init(k) }
         }
     }

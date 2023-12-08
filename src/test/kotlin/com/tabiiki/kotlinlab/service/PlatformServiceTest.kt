@@ -149,7 +149,7 @@ class PlatformServiceTest {
 
         val releaseJob2 = launch {
             platformServiceV2.release(
-                transporters = mutableListOf(transport2,transport3,transport4)
+                transporters = mutableListOf(transport2, transport3, transport4)
             )
         }
         // NOTE this tests the previous platform exit is now GREEN
