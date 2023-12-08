@@ -32,8 +32,7 @@ class NetworkService(
         }
 
         launch { lineFactory.tracking(channel = transportReceiver) }
-
-        lines.groupBy { it.name }.values.forEach { line -> launch { lineController.start(line) } }
+        lines.groupBy { it.name }.values.forEach { line -> launch {  lineController.start(line) } }
         launch { commuterService.generate() }
     }
 }

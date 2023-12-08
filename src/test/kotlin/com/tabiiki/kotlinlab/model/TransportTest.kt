@@ -66,11 +66,6 @@ internal class TransportTest {
     }
 
     @Test
-    fun `test platform from key`() {
-        assertThat(train.platformFromKey()).isEqualTo(Pair("1:POSITIVE", "1:A"))
-    }
-
-    @Test
     fun `test platform from and to with journey`() = runBlocking {
         train.startJourney(
             LineInstructions(
@@ -92,7 +87,6 @@ internal class TransportTest {
             delay(100)
         } while (!train.atPlatform())
 
-        assertThat(train.platformFromKey()).isEqualTo(Pair("1:POSITIVE", "1:A"))
         assertThat(train.platformToKey()).isEqualTo(Pair("1:POSITIVE", "1:B"))
 
         job.cancel()

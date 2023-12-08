@@ -135,6 +135,8 @@ class PlatformServiceTest {
 
         val transport = lineFactory.get(lineFactory.get().first()).transporters.first()
         val transport2 = lineFactory.get(transport.line.id).transporters.first { it.section() == transport.section() && it.id != transport.id }
+        val transport3 = lineFactory.get(transport.line.id).transporters.first { it.section() == transport.section() && !listOf(transport.id, transport2.id).contains(it.id) }
+        val transport4 = lineFactory.get(transport.line.id).transporters.first { it.section() == transport.section() && !listOf(transport.id, transport2.id, transport3.id).contains(it.id) }
         Assertions.assertThat(transport.isStationary()).isTrue
         val releaseJob = launch {
             platformServiceV2.release(
@@ -147,7 +149,7 @@ class PlatformServiceTest {
 
         val releaseJob2 = launch {
             platformServiceV2.release(
-                transporters = mutableListOf(transport2)
+                transporters = mutableListOf(transport2,transport3,transport4)
             )
         }
         // NOTE this tests the previous platform exit is now GREEN

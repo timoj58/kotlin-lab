@@ -78,23 +78,10 @@ data class Transport(
     fun platformKey(): Pair<String, String> =
         Pair("${line.name}:${this.lineDirection()}", section().first.substringBefore("|"))
 
+    fun platformToKey(): Pair<String, String> =
+        Pair("${line.name}:${this.lineDirection()}", "${line.name}:${section().second.substringBefore("|")}")
+
     fun section(): Pair<String, String> = sectionData.second ?: sectionData.first!!
-
-    fun platformFromKey(): Pair<String, String> {
-        val line = line.name
-        val dir = journey?.direction ?: this.lineDirection()
-        val stationId = journey?.from?.id ?: Line.getStation(section().first)
-
-        return Pair("$line:$dir", "$line:$stationId")
-    }
-
-    fun platformToKey(terminal: Boolean = false): Pair<String, String>? {
-        val line = line.name
-        var dir = journey?.direction ?: return null
-        if (terminal) dir = LineDirection.TERMINAL
-
-        return Pair("$line:$dir", "$line:${journey!!.to.id}")
-    }
 
     fun addSection(section: Pair<String, String>? = null) {
         val key = section ?: actualSection!!

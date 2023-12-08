@@ -14,7 +14,7 @@ management:
 
 
 network:
-  time-step: 1
+  time-step: 10
   stations-csv: src/main/resources/network/stations.csv
   transporters:
     ferries:

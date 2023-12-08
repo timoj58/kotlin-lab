@@ -121,7 +121,7 @@ class SignalFactory(
         }
     }
 
-    fun get(section: Pair<String, String>): Signal = signals[section]!!
+    fun get(section: Pair<String, String>): Signal = signals[section] ?: throw RuntimeException("missing $section")
     fun get(signalType: SignalType): List<Signal> = signals.values.filter { it.type == signalType }.toList()
 
     fun updateConnected(line: String, lineRepo: LineRepo) {

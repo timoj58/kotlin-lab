@@ -54,8 +54,8 @@ configure<SourceSetContainer> {
 }
 
 tasks.test {
-    minHeapSize = "512m"
-    maxHeapSize = "1024m"
+    minHeapSize = "1024m"
+    maxHeapSize = "2048m"
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }

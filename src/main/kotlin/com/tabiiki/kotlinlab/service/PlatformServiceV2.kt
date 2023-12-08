@@ -91,7 +91,7 @@ class PlatformServiceV2(
 
         val job = launch {
             transport.motionLoop(channel = transportArrivedChannel) {
-                sectionService.removeFromQueue(key = transport.section())
+                //sectionService.removeFromQueue(key = transport.section())
                 launch {
                     signalService.send(
                         key = platformSignalExitKey,
@@ -120,29 +120,10 @@ class PlatformServiceV2(
     }
 
     suspend fun release(transporters: MutableList<Transport>) = coroutineScope {
-        do {
-            val transport = transporters.removeFirst()
-            val startedAt = System.currentTimeMillis()
-            val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
-            val entryKey = transport.platformKey().getPlatformEntryKey(switchPlatform)
-            val exitKey = transport.platformKey().getPlatformExitKey(switchPlatform)
-
-            var release: Boolean
-            do {
-                val platformEntrySignal = signalService.receive(entryKey)
-                val platformExitSignal = signalService.receive(exitKey)
-
-                release = (
-                    platformEntrySignal?.signalValue == SignalValue.GREEN &&
-                        platformExitSignal?.signalValue == SignalValue.GREEN &&
-                        platformExitSignal.timesStamp > startedAt &&
-                        platformEntrySignal.timesStamp > startedAt
-                    )
-            } while (!release)
-
-            release(transport = transport)
-        } while (transporters.isNotEmpty())
-    }
+        transporters.groupBy { it.section().first }.forEach { (_, u) ->
+            launch { releaseBySection(transporters = u.toMutableList()) }
+        }
+     }
 
     suspend fun hold(transport: Transport) = coroutineScope {
         val platformSignalEntryKey = transport.platformKey().getPlatformEntryKey(
@@ -187,6 +168,35 @@ class PlatformServiceV2(
         val msg = channel.receive()
         channel.close()
         hold(transport = msg)
+    }
+
+    private suspend fun releaseBySection(transporters: MutableList<Transport>) = coroutineScope {
+        val line = transporters.first().line.id
+        // println("releasing by section ${transporters.first().section()}")
+        do {
+            val transport = transporters.removeFirst()
+            val startedAt = System.currentTimeMillis()
+            val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
+            val entryKey = transport.platformKey().getPlatformEntryKey(switchPlatform)
+            val exitKey = transport.platformKey().getPlatformExitKey(switchPlatform)
+
+            var release: Boolean
+            do {
+                val platformEntrySignal = signalService.receive(entryKey)
+                val platformExitSignal = signalService.receive(exitKey)
+
+                release =
+                    platformEntrySignal?.signalValue == SignalValue.GREEN &&
+                            platformExitSignal?.signalValue == SignalValue.GREEN &&
+                            platformExitSignal.timesStamp > startedAt &&
+                            platformEntrySignal.timesStamp > startedAt
+            } while (!release)
+
+            release(transport = transport)
+            delay(transport.timeStep)
+        } while (transporters.isNotEmpty())
+
+        println("buffered network release completed for $line")
     }
 
     companion object {

@@ -19,12 +19,12 @@ class LineConductor(
     suspend fun release(
         transport: Transport
     ): Unit = coroutineScope {
-        platformService.release(transport = transport)
+       platformService.release(transport = transport)
     }
 
     suspend fun buffer(
         transporters: MutableList<Transport>
-    ) {
+    ) = coroutineScope {
         platformService.release(transporters = transporters)
     }
 
