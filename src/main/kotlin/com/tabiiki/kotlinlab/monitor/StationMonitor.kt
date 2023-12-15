@@ -1,6 +1,6 @@
 package com.tabiiki.kotlinlab.monitor
 
-import com.tabiiki.kotlinlab.factory.SignalMessage
+import com.tabiiki.kotlinlab.factory.SignalMessageV2
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
@@ -32,8 +32,8 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
     }
 
     suspend fun monitorPlatform(
-        platformChannel: Channel<SignalMessage>,
-        stationChannel: Channel<SignalMessage>
+        platformChannel: Channel<SignalMessageV2>,
+        stationChannel: Channel<SignalMessageV2>
     ) = coroutineScope {
         var previousSignal: SignalValue? = null
         do {
@@ -54,7 +54,7 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
 
     suspend fun monitorStation(
         station: Station,
-        stationChannel: Channel<SignalMessage>,
+        stationChannel: Channel<SignalMessageV2>,
         globalListener: Channel<StationMessage>
     ) = coroutineScope {
         do {

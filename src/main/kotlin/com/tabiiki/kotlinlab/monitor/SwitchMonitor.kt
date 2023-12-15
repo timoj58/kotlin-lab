@@ -23,7 +23,7 @@ class SwitchMonitor {
 
         jobs.forEach { it.cancel() }
 
-        launch { transport.motionLoop(Channel()) {} }
+        launch { transport.motionLoop(Channel()) }
 
         val sectionLeft = transport.section()
         transport.switchSection(

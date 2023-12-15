@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.factory.LineFactory
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.monitor.SwitchMonitor
-import com.tabiiki.kotlinlab.repo.LineDirection
 import kotlinx.coroutines.Job
 import org.springframework.stereotype.Service
 import java.util.function.Consumer

@@ -23,7 +23,7 @@ class IntegrationControl {
         val startTime = System.currentTimeMillis()
         do {
             val msg = channel.receive()
-            // println(msg)
+            //   println(msg)
             if (msg.type != MessageType.HEALTH) {
                 if (!trainsByLine.containsKey(msg.line)) {
                     trainsByLine[msg.line!!] = mutableSetOf()

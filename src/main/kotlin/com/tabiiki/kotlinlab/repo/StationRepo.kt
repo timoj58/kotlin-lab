@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.repo
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.service.LineDirection
 import org.springframework.stereotype.Repository
 import kotlin.math.abs
 

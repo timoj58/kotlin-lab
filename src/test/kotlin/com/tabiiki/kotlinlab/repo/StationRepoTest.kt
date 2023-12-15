@@ -3,6 +3,7 @@ package com.tabiiki.kotlinlab.repo
 import com.tabiiki.kotlinlab.configuration.StationConfig
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.model.Station
+import com.tabiiki.kotlinlab.service.LineDirection
 import com.tabiiki.kotlinlab.util.LineBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

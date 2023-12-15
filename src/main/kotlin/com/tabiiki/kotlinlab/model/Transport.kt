@@ -1,11 +1,11 @@
 package com.tabiiki.kotlinlab.model
 
 import com.tabiiki.kotlinlab.configuration.TransportConfig
-import com.tabiiki.kotlinlab.factory.SignalMessage
+import com.tabiiki.kotlinlab.factory.SignalMessageV2
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.monitor.SwitchMonitor
-import com.tabiiki.kotlinlab.repo.LineDirection
-import com.tabiiki.kotlinlab.repo.LineInstructions
+import com.tabiiki.kotlinlab.service.LineDirection
+import com.tabiiki.kotlinlab.service.LineInstructions
 import com.tabiiki.kotlinlab.util.HaversineCalculator
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -58,7 +58,6 @@ data class Transport(
     private var journey: LineInstructions? = null
     private var journeyTime = Triple(Pair("", ""), AtomicInteger(0), 0.0)
     private var sectionData: Pair<Pair<String, String>?, Pair<String, String>?> = Pair(null, null)
-    private var sectionChannel: Channel<Transport>? = null
 
     fun getJourneyTime() = Triple(journeyTime.first, journeyTime.second.get(), journeyTime.third)
     fun atPlatform() = status == Status.PLATFORM && physics.velocity == 0.0
@@ -71,10 +70,6 @@ data class Transport(
         }
     }
 
-    fun setChannel(sectionChannel: Channel<Transport>) {
-        this.sectionChannel = sectionChannel
-    }
-
     fun platformKey(): Pair<String, String> =
         Pair("${line.name}:${this.lineDirection()}", section().first.substringBefore("|"))
 
@@ -82,6 +77,8 @@ data class Transport(
         Pair("${line.name}:${this.lineDirection()}", "${line.name}:${section().second.substringBefore("|")}")
 
     fun section(): Pair<String, String> = sectionData.second ?: sectionData.first!!
+
+    fun previousSection(): Pair<String, String> = sectionData.first!!
 
     fun addSection(section: Pair<String, String>? = null) {
         val key = section ?: actualSection!!
@@ -114,28 +111,28 @@ data class Transport(
         } while (true)
     }
 
-    suspend fun signal(channel: Channel<SignalMessage>, departedConsumer: Consumer<Transport>? = null) {
-        val timeRegistered = System.currentTimeMillis()
-        var previousMsg: SignalMessage? = null
+    suspend fun monitorSectionSignal(
+        sectionSubscription: Channel<SignalMessageV2>,
+        departedConsumer: Consumer<Transport>? = null
+    ) {
+        var previousMsg: SignalMessageV2? = null
         departedConsumer?.accept(this)
         do {
-            val msg = channel.receive()
+            val msg = sectionSubscription.receive()
 
-            if (msg.timesStamp >= timeRegistered) {
-                if (previousMsg == null ||
-                    msg.signalValue != previousMsg.signalValue &&
-                    !(msg.id ?: UUID.randomUUID()).equals(id)
-                ) {
-                    when (msg.signalValue) {
-                        SignalValue.GREEN -> Instruction.THROTTLE_ON
+            if (previousMsg == null || msg.signalValue != previousMsg.signalValue
+            ) {
+                when (msg.signalValue) {
+                    SignalValue.GREEN -> Instruction.THROTTLE_ON
 
-                        SignalValue.RED -> Instruction.EMERGENCY_STOP
-                    }.also { instruction = it }
+                    SignalValue.RED -> Instruction.EMERGENCY_STOP
+                }.also { instruction = it }
 
-                    previousMsg = msg
-                }
+                previousMsg = msg
             }
         } while (status.moving())
+
+        sectionSubscription.close()
     }
 
     fun lineDirection(ignoreTerminal: Boolean = false): LineDirection {
@@ -165,7 +162,7 @@ data class Transport(
         }
     }
 
-    suspend fun motionLoop(channel: Channel<Transport>, consumer: Consumer<Transport>) {
+    suspend fun motionLoop(arrivalChannel: Channel<Transport>) {
         val emergencyStop = AtomicInteger(0)
         val counter = AtomicInteger(0)
 
@@ -183,7 +180,7 @@ data class Transport(
             if (emergencyStop.get() == 0 && instruction == Instruction.EMERGENCY_STOP) emergencyStop.set(counter.get())
         } while (physics.displacement <= physics.distance)
 
-        stopJourney(channel = channel, consumer = consumer)
+        stopJourney(arrivalChannel = arrivalChannel)
     }
 
     fun startJourney(lineInstructions: LineInstructions) {
@@ -204,7 +201,7 @@ data class Transport(
         it + 1 == idx || it - 1 == idx
     }
 
-    private suspend fun stopJourney(channel: Channel<Transport>, consumer: Consumer<Transport>) = coroutineScope {
+    private suspend fun stopJourney(arrivalChannel: Channel<Transport>) = coroutineScope {
         physics.reset()
         actualSection = null
         journey!!.let {
@@ -215,10 +212,7 @@ data class Transport(
         }
         status = Status.PLATFORM
 
-        launch {
-            consumer.accept(this@Transport)
-            channel.send(this@Transport)
-        }
+        launch { arrivalChannel.send(this@Transport) }
     }
 
     companion object {

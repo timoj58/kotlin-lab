@@ -1,5 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.factory.SignalMessageV2
+import com.tabiiki.kotlinlab.factory.SignalV2
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
@@ -13,7 +15,17 @@ class LineController(
     private val conductor: LineConductor
 ) {
 
-    suspend fun init(commuterChannel: Channel<Commuter>) = coroutineScope {
+    suspend fun subscribeStations(
+        stationSubscribers: Map<Pair<String, String>, Channel<SignalMessageV2>>
+    ) {
+        conductor.subscribeStations(
+            stationSubscribers = stationSubscribers
+        )
+    }
+    fun getPlatformSignals(): List<SignalV2> = conductor.getPlatformSignals()
+    suspend fun init(
+        commuterChannel: Channel<Commuter>
+    ) = coroutineScope {
         launch { conductor.init(commuterChannel = commuterChannel) }
     }
 

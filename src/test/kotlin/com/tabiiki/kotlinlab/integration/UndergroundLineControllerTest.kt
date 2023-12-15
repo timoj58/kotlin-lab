@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
-import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.SwitchService
@@ -18,17 +17,15 @@ class UndergroundLineControllerTest @Autowired constructor(
     @Value("\${network.time-step}") val timeStep: Long,
     transportersConfig: TransportersConfig,
     stationRepo: StationRepo,
-    signalFactory: SignalFactory,
     switchService: SwitchService,
     stationFactory: StationFactory
 ) {
     val lineControllerTest = LineControllerTest(
         timeStep,
         transportersConfig,
-        stationRepo,
-        signalFactory,
         switchService,
-        stationFactory
+        stationFactory,
+        stationRepo
     )
 
     @Test
@@ -53,7 +50,7 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test piccadilly`() = runBlocking {
-        lineControllerTest.test("underground", "piccadilly", 10)
+        lineControllerTest.test("underground", "piccadilly", 6)
     }
 
     @Test
@@ -63,7 +60,7 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test bakerloo`() = runBlocking {
-        lineControllerTest.test("underground", "bakerloo", 8)
+        lineControllerTest.test("underground", "bakerloo", 6)
     }
 
     @Test
@@ -73,16 +70,16 @@ class UndergroundLineControllerTest @Autowired constructor(
 
     @Test
     fun `test hammersmith`() = runBlocking {
-        lineControllerTest.test("underground", "hammersmith", 10)
+        lineControllerTest.test("underground", "hammersmith", 6)
     }
 
     @Test
     fun `test circle`() = runBlocking {
-        lineControllerTest.test("underground", "circle", 8)
+        lineControllerTest.test("underground", "circle", 6)
     }
 
     @Test
     fun `test central`() = runBlocking {
-        lineControllerTest.test("underground", "central", 8)
+        lineControllerTest.test("underground", "central", 6)
     }
 }

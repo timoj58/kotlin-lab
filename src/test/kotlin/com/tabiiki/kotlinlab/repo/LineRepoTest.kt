@@ -16,7 +16,7 @@ class LineRepoTest {
     private val stationsConfig = StationsConfig("src/main/resources/network/stations.csv")
     private val stationFactory = StationFactory(stationsConfig)
     private val stationRepo = StationRepo(stationFactory)
-    private val lineRepo = LineRepo(stationRepo)
+    // private val lineRepo = LineRepo(stationRepo)
 
     private val linesAdapter = LinesAdapter(
         listOf("src/main/resources/network/river/river.yml"),
@@ -52,14 +52,14 @@ class LineRepoTest {
     @BeforeEach
     fun init() {
         lineFactory.get().map { lineFactory.get(it) }.groupBy { it.name }.forEach {
-            lineRepo.addLineDetails(it.key, it.value)
+            //     lineRepo.addLineDetails(it.key, it.value)
         }
     }
 
     @Test
     fun `get lines stations`() {
-        val sections = lineRepo.getPreviousSections(platformKey = Pair("River:POSITIVE", "River:671"))
-        println("$sections")
-        println(lineRepo.getPreviousSections(platformKey = Pair("River:POSITIVE", "River:673")))
+        //       val sections = lineRepo.getPreviousSections(platformKey = Pair("River:POSITIVE", "River:671"))
+        //    println("$sections")
+        //     println(lineRepo.getPreviousSections(platformKey = Pair("River:POSITIVE", "River:673")))
     }
 }

@@ -1,5 +1,7 @@
 package com.tabiiki.kotlinlab.service
 
+import com.tabiiki.kotlinlab.factory.SignalMessageV2
+import com.tabiiki.kotlinlab.factory.SignalV2
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
@@ -13,6 +15,7 @@ class LineConductor(
     private val platformService: PlatformServiceV2
 ) {
 
+    fun getPlatformSignals(): List<SignalV2> = platformService.getPlatformSignals()
     fun getTransportersToDispatch(lines: List<Line>): MutableList<Transport> =
         lines.map { it.transporters }.flatten().groupBy { it.section() }.values.flatten().toMutableList()
 
@@ -28,7 +31,23 @@ class LineConductor(
         platformService.release(transporters = transporters)
     }
 
-    suspend fun init(commuterChannel: Channel<Commuter>) = coroutineScope {
-        launch { platformService.init(commuterChannel = commuterChannel) }
+    suspend fun subscribeStations(
+        stationSubscribers: Map<Pair<String, String>, Channel<SignalMessageV2>>
+    ) = coroutineScope {
+        launch {
+            platformService.subscribeStations(
+                stationSubscribers = stationSubscribers
+            )
+        }
+    }
+
+    suspend fun init(
+        commuterChannel: Channel<Commuter>
+    ) = coroutineScope {
+        launch {
+            platformService.init(
+                commuterChannel = commuterChannel
+            )
+        }
     }
 }

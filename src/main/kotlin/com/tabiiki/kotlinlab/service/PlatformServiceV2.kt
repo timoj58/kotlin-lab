@@ -1,15 +1,11 @@
 package com.tabiiki.kotlinlab.service
 
-import com.tabiiki.kotlinlab.factory.LineFactory
-import com.tabiiki.kotlinlab.factory.Origin
-import com.tabiiki.kotlinlab.factory.SignalMessage
+import com.tabiiki.kotlinlab.factory.SignalMessageV2
+import com.tabiiki.kotlinlab.factory.SignalV2
 import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Commuter
 import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
-import com.tabiiki.kotlinlab.monitor.PlatformMonitorV2
-import com.tabiiki.kotlinlab.repo.LineDirection
-import com.tabiiki.kotlinlab.repo.LineRepo
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -17,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
 
 enum class PlatformSignalType {
     ENTRY, EXIT
@@ -25,87 +22,94 @@ enum class PlatformSignalType {
 @Service
 class PlatformServiceV2(
     private val sectionService: SectionServiceV2,
-    private val signalService: SignalService,
-    private val lineFactory: LineFactory,
-    private val lineRepo: LineRepo
+    private val signalService: SignalServiceV2,
+    private val lineService: LineService
 ) {
-    private val platformMonitorV2 = PlatformMonitorV2(signalService)
     private var commuterChannel: Channel<Commuter>? = null
+
+    fun getPlatformSignals(): List<SignalV2> = signalService.getPlatformSignals()
 
     suspend fun init(commuterChannel: Channel<Commuter>) = coroutineScope {
         this@PlatformServiceV2.commuterChannel = commuterChannel
-        signalService.getPlatformSignals().forEach {
-            launch { signalService.init(it) }
+
+        signalService.init(
+            lines = lineService.getLines(),
+            isSwitchStation = { l, s -> lineService.isSwitchStation(l, s) },
+            previousSections = { k -> lineService.getPreviousSections(k) }
+        )
+
+        launch { signalService.monitor() }
+    }
+
+    suspend fun subscribeStations(
+        stationSubscribers: Map<Pair<String, String>, Channel<SignalMessageV2>>
+    ) = coroutineScope {
+        stationSubscribers.forEach {
             launch {
-                platformMonitorV2.monitor(it)
+                signalService.subscribe(
+                    key = it.key,
+                    channel = it.value
+                )
             }
         }
-
-        lineFactory.get().map { lineFactory.get(it) }.groupBy { it.name }.values.forEach { line ->
-            lineRepo.addLineDetails(line.first().name, line)
-        }
-        lineFactory.get().map { lineFactory.get(it).name }.distinct().forEach {
-            signalService.initConnected(line = it, lineRepo = lineRepo)
-        }
-
-        launch { sectionService.init() }
     }
 
     suspend fun release(transport: Transport, jobs: List<Job> = emptyList()) = coroutineScope {
+        if (jobs.isEmpty()) println("releasing ${transport.id}")
         val isSwitchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         val platformSignalEntryKey = transport.platformKey().getPlatformEntryKey(switchPlatform = isSwitchPlatform)
         val platformSignalExitKey = transport.platformKey().getPlatformExitKey(switchPlatform = isSwitchPlatform)
 
         transport.startJourney(
-            lineInstructions = lineRepo.getLineInstructions(
+            lineInstructions = lineService.getLineInstructions(
                 transport = transport,
                 minimumHold = transport.timeStep.toInt() * 50
             )
         )
+
         signalService.send(
             key = platformSignalExitKey,
-            signalMessage = SignalMessage(
+            message = SignalMessageV2(
                 signalValue = SignalValue.RED,
-                id = transport.id,
-                line = transport.line.id,
-                origin = Origin.RELEASE
+                line = transport.line.id
             )
         )
 
-        if (!isSwitchPlatform) {
-            signalService.send(
-                key = platformSignalEntryKey,
-                signalMessage = SignalMessage(
-                    signalValue = SignalValue.GREEN,
-                    id = transport.id,
-                    line = transport.line.id,
-                    origin = Origin.RELEASE
-                )
+        // if (!isSwitchPlatform) {
+        signalService.send(
+            key = platformSignalEntryKey,
+            message = SignalMessageV2(
+                signalValue = SignalValue.GREEN,
+                line = transport.line.id
             )
-        }
+        )
+        // }
 
         val transportArrivedChannel = Channel<Transport>()
-        launch {
-            monitorTransportArrivedChannel(channel = transportArrivedChannel)
-        }
 
-        val job = launch {
-            transport.motionLoop(channel = transportArrivedChannel) {
-                // sectionService.removeFromQueue(key = transport.section())
+        launch {
+            monitorTransportArrivedChannel(channel = transportArrivedChannel) {
                 launch {
                     signalService.send(
                         key = platformSignalExitKey,
-                        signalMessage = SignalMessage(
+                        message = SignalMessageV2(
                             signalValue = SignalValue.GREEN,
-                            id = it.id,
                             line = it.line.id,
-                            origin = Origin.HOLD
+                            id = transport.id
                         )
                     )
                 }
             }
         }
 
+        val job = launch { transport.motionLoop(arrivalChannel = transportArrivedChannel) }
+        val sectionSubscription = Channel<SignalMessageV2>()
+        launch {
+            signalService.subscribe(
+                key = transport.section(),
+                channel = sectionSubscription
+            )
+        }
         sectionService.accept(
             transport = transport
                 .also {
@@ -115,8 +119,45 @@ class PlatformServiceV2(
                     }
                 },
             motionJob = job,
-            jobs = jobs
-        )
+            jobs = jobs,
+            sectionSubscription = sectionSubscription
+        ) {
+            launch {
+                val sectionLeft = it.second
+                val sectionEntering = it.third
+
+                val subscriber = Channel<SignalMessageV2>()
+
+                launch {
+                    signalService.subscribe(
+                        key = sectionEntering,
+                        channel = subscriber
+                    )
+                }
+
+                transport.monitorSectionSignal(subscriber) { t ->
+                    launch {
+                        if (sectionEntering.second.contains("|")) {
+                            SignalMessageV2(
+                                signalValue = SignalValue.GREEN,
+                                id = t.id,
+                                key = sectionLeft,
+                                line = t.line.id
+                            ).also {
+                                signalService.send(
+                                    key = t.getMainlineForSwitch(),
+                                    message = it
+                                )
+                                signalService.send(
+                                    key = t.section(),
+                                    message = it
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     suspend fun release(transporters: MutableList<Transport>) = coroutineScope {
@@ -133,6 +174,16 @@ class PlatformServiceV2(
             switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         )
 
+        val subscriber = Channel<SignalMessageV2>()
+
+        launch {
+            signalService.subscribe(
+                key = platformSignalExitKey,
+                channel = subscriber,
+                emit = true
+            )
+        }
+
         val embarkJob = launch {
             transport.carriage.embark(commuterChannel!!)
         }
@@ -142,11 +193,9 @@ class PlatformServiceV2(
 
         signalService.send(
             key = platformSignalEntryKey,
-            signalMessage = SignalMessage(
+            message = SignalMessageV2(
                 signalValue = SignalValue.RED,
-                id = transport.id,
-                line = transport.line.id,
-                origin = Origin.HOLD
+                line = transport.line.id
             )
         )
         var canRelease: Boolean
@@ -157,46 +206,55 @@ class PlatformServiceV2(
             delay(transport.timeStep)
             canRelease = (counter.incrementAndGet() > minimumHold / transport.timeStep)
             if (canRelease) {
-                canRelease = signalService.receive(platformSignalExitKey)?.signalValue == SignalValue.GREEN
+                canRelease = subscriber.receive().signalValue == SignalValue.GREEN
             }
         } while (!canRelease)
 
+        subscriber.close()
         launch { release(transport = transport, jobs = listOf(embarkJob, disembarkJob)) }
     }
 
-    private suspend fun monitorTransportArrivedChannel(channel: Channel<Transport>) {
+    private suspend fun monitorTransportArrivedChannel(
+        channel: Channel<Transport>,
+        arrivalAction: Consumer<Transport>
+    ) {
         val msg = channel.receive()
+        arrivalAction.accept(msg)
         channel.close()
+        // println("${msg.id} completed ${msg.previousSection()}")
         hold(transport = msg)
     }
 
     private suspend fun releaseBySection(transporters: MutableList<Transport>) = coroutineScope {
-        val line = transporters.first().line.id
-        // println("releasing by section ${transporters.first().section()}")
+        println("testing for release ${transporters.first().section()} ${transporters.size}")
+        val section = transporters.first().section()
         do {
             val transport = transporters.removeFirst()
-            val startedAt = System.currentTimeMillis()
             val switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
             val entryKey = transport.platformKey().getPlatformEntryKey(switchPlatform)
             val exitKey = transport.platformKey().getPlatformExitKey(switchPlatform)
+            val entrySignalSubscription = Channel<SignalMessageV2>()
+            val exitSignalSubscription = Channel<SignalMessageV2>()
+
+            launch { signalService.subscribe(key = entryKey, channel = entrySignalSubscription, emit = true) }
+            launch { signalService.subscribe(key = exitKey, channel = exitSignalSubscription, emit = true) }
 
             var release: Boolean
             do {
-                val platformEntrySignal = signalService.receive(entryKey)
-                val platformExitSignal = signalService.receive(exitKey)
+                val platformEntrySignal = entrySignalSubscription.receive()
+                val platformExitSignal = exitSignalSubscription.receive()
 
                 release =
-                    platformEntrySignal?.signalValue == SignalValue.GREEN &&
-                    platformExitSignal?.signalValue == SignalValue.GREEN &&
-                    platformExitSignal.timesStamp > startedAt &&
-                    platformEntrySignal.timesStamp > startedAt
+                    platformEntrySignal.signalValue == SignalValue.GREEN &&
+                    platformExitSignal.signalValue == SignalValue.GREEN
             } while (!release)
-
-            release(transport = transport)
+            entrySignalSubscription.close()
+            exitSignalSubscription.close()
+            launch { release(transport = transport) }
             delay(transport.timeStep)
         } while (transporters.isNotEmpty())
 
-        println("buffered network release completed for $line")
+        println("buffered network release completed for $section")
     }
 
     companion object {

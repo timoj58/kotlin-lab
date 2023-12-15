@@ -1,7 +1,6 @@
 package com.tabiiki.kotlinlab.integration
 
 import com.tabiiki.kotlinlab.configuration.TransportersConfig
-import com.tabiiki.kotlinlab.factory.SignalFactory
 import com.tabiiki.kotlinlab.factory.StationFactory
 import com.tabiiki.kotlinlab.repo.StationRepo
 import com.tabiiki.kotlinlab.service.SwitchService
@@ -18,17 +17,15 @@ class OvergroundLineControllerTest @Autowired constructor(
     @Value("\${network.time-step}") val timeStep: Long,
     transportersConfig: TransportersConfig,
     stationRepo: StationRepo,
-    signalFactory: SignalFactory,
     switchService: SwitchService,
     stationFactory: StationFactory
 ) {
     val lineControllerTest = LineControllerTest(
         timeStep,
         transportersConfig,
-        stationRepo,
-        signalFactory,
         switchService,
-        stationFactory
+        stationFactory,
+        stationRepo
     )
 
     @Test

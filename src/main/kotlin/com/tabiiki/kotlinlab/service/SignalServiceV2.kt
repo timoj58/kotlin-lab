@@ -1,0 +1,84 @@
+package com.tabiiki.kotlinlab.service
+
+import com.tabiiki.kotlinlab.factory.SignalFactoryV2
+import com.tabiiki.kotlinlab.factory.SignalMessageV2
+import com.tabiiki.kotlinlab.factory.SignalType
+import com.tabiiki.kotlinlab.factory.SignalV2
+import com.tabiiki.kotlinlab.model.Line
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Service
+
+@Service
+class SignalServiceV2(
+    @Value("\${network.time-step}") val timeStep: Long
+) {
+    private var signals: Map<Pair<String, String>, SignalV2>? = null
+
+    fun init(
+        lines: List<Line>,
+        isSwitchStation: (String, String) -> Boolean,
+        previousSections: (Pair<String, String>) -> List<Pair<String, String>>
+    ) {
+        signals = SignalFactoryV2().getSignals(
+            lines = lines,
+            isSwitchStation = isSwitchStation,
+            previousSections = previousSections
+        )
+    }
+
+    fun getPlatformSignals(): List<SignalV2> = signals!!.values.filter { it.type == SignalType.PLATFORM }
+
+    suspend fun monitor() = coroutineScope {
+        signals!!.values.forEach {
+            launch { monitor(it) }
+        }
+    }
+
+    suspend fun subscribe(
+        key: Pair<String, String>,
+        channel: Channel<SignalMessageV2>,
+        emit: Boolean = false
+    ) = coroutineScope {
+        signals!![key]!!.subscribe(channel = channel)
+
+        if (emit) {
+            launch { emit(key = key, channel = channel) }
+        }
+    }
+
+    suspend fun send(key: Pair<String, String>, message: SignalMessageV2) {
+        signals!![key]!!.receiver.send(message)
+    }
+
+    private suspend fun emit(
+        key: Pair<String, String>,
+        channel: Channel<SignalMessageV2>
+    ) {
+        do {
+            if (!channel.isClosedForReceive) {
+                try {
+                    channel.send(signals!![key]!!.latest)
+                } catch (e: Exception) {
+                    return
+                }
+            }
+            delay(timeStep)
+        } while (!channel.isClosedForReceive)
+    }
+
+    private suspend fun monitor(signal: SignalV2) {
+        do {
+            signal.latest = signal.receiver.receive()
+            signal.consumers.filter { !it.isClosedForSend }.forEach {
+                try {
+                    it.send(signal.latest)
+                } catch (e: Exception) { }
+            }
+            signal.consumers.removeIf { it.isClosedForSend }
+        } while (true)
+    }
+}

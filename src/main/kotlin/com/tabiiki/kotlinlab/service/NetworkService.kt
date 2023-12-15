@@ -17,7 +17,12 @@ class NetworkService(
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 
     suspend fun init() = coroutineScope {
-        lineController.init(commuterService.getCommuterChannel())
+        lineController.init(commuterChannel = commuterService.getCommuterChannel())
+        lineController.subscribeStations(
+            stationSubscribers = stationService.getSubscribers(
+                platformSignals = lineController.getPlatformSignals()
+            )
+        )
     }
 
     suspend fun start(
