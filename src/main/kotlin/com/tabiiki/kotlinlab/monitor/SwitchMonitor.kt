@@ -16,7 +16,6 @@ class SwitchMonitor {
         arrivalChannel: Channel<Transport>,
         completeSection: Consumer<Pair<Transport, Pair<String, String>>>
     ) = coroutineScope {
-        println("handing switch ${transport.id} ${transport.section()}}")
         val distance = distanceToSwitch(transport)
 
         do {

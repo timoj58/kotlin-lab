@@ -34,7 +34,7 @@ data class SignalV2(
     val type: SignalType = SignalType.SECTION,
     var latest: SignalMessageV2 = SignalMessageV2(
         signalValue = SignalValue.GREEN,
-        line = null,
+        line = null
     ),
     val isTerminal: Boolean = false,
     val key: Pair<String, String>

@@ -41,7 +41,9 @@ class StationMonitor(val timeStep: Long, stations: List<String>) {
 
             msg.commuterChannel?.let {
                 when (msg.signalValue) {
-                    SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch { embark(msg.key!!, it) }
+                    SignalValue.RED -> carriageChannelJobs[msg.id!!] = launch {
+                        embark(msg.key!!, it)
+                    }
                     SignalValue.GREEN -> carriageChannelJobs[msg.id!!]?.cancel()
                 }
             }

@@ -43,9 +43,13 @@ class IntegrationControl {
 
         diagnosticsCheck()
         diagnostics.run()
-        jobs.forEach { if (it.isActive) try {
-            it.cancel()
-        }catch (e: Exception) {}}
+        jobs.forEach {
+            if (it.isActive) {
+                try {
+                    it.cancel()
+                } catch (e: Exception) {}
+            }
+        }
         assert()
     }
 

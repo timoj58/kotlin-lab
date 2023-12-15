@@ -55,7 +55,8 @@ class SwitchService(
         transport = transport,
         jobs = jobs,
         arrivalChannel = arrivalChannel,
-        completeSection = completeSection)
+        completeSection = completeSection
+    )
 
     companion object {
         private fun getSection(section: Pair<String, String>): Pair<String, String> =

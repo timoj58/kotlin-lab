@@ -40,7 +40,7 @@ data class TransportMessage(
     val latitude: Double,
     val longitude: Double,
     val velocity: Double,
-    val instruction: Instruction,
+    val instruction: Instruction
 )
 
 data class Transport(
@@ -101,20 +101,20 @@ data class Transport(
             delay(timeStep * 10)
             val position = if (!isStationary()) physics.getPosition() else (physics.lastPosition ?: Pair(0.0, 0.0))
             trackers.forEach {
-               launch {
-                   it.send(
-                       TransportMessage(
-                           id = id,
-                           lineId = line.id,
-                           lineName = line.name,
-                           section = section(),
-                           velocity = physics.velocity,
-                           latitude = position.first,
-                           longitude = position.second,
-                           instruction = instruction,
-                       )
-                   )
-               }
+                launch {
+                    it.send(
+                        TransportMessage(
+                            id = id,
+                            lineId = line.id,
+                            lineName = line.name,
+                            section = section(),
+                            velocity = physics.velocity,
+                            latitude = position.first,
+                            longitude = position.second,
+                            instruction = instruction
+                        )
+                    )
+                }
             }
         } while (true)
     }
@@ -127,7 +127,7 @@ data class Transport(
         departedConsumer?.accept(this)
         do {
             val msg = sectionSubscription.receive()
-           // println("$id received $msg")
+            // println("$id received $msg")
 
             if (previousMsg == null || msg.signalValue != previousMsg.signalValue
             ) {
@@ -142,7 +142,7 @@ data class Transport(
         } while (status.moving())
 
         sectionSubscription.close()
-      //  println("$id gave up listening in ${section()}")
+        //  println("$id gave up listening in ${section()}")
     }
 
     fun lineDirection(ignoreTerminal: Boolean = false): LineDirection {

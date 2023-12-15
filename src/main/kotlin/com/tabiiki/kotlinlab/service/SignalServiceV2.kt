@@ -4,7 +4,6 @@ import com.tabiiki.kotlinlab.factory.SignalFactoryV2
 import com.tabiiki.kotlinlab.factory.SignalMessageV2
 import com.tabiiki.kotlinlab.factory.SignalType
 import com.tabiiki.kotlinlab.factory.SignalV2
-import com.tabiiki.kotlinlab.factory.SignalValue
 import com.tabiiki.kotlinlab.model.Line
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -52,7 +51,7 @@ class SignalServiceV2(
     }
 
     suspend fun send(key: Pair<String, String>, message: SignalMessageV2) {
-      //  println("sending $message")
+        //  println("sending $message")
         signals!![key]!!.receiver.send(message)
     }
 
@@ -76,24 +75,9 @@ class SignalServiceV2(
         do {
             signal.latest = signal.receiver.receive()
 
-       /*     if(signal.latest.key == Pair("Gospel Oak - Barking:NEGATIVE:ENTRY", "Gospel Oak - Barking:29")){
-                println("received it ${signal.latest.key} sending to ${signal.children.map { it.key }}")
-            }
-
-            if(signal.key == Pair("Gospel Oak - Barking:646", "29") && signal.latest.key == Pair("Gospel Oak - Barking:NEGATIVE:ENTRY", "Gospel Oak - Barking:29") ){
-                if(signal.consumers.isNotEmpty()){
-                    println("trying to send the message ${signal.latest}")
-                }else{
-                    println("no consumers ${signal.latest}")
-                }
-            } */
-
             launch {
                 signal.children.forEach {
-                //    if(signal.latest.key == Pair("Gospel Oak - Barking:NEGATIVE:ENTRY", "Gospel Oak - Barking:29")){
-                 //       println("sent it ${signal.latest.key} sending to ${signal.children.map { it.key }}")
-                 //   }
-                  launch {  it.receiver.send(signal.latest) }
+                    launch { it.receiver.send(signal.latest) }
                 }
             }
             signal.consumers.filter { !it.isClosedForSend }.forEach {

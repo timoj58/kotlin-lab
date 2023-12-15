@@ -48,7 +48,6 @@ class SectionServiceV2(
         arrivalChannel: Channel<Transport>,
         switchActions: Consumer<Triple<Transport, Pair<String, String>, Pair<String, String>>>
     ) = coroutineScope {
-        println("${transport.id} entering ${transport.section()}")
         val job = launch {
             transport.monitorSectionSignal(sectionSubscription = sectionSubscription) { }
         }
@@ -58,7 +57,8 @@ class SectionServiceV2(
                 switchService.switch(
                     transport = transport,
                     jobs = listOf(job, motionJob),
-                    arrivalChannel = arrivalChannel) {
+                    arrivalChannel = arrivalChannel
+                ) {
                     launch {
                         processSwitch(
                             details = it,
@@ -79,9 +79,6 @@ class SectionServiceV2(
         val transport = details.first
         val sectionLeft = details.second
         val sectionEntering = transport.section()
-
-        println("${transport.id} left $sectionLeft entering $sectionEntering")
-
         switchActions.accept(Triple(transport, sectionLeft, sectionEntering))
     }
 }

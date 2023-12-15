@@ -48,7 +48,7 @@ network:
       - transport-id: 5
         capacity: 500
         weight: 1000
-        top-speed: 15
+        top-speed: 20
         power: 1500
       - transport-id: 6
         capacity: 75

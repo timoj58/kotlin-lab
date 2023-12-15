@@ -14,7 +14,7 @@ class NetworkService(
     private val stationService: StationService,
     private val commuterService: CommuterService,
     private val lineFactory: LineFactory,
-    private val regulatorService: RegulatorService,
+    private val regulatorService: RegulatorService
 ) {
     private val lines = lineFactory.get().map { lineFactory.get(it) }
 

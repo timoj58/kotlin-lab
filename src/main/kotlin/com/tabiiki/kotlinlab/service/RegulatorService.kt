@@ -23,18 +23,15 @@ class RegulatorService {
     }
 
     suspend fun regulate() {
-
         do {
-           val msg = transportReceiver.receive()
+            val msg = transportReceiver.receive()
             transportersByLine[msg.lineName]!![msg.id] = msg
-            if(transportersByLine[msg.lineName]!!.values.all { listOf(Instruction.SCHEDULED_STOP, Instruction.EMERGENCY_STOP).contains(it?.instruction) }){
-                 timers[msg.lineName]!!.getAndIncrement()
-            }else{
+            if (transportersByLine[msg.lineName]!!.values.all { listOf(Instruction.SCHEDULED_STOP, Instruction.EMERGENCY_STOP).contains(it?.instruction) }) {
+                timers[msg.lineName]!!.getAndIncrement()
+            } else {
                 timers[msg.lineName]!!.set(0)
             }
-         //   if(timers[msg.lineName]!!.get() > 10000) throw RuntimeException("${msg.lineName} ${transportersByLine[msg.lineName]!!.values.map { Pair(it!!.id, it.section) }}")
-        }while (true)
-
+            //   if(timers[msg.lineName]!!.get() > 10000) throw RuntimeException("${msg.lineName} ${transportersByLine[msg.lineName]!!.values.map { Pair(it!!.id, it.section) }}")
+        } while (true)
     }
-
 }

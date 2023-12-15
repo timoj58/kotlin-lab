@@ -13,7 +13,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
@@ -74,30 +73,30 @@ class PlatformServiceV2(
                 minimumHold = transport.timeStep.toInt() * 50
             )
         )
-       launch {
-           signalService.send(
-               key = platformSignalExitKey,
-               message = SignalMessageV2(
-                   signalValue = SignalValue.RED,
-                   line = transport.line.id,
-                   key = platformSignalExitKey,
-                   id = transport.id,
-               )
-           )
-       }
+        launch {
+            signalService.send(
+                key = platformSignalExitKey,
+                message = SignalMessageV2(
+                    signalValue = SignalValue.RED,
+                    line = transport.line.id,
+                    key = platformSignalExitKey,
+                    id = transport.id
+                )
+            )
+        }
 
         if (!isSwitchPlatform) {
-          launch {
-              signalService.send(
-                  key = platformSignalEntryKey,
-                  message = SignalMessageV2(
-                      signalValue = SignalValue.GREEN,
-                      line = transport.line.id,
-                      key = platformSignalEntryKey,
-                      id = transport.id,
-                  )
-              )
-          }
+            launch {
+                signalService.send(
+                    key = platformSignalEntryKey,
+                    message = SignalMessageV2(
+                        signalValue = SignalValue.GREEN,
+                        line = transport.line.id,
+                        key = platformSignalEntryKey,
+                        id = transport.id
+                    )
+                )
+            }
         }
 
         val transportArrivedChannel = Channel<Transport>()
@@ -111,8 +110,7 @@ class PlatformServiceV2(
                             signalValue = SignalValue.GREEN,
                             line = it.line.id,
                             id = transport.id,
-                            key = platformSignalExitKey,
-                            commuterChannel = commuterChannel!!
+                            key = platformSignalExitKey
                         )
                     )
                 }
@@ -124,7 +122,7 @@ class PlatformServiceV2(
         launch {
             signalService.subscribe(
                 key = transport.section(),
-                channel = sectionSubscription,
+                channel = sectionSubscription
             )
         }
         sectionService.accept(
@@ -138,7 +136,7 @@ class PlatformServiceV2(
             motionJob = job,
             jobs = jobs,
             sectionSubscription = sectionSubscription,
-            arrivalChannel = transportArrivedChannel,
+            arrivalChannel = transportArrivedChannel
         ) {
             launch {
                 val sectionLeft = it.second
@@ -162,7 +160,7 @@ class PlatformServiceV2(
                                     signalValue = SignalValue.GREEN,
                                     id = t.id,
                                     key = sectionLeft,
-                                    line = t.line.id,
+                                    line = t.line.id
                                 ).also {
                                     launch {
                                         signalService.send(
@@ -199,8 +197,21 @@ class PlatformServiceV2(
         val platformSignalExitKey = transport.platformKey().getPlatformExitKey(
             switchPlatform = sectionService.isSwitchPlatform(transport, transport.section())
         )
-        //if(platformLocks[platformSignalEntryKey]!!.get()) throw RuntimeException("${transport.id} $platformSignalEntryKey is locked")
+        // if(platformLocks[platformSignalEntryKey]!!.get()) throw RuntimeException("${transport.id} $platformSignalEntryKey is locked")
         platformLocks[platformSignalEntryKey]!!.set(true)
+
+        launch {
+            signalService.send(
+                key = platformSignalEntryKey,
+                message = SignalMessageV2(
+                    signalValue = SignalValue.RED,
+                    line = transport.line.id,
+                    key = platformSignalEntryKey,
+                    id = transport.id,
+                    commuterChannel = commuterChannel!!
+                )
+            )
+        }
 
         val subscriber = Channel<SignalMessageV2>()
 
@@ -218,20 +229,6 @@ class PlatformServiceV2(
         val disembarkJob = launch {
             transport.carriage.disembark(Line.getStation(transport.platformKey().second), commuterChannel!!)
         }
-
-        launch {
-            signalService.send(
-                key = platformSignalEntryKey,
-                message = SignalMessageV2(
-                    signalValue = SignalValue.RED,
-                    line = transport.line.id,
-                    key = platformSignalEntryKey,
-                    id = transport.id,
-                    commuterChannel = commuterChannel!!,
-                )
-            )
-        }
-
 
         var canRelease: Boolean
         val minimumHold = transport.timeStep.toInt() * 50
@@ -257,12 +254,10 @@ class PlatformServiceV2(
         val msg = channel.receive()
         arrivalAction.accept(msg)
         channel.close()
-        println("${msg.id} completed ${msg.previousSection()}")
         hold(transport = msg)
     }
 
     private suspend fun releaseBySection(transporters: MutableList<Transport>) = coroutineScope {
-        println("testing for release ${transporters.first().section()} ${transporters.size}")
         val section = transporters.first().section()
         do {
             val transport = transporters.removeFirst()
