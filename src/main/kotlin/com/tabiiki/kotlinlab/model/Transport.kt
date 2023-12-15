@@ -26,7 +26,7 @@ enum class Status {
 }
 
 enum class Instruction {
-    STATIONARY, EMERGENCY_STOP, SCHEDULED_STOP, THROTTLE_ON;
+    STATIONARY, EMERGENCY_STOP, SCHEDULED_STOP, THROTTLE_ON, DEFAULT;
 
     fun isMoving(): Boolean = THROTTLE_ON == this
 }
@@ -35,10 +35,12 @@ data class TransportMessage(
     val eventType: String = "TRANSPORT",
     val id: UUID,
     val lineId: String,
+    val lineName: String,
     val section: Pair<String, String>? = null,
     val latitude: Double,
     val longitude: Double,
-    val velocity: Double
+    val velocity: Double,
+    val instruction: Instruction,
 )
 
 data class Transport(
@@ -94,20 +96,26 @@ data class Transport(
     fun getMainlineForSwitch(): Pair<String, String> =
         Pair("${line.name}:${journey!!.from.id}", journey!!.to.id)
 
-    suspend fun track(tracker: Channel<TransportMessage>) {
+    suspend fun track(trackers: List<Channel<TransportMessage>>) = coroutineScope {
         do {
             delay(timeStep * 10)
             val position = if (!isStationary()) physics.getPosition() else (physics.lastPosition ?: Pair(0.0, 0.0))
-            tracker.send(
-                TransportMessage(
-                    id = id,
-                    lineId = line.id,
-                    section = section(),
-                    velocity = physics.velocity,
-                    latitude = position.first,
-                    longitude = position.second
-                )
-            )
+            trackers.forEach {
+               launch {
+                   it.send(
+                       TransportMessage(
+                           id = id,
+                           lineId = line.id,
+                           lineName = line.name,
+                           section = section(),
+                           velocity = physics.velocity,
+                           latitude = position.first,
+                           longitude = position.second,
+                           instruction = instruction,
+                       )
+                   )
+               }
+            }
         } while (true)
     }
 
@@ -119,6 +127,7 @@ data class Transport(
         departedConsumer?.accept(this)
         do {
             val msg = sectionSubscription.receive()
+           // println("$id received $msg")
 
             if (previousMsg == null || msg.signalValue != previousMsg.signalValue
             ) {
@@ -133,6 +142,7 @@ data class Transport(
         } while (status.moving())
 
         sectionSubscription.close()
+      //  println("$id gave up listening in ${section()}")
     }
 
     fun lineDirection(ignoreTerminal: Boolean = false): LineDirection {

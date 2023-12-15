@@ -63,11 +63,11 @@ class LineFactory(
     fun isSwitchSection(lineId: String, section: Pair<String, String>): Pair<Boolean, Boolean> =
         Pair(isSwitchStation(lineId, section.first), isSwitchStation(lineId, section.second))
 
-    suspend fun tracking(channel: Channel<TransportMessage>): Unit = coroutineScope {
+    suspend fun tracking(channels: List<Channel<TransportMessage>>): Unit = coroutineScope {
         lines.forEach {
             it.transporters.forEach {
                     transport ->
-                launch { transport.track(channel) }
+                launch { transport.track(channels) }
             }
         }
     }

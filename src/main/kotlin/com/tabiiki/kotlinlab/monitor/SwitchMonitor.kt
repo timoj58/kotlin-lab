@@ -13,8 +13,10 @@ class SwitchMonitor {
     suspend fun switch(
         transport: Transport,
         jobs: List<Job>,
+        arrivalChannel: Channel<Transport>,
         completeSection: Consumer<Pair<Transport, Pair<String, String>>>
     ) = coroutineScope {
+        println("handing switch ${transport.id} ${transport.section()}}")
         val distance = distanceToSwitch(transport)
 
         do {
@@ -23,7 +25,7 @@ class SwitchMonitor {
 
         jobs.forEach { it.cancel() }
 
-        launch { transport.motionLoop(Channel()) }
+        launch { transport.motionLoop(arrivalChannel = arrivalChannel) }
 
         val sectionLeft = transport.section()
         transport.switchSection(

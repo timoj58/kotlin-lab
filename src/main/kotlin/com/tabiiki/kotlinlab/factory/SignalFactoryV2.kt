@@ -30,10 +30,11 @@ data class SignalMessageV2(
 data class SignalV2(
     val receiver: Channel<SignalMessageV2> = Channel(),
     val consumers: MutableList<Channel<SignalMessageV2>> = mutableListOf(),
+    val children: MutableList<SignalV2> = mutableListOf(),
     val type: SignalType = SignalType.SECTION,
     var latest: SignalMessageV2 = SignalMessageV2(
         signalValue = SignalValue.GREEN,
-        line = null
+        line = null,
     ),
     val isTerminal: Boolean = false,
     val key: Pair<String, String>
@@ -75,18 +76,18 @@ class SignalFactoryV2 {
 
         signals.values.filter { it.type == SignalType.PLATFORM }.forEach { signal ->
             if (signal.isTerminal) {
-                signal.consumers.add(
+                signal.children.add(
                     signals[
                         Pair(
                             "${signal.key.first.substringBefore(":")}:${Line.getStation(signal.key.second)}",
                             "${Line.getStation(signal.key.second)}|"
                         )
-                    ]!!.receiver
+                    ]!!
                 )
             } else {
                 previousSections(signal.key).forEach {
-                    signal.consumers.add(
-                        signals[it]!!.receiver
+                    signal.children.add(
+                        signals[it]!!
                     )
                 }
             }

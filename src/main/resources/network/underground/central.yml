@@ -1,7 +1,7 @@
 lines:
   - id: CENTRAL-1
     transport-id: 3
-    line-capacity: 14
+    line-capacity: 20
     name: Central
     stations:
       - 168
@@ -42,7 +42,7 @@ lines:
 
   - id: CENTRAL-2
     transport-id: 3
-    line-capacity: 14
+    line-capacity: 8
     name: Central
     stations:
       - 168
@@ -82,7 +82,7 @@ lines:
 
   - id: CENTRAL-3
     transport-id: 3
-    line-capacity: 14
+    line-capacity: 8
     name: Central
     stations:
       - 622
@@ -128,7 +128,7 @@ lines:
 
   - id: CENTRAL-4
     transport-id: 3
-    line-capacity: 14
+    line-capacity: 8
     name: Central
     stations:
       - 622
@@ -173,7 +173,7 @@ lines:
 
   - id: CENTRAL-5
     transport-id: 3
-    line-capacity: 14
+    line-capacity: 20
     name: Central
     stations:
       - 622

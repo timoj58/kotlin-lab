@@ -5,6 +5,7 @@ import com.tabiiki.kotlinlab.model.Line
 import com.tabiiki.kotlinlab.model.Transport
 import com.tabiiki.kotlinlab.monitor.SwitchMonitor
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import org.springframework.stereotype.Service
 import java.util.function.Consumer
 
@@ -48,8 +49,13 @@ class SwitchService(
     suspend fun switch(
         transport: Transport,
         jobs: List<Job>,
+        arrivalChannel: Channel<Transport>,
         completeSection: Consumer<Pair<Transport, Pair<String, String>>>
-    ) = switchMonitor.switch(transport, jobs, completeSection)
+    ) = switchMonitor.switch(
+        transport = transport,
+        jobs = jobs,
+        arrivalChannel = arrivalChannel,
+        completeSection = completeSection)
 
     companion object {
         private fun getSection(section: Pair<String, String>): Pair<String, String> =
