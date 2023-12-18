@@ -68,7 +68,6 @@ class SectionServiceV2(
                 }
             }
         }
-
         jobs?.forEach { it.cancel() }
     }
 

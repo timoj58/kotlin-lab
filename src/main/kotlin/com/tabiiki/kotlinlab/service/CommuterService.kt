@@ -20,7 +20,7 @@ class CommuterService(
         launch { routeService.listen() }
 
         do {
-            delay(timeStep * 100)
+            delay(timeStep)
             // release X amounts of new commuters.  TBC.  variable likely makes sense. (for now 1)
             // also what happens when they complete journey? need to track  them.  and perhaps cap no of commuters once performance discovered
             val commuter = Commuter(

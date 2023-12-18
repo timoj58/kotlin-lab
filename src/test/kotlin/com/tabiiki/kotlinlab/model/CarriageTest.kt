@@ -38,9 +38,9 @@ class CarriageTest {
 
         delay(100)
 
-        val embarkJob = launch { carriage.embark(stationChannel) }
+        val embarkJob = launch { carriage.embark(stationChannel, Channel()) }
         delay(100)
-        val channel = carriage.channel
+        val channel = Channel<Commuter>()
         jobs.add(launch { channel.send(commuter) })
         delay(100)
         embarkJob.cancel()

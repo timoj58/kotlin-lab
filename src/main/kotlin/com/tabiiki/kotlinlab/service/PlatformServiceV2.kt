@@ -27,12 +27,14 @@ class PlatformServiceV2(
     private val signalService: SignalServiceV2,
     private val lineService: LineService
 ) {
-    private var commuterChannel: Channel<Commuter>? = null
     private val platformLocks: ConcurrentHashMap<Pair<String, String>, AtomicBoolean> = ConcurrentHashMap()
+    private var commuterChannel: Channel<Commuter>? = null
 
     fun getPlatformSignals(): List<SignalV2> = signalService.getPlatformSignals()
 
-    suspend fun init(commuterChannel: Channel<Commuter>) = coroutineScope {
+    suspend fun init(
+        commuterChannel: Channel<Commuter>
+    ) = coroutineScope {
         this@PlatformServiceV2.commuterChannel = commuterChannel
 
         signalService.init(
@@ -199,6 +201,16 @@ class PlatformServiceV2(
         )
         // if(platformLocks[platformSignalEntryKey]!!.get()) throw RuntimeException("${transport.id} $platformSignalEntryKey is locked")
         platformLocks[platformSignalEntryKey]!!.set(true)
+        val embarkChannel = Channel<Commuter>()
+        val embarkJob = launch {
+            transport.carriage.embark(
+                embarkChannel = embarkChannel,
+                commuterChannel = commuterChannel!!
+            )
+        }
+        val disembarkJob = launch {
+            transport.carriage.disembark(Line.getStation(transport.platformKey().second), commuterChannel!!)
+        }
 
         launch {
             signalService.send(
@@ -208,7 +220,7 @@ class PlatformServiceV2(
                     line = transport.line.id,
                     key = platformSignalEntryKey,
                     id = transport.id,
-                    commuterChannel = commuterChannel!!
+                    commuterChannel = embarkChannel
                 )
             )
         }
@@ -221,13 +233,6 @@ class PlatformServiceV2(
                 channel = subscriber,
                 emit = true
             )
-        }
-
-        val embarkJob = launch {
-            transport.carriage.embark(commuterChannel!!)
-        }
-        val disembarkJob = launch {
-            transport.carriage.disembark(Line.getStation(transport.platformKey().second), commuterChannel!!)
         }
 
         var canRelease: Boolean
